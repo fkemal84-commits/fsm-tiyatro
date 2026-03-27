@@ -51,8 +51,13 @@ export default async function Blog() {
               ></textarea>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem' }}>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
-                  <label style={{ fontSize: '0.8rem', color: 'var(--text-muted)', fontWeight: 600 }}>Kapak Fotoğrafı (Opsiyonel):</label>
-                  <input type="file" name="image" accept="image/*" style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }} />
+                  <label style={{ fontSize: '0.8rem', color: 'var(--text-muted)', fontWeight: 600 }}>Kapak Fotoğrafı (Maksimum 2MB - JPG, PNG, WEBP):</label>
+                  <input 
+                    type="file" 
+                    name="image" 
+                    accept="image/jpeg,image/png,image/webp" 
+                    style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }} 
+                  />
                 </div>
                 <button type="submit" className="btn btn-primary" style={{ padding: '0.8rem 2.5rem' }}>Hemen Yayınla</button>
               </div>

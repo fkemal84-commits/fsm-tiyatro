@@ -7,8 +7,20 @@ import bcrypt from 'bcryptjs';
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 
-// Firebase Storage Yükleme Yardımcısı
+// Firebase Storage Yükleme Yardımcısı (Güvenlikli)
 async function uploadToStorage(file: File, folder: string) {
+  // 1. Dosya Boyutu Kontrolü (Maksimum 2MB)
+  const MAX_SIZE = 2 * 1024 * 1024;
+  if (file.size > MAX_SIZE) {
+    throw new Error("Dosya boyutu çok büyük! Maksimum 2 MB yükleyebilirsiniz.");
+  }
+
+  // 2. Dosya Formatı Kontrolü (JPG, PNG, WEBP)
+  const allowedTypes = ['image/jpeg', 'image/png', 'image/webp'];
+  if (!allowedTypes.includes(file.type)) {
+    throw new Error("Geçersiz dosya formatı! Sadece JPG, PNG ve WEBP yükleyebilirsiniz.");
+  }
+
   const bytes = await file.arrayBuffer();
   const buffer = Buffer.from(bytes);
   const uniquePrefix = Date.now() + '-' + Math.round(Math.random() * 1E9);

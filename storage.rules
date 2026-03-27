@@ -1,0 +1,18 @@
+rules_version = '2';
+service firebase.storage {
+  match /b/{bucket}/o {
+    match /{allPaths=**} {
+      // 1. Okuma İzni (Public): Tüm görseller herkes tarafından görülebilir
+      allow read: if true;
+
+      // 2. Yazma İzni (Güvenlikli):
+      // - Boyut 2MB (2 * 1024 * 1024) ile sınırlı
+      // - Sadece belirtilen MIME tiplerine izin verilir
+      allow write: if request.resource.size < 2 * 1024 * 1024
+                   && request.resource.contentType.matches('image/.*')
+                   && (request.resource.contentType == 'image/jpeg' 
+                       || request.resource.contentType == 'image/png' 
+                       || request.resource.contentType == 'image/webp');
+    }
+  }
+}

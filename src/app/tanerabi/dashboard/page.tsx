@@ -158,11 +158,11 @@ export default async function Dashboard() {
                 required
               ></textarea>
               <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-                <label style={{ fontSize: '0.85rem', color: 'var(--primary-gold)' }}>Kapak Fotoğrafı Seçiniz:</label>
+                <label style={{ fontSize: '0.85rem', color: 'var(--primary-gold)' }}>Kapak Fotoğrafı Seçiniz (Maks. 2MB - JPG, PNG, WEBP):</label>
                 <input 
                   type="file" 
                   name="image" 
-                  accept="image/*" 
+                  accept="image/jpeg,image/png,image/webp" 
                   style={{ color: 'var(--text-muted)', fontSize: '0.85rem' }} 
                 />
               </div>
@@ -197,11 +197,11 @@ export default async function Dashboard() {
                   required
                 ></textarea>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-                  <label style={{ fontSize: '0.85rem', color: 'var(--primary-gold)' }}>Oyun Afişi (Poster):</label>
+                  <label style={{ fontSize: '0.85rem', color: 'var(--primary-gold)' }}>Oyun Afişi / Poster (Maks. 2MB - JPG, PNG, WEBP):</label>
                   <input 
                     type="file" 
                     name="poster" 
-                    accept="image/*" 
+                    accept="image/jpeg,image/png,image/webp" 
                     style={{ color: 'var(--text-muted)', fontSize: '0.85rem' }} 
                   />
                 </div>
