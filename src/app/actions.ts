@@ -101,18 +101,37 @@ export async function registerUser(formData: FormData) {
 
   const hashedPassword = await bcrypt.hash(password, 10);
 
+  // OKUL MAİLİ KONTROLÜ (stu.fsm.edu.tr)
+  const isSchoolEmail = email.toLowerCase().endsWith('@stu.fsm.edu.tr');
+  const role = isSchoolEmail ? 'MEMBER' : 'PENDING';
+
   await adminDb.collection('users').add({
     name,
     surname,
-    email,
+    email: email.toLowerCase(),
     phone,
     password: hashedPassword,
     consent,
-    role: 'MEMBER',
+    role,
     createdAt: new Date().toISOString()
   });
 
-  return { success: true };
+  return { success: true, pending: !isSchoolEmail };
+}
+
+export async function approveUser(formData: FormData) {
+  const userId = formData.get('userId') as string;
+  if (!userId) return;
+
+  const session = await getServerSession(authOptions);
+  const currentUserRole = (session?.user as any)?.role;
+  if (currentUserRole !== 'SUPERADMIN' && currentUserRole !== 'ADMIN') return;
+
+  await adminDb.collection('users').doc(userId).update({
+    role: 'MEMBER'
+  });
+
+  revalidatePath('/tanerabi/dashboard');
 }
 
 export async function changePassword(formData: FormData) {

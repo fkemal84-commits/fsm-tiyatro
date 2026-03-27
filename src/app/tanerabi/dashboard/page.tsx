@@ -1,4 +1,4 @@
-import { addPost, addPlay, changeUserRole, deletePost, deletePlay } from '@/app/actions';
+import { addPost, addPlay, changeUserRole, deletePost, deletePlay, approveUser } from '@/app/actions';
 import DeleteButton from '@/components/DeleteButton';
 import { adminDb } from '@/lib/firebase-admin';
 import { getServerSession } from "next-auth";
@@ -34,11 +34,51 @@ export default async function Dashboard() {
       .map(doc => ({ id: doc.id, ...doc.data() as any }))
       .sort((a, b) => new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime());
 
+    // Onay bekleyen kullanıcıları filtrele
+    const pendingUsers = users.filter((u: any) => u.role === 'PENDING');
+    const approvedUsers = users.filter((u: any) => u.role !== 'PENDING');
+
     return (
       <div style={{ padding: '8rem 5% 4rem', minHeight: '100vh', background: 'var(--bg-dark)' }}>
         <h1 className="serif-font" style={{ fontSize: '3rem', color: 'var(--primary-gold)', marginBottom: '2rem', textAlign: 'center' }}>
           {role === 'EDITOR' ? 'İçerik Stüdyosu' : 'Ana Kontrol ve Yönetim Paneli'}
         </h1>
+
+        {/* ONAY BEKLEYENLER - SADECE ADMIN VE SUPERADMIN GÖREBİLİR */}
+        {(role === 'SUPERADMIN' || role === 'ADMIN') && pendingUsers.length > 0 && (
+          <div className="glass-card" style={{ maxWidth: '1000px', margin: '0 auto 2rem', padding: '2rem', borderColor: 'var(--primary-gold)', borderStyle: 'dashed' }}>
+            <h2 style={{ color: 'var(--primary-gold)', marginBottom: '1.5rem', fontSize: '1.5rem', display: 'flex', alignItems: 'center', gap: '0.8rem' }}>
+              <ion-icon name="time-outline"></ion-icon> Onay Bekleyen Kullanıcılar (Dış Mail)
+            </h2>
+            <div style={{ overflowX: 'auto' }}>
+              <table style={{ width: '100%', textAlign: 'left', color: '#fff', borderCollapse: 'collapse', fontSize: '0.9rem' }}>
+                <thead>
+                  <tr style={{ borderBottom: '1px solid rgba(255,255,255,0.2)' }}>
+                    <th style={{ padding: '0.8rem 1rem' }}>Ad Soyad</th>
+                    <th style={{ padding: '0.8rem 1rem' }}>E-Posta</th>
+                    <th style={{ padding: '0.8rem 1rem' }}>Kayıt Tarihi</th>
+                    <th style={{ padding: '0.8rem 1rem', textAlign: 'center' }}>İşlem</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {pendingUsers.map((u: any) => (
+                    <tr key={u.id} style={{ borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
+                      <td style={{ padding: '1rem' }}>{u.name} {u.surname}</td>
+                      <td style={{ padding: '1rem' }}>{u.email}</td>
+                      <td style={{ padding: '1rem' }}>{new Date(u.createdAt).toLocaleDateString('tr-TR')}</td>
+                      <td style={{ padding: '1rem', textAlign: 'center' }}>
+                         <form action={approveUser} style={{ display: 'inline' }}>
+                            <input type="hidden" name="userId" value={u.id} />
+                            <button type="submit" className="btn btn-primary" style={{ padding: '0.4rem 1.2rem', fontSize: '0.8rem' }}>Onayla ve Üye Yap</button>
+                         </form>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        )}
         
         {/* ÜYE LİSTESİ - SADECE ADMIN VE SUPERADMIN GÖREBİLİR */}
         {(role === 'SUPERADMIN' || role === 'ADMIN') && (
@@ -57,7 +97,7 @@ export default async function Dashboard() {
                   </tr>
                 </thead>
                 <tbody>
-                  {users.map((u: any) => {
+                  {approvedUsers.map((u: any) => {
                     const canEdit = 
                       (role === 'SUPERADMIN') || 
                       (role === 'ADMIN' && u.role !== 'SUPERADMIN' && u.role !== 'ADMIN');

@@ -8,6 +8,7 @@ export default function Register() {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [successMessage, setSuccessMessage] = useState('');
 
   const handleRegister = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -20,9 +21,12 @@ export default function Register() {
       if (res?.error) {
         setError(res.error);
         setLoading(false);
+      } else if (res?.pending) {
+        setSuccessMessage("Kayıt talebiniz alındı! Okul dışı e-posta kullandığınız için hesabınız yönetici onayından sonra aktif edilecektir. Onaylandığında giriş yapabilirsiniz.");
+        setLoading(false);
       } else {
-        alert("Kayıt başarılı! Lütfen sisteme giriş yapın.");
-        router.push('/login');
+        setSuccessMessage("Kayıt başarılı! Okul e-postanızla anında üye oldunuz. Şimdi giriş yapabilirsiniz.");
+        setTimeout(() => router.push('/login'), 3000);
       }
     } catch {
       setError("Beklenmedik bir hata oluştu.");
@@ -33,29 +37,43 @@ export default function Register() {
   return (
     <div className="hero" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '100vh', paddingTop: '6rem' }}>
       <div className="glass-card" style={{ maxWidth: '500px', width: '90%' }}>
-        <h2 className="serif-font" style={{ fontSize: '2.5rem', color: 'var(--primary-gold)', marginBottom: '0.5rem', textAlign: 'center' }}>Aileye Katıl</h2>
-        <p style={{ color: 'var(--text-muted)', marginBottom: '2rem', textAlign: 'center', fontSize: '1rem' }}>FSM Tiyatro ve Sinema Kulübü Resmi Öğrenci ve Üye Kayıt Formu</p>
         
-        {error && <div style={{ background: 'rgba(139,0,0,0.5)', color: '#fff', padding: '0.8rem', borderRadius: '8px', marginBottom: '1rem', border: '1px solid rgba(255,0,0,0.3)' }}>{error}</div>}
-
-        <form onSubmit={handleRegister} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-          <div style={{ display: 'flex', gap: '1rem' }}>
-            <input type="text" name="name" placeholder="Adınız" style={{ flex: 1, padding: '0.8rem', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.2)', background: 'rgba(0,0,0,0.3)', color: '#fff' }} required />
-            <input type="text" name="surname" placeholder="Soyadınız" style={{ flex: 1, padding: '0.8rem', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.2)', background: 'rgba(0,0,0,0.3)', color: '#fff' }} required />
+        {successMessage ? (
+          <div style={{ textAlign: 'center', padding: '1rem' }}>
+             <div style={{ fontSize: '4rem', color: 'var(--primary-gold)', marginBottom: '1.5rem' }}>
+                <ion-icon name="checkmark-circle-outline"></ion-icon>
+             </div>
+             <h2 className="serif-font" style={{ color: '#fff', fontSize: '1.8rem', marginBottom: '1rem' }}>Süreç Başlatıldı</h2>
+             <p style={{ color: 'var(--text-muted)', fontSize: '1rem', lineHeight: '1.6', marginBottom: '2rem' }}>{successMessage}</p>
+             <a href="/login" className="btn btn-primary" style={{ width: '100%' }}>Giriş Sayfasına Dön</a>
           </div>
-          <input type="email" name="email" placeholder="Okul (fsm.edu.tr) veya Kişisel E-posta" style={{ padding: '0.8rem', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.2)', background: 'rgba(0,0,0,0.3)', color: '#fff' }} required />
-          <input type="tel" name="phone" placeholder="Telefon Numarası (05XX)" style={{ padding: '0.8rem', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.2)', background: 'rgba(0,0,0,0.3)', color: '#fff' }} required />
-          <input type="password" name="password" placeholder="Sisteme Giriş Şifrenizi Belirleyin" style={{ padding: '0.8rem', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.2)', background: 'rgba(0,0,0,0.3)', color: '#fff' }} required minLength={6} />
-          
-          <label style={{ display: 'flex', gap: '0.8rem', alignItems: 'flex-start', margin: '0.5rem 0', cursor: 'pointer', fontSize: '0.85rem', color: 'var(--text-muted)' }}>
-            <input type="checkbox" name="consent" style={{ marginTop: '0.2rem' }} required />
-            <span style={{ lineHeight: '1.4' }}>Kişisel verilerimin kulüp faaliyetleri kapsamında işlenmesine dair <a href="#" style={{ color: 'var(--primary-gold)', textDecoration: 'underline' }}>Üye Aydınlatma ve Açık Rıza Metnini</a> okudum, anladım ve onaylıyorum.</span>
-          </label>
+        ) : (
+          <>
+            <h2 className="serif-font" style={{ fontSize: '2.5rem', color: 'var(--primary-gold)', marginBottom: '0.5rem', textAlign: 'center' }}>Aileye Katıl</h2>
+            <p style={{ color: 'var(--text-muted)', marginBottom: '2rem', textAlign: 'center', fontSize: '1rem' }}>FSM Tiyatro ve Sinema Kulübü Resmi Öğrenci ve Üye Kayıt Formu</p>
+            
+            {error && <div style={{ background: 'rgba(139,0,0,0.5)', color: '#fff', padding: '0.8rem', borderRadius: '8px', marginBottom: '1rem', border: '1px solid rgba(255,0,0,0.3)' }}>{error}</div>}
 
-          <button type="submit" className="btn btn-primary" style={{ width: '100%', marginTop: '0.5rem' }} disabled={loading}>
-            {loading ? 'Sisteme Kaydediliyor...' : 'Kaydı Tamamla ve Üye Ol'}
-          </button>
-        </form>
+            <form onSubmit={handleRegister} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+              <div style={{ display: 'flex', gap: '1rem' }}>
+                <input type="text" name="name" placeholder="Adınız" style={{ flex: 1, padding: '0.8rem', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.2)', background: 'rgba(0,0,0,0.3)', color: '#fff' }} required />
+                <input type="text" name="surname" placeholder="Soyadınız" style={{ flex: 1, padding: '0.8rem', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.2)', background: 'rgba(0,0,0,0.3)', color: '#fff' }} required />
+              </div>
+              <input type="email" name="email" placeholder="Okul (fsm.edu.tr) veya Kişisel E-posta" style={{ padding: '0.8rem', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.2)', background: 'rgba(0,0,0,0.3)', color: '#fff' }} required />
+              <input type="tel" name="phone" placeholder="Telefon Numarası (05XX)" style={{ padding: '0.8rem', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.2)', background: 'rgba(0,0,0,0.3)', color: '#fff' }} required />
+              <input type="password" name="password" placeholder="Sisteme Giriş Şifrenizi Belirleyin" style={{ padding: '0.8rem', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.2)', background: 'rgba(0,0,0,0.3)', color: '#fff' }} required minLength={6} />
+              
+              <label style={{ display: 'flex', gap: '0.8rem', alignItems: 'flex-start', margin: '0.5rem 0', cursor: 'pointer', fontSize: '0.85rem', color: 'var(--text-muted)' }}>
+                <input type="checkbox" name="consent" style={{ marginTop: '0.2rem' }} required />
+                <span style={{ lineHeight: '1.4' }}>Kişisel verilerimin kulüp faaliyetleri kapsamında işlenmesine dair <a href="#" style={{ color: 'var(--primary-gold)', textDecoration: 'underline' }}>Üye Aydınlatma ve Açık Rıza Metnini</a> okudum, anladım ve onaylıyorum.</span>
+              </label>
+
+              <button type="submit" className="btn btn-primary" style={{ width: '100%', marginTop: '0.5rem' }} disabled={loading}>
+                {loading ? 'Sisteme Kaydediliyor...' : 'Kaydı Tamamla ve Üye Ol'}
+              </button>
+            </form>
+          </>
+        )}
       </div>
     </div>
   );

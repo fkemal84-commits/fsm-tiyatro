@@ -21,6 +21,10 @@ export const authOptions: NextAuthOptions = {
         
         const isPasswordValid = await bcrypt.compare(credentials.password, user.password);
         if (!isPasswordValid) return null;
+
+        // Onay bekleyen kullanıcıları engelle
+        if (user.role === 'PENDING') return null;
+
         return { id: userDoc.id, email: user.email, name: user.name, role: user.role };
       }
     })
