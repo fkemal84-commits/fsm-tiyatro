@@ -43,6 +43,9 @@ export async function addPost(formData: FormData) {
   }
 
   const session = await getServerSession(authOptions);
+  const role = (session?.user as any)?.role;
+  if (role !== 'SUPERADMIN' && role !== 'ADMIN' && role !== 'EDITOR') return;
+
   const authorName = session?.user?.name || 'Anonim';
 
   await adminDb.collection('posts').add({
