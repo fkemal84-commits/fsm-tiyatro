@@ -40,10 +40,7 @@ export default function Navbar({ session }: { session?: any }) {
             <li><Link href="/" className={pathname === '/' ? 'active' : ''}>Ana Sayfa</Link></li>
             <li><Link href="/plays" className={pathname === '/plays' ? 'active' : ''}>Oyunlarımız</Link></li>
             <li><Link href="/blog" className={pathname === '/blog' ? 'active' : ''}>Blog & Haberler</Link></li>
-            
-            {session && (
-              <li><Link href="/members" className={pathname === '/members' ? 'active' : ''}>Üye Panosu</Link></li>
-            )}
+            <li><Link href="/members" className={pathname === '/members' ? 'active' : ''}>Üye Panosu</Link></li>
 
             {(role === 'SUPERADMIN' || role === 'ADMIN' || role === 'EDITOR') && (
               <li>

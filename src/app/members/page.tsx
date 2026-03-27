@@ -6,12 +6,7 @@ import { addRehearsal, addTeamNeed } from "@/app/actions";
 
 export default async function MembersDashboard() {
   const session = await getServerSession(authOptions);
-  
-  if (!session) {
-    redirect('/login');
-  }
-
-  const role = (session.user as any).role;
+  const role = (session?.user as any)?.role;
   const canAdd = role === 'ADMIN' || role === 'SUPERADMIN';
 
   const rehearsalsSnapshot = await adminDb.collection('rehearsals').orderBy('createdAt', 'desc').get();
@@ -25,7 +20,12 @@ export default async function MembersDashboard() {
       <header style={{ textAlign: 'center', marginBottom: '4rem' }}>
         <h1 className="serif-font" style={{ fontSize: '3rem', color: 'var(--primary-gold)', marginBottom: '1rem' }}>Üye Panosu</h1>
         <p style={{ color: 'var(--text-muted)' }}>
-          Hoş geldin, <span style={{ color: '#fff', fontWeight: 'bold' }}>{session.user?.name || session.user?.email || "Sayın Üyemiz"}</span>! <br/> 
+          {session ? (
+            <>Hoş geldin, <span style={{ color: '#fff', fontWeight: 'bold' }}>{session.user?.name || session.user?.email}</span>!</>
+          ) : (
+            <>FSM Vakıf Üniversitesi Sinema ve Tiyatro Kulübü <span style={{ color: '#fff', fontWeight: 'bold' }}>Dijital Panosu</span></>
+          )}
+          <br/> 
           Sadece üyelere özel prova saatleri ve ekip ihtiyaçları aşağıdadır.
         </p>
       </header>
