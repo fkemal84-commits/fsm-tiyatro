@@ -1,9 +1,17 @@
 import ScrollReveal from "@/components/ScrollReveal";
 import { adminDb } from "@/lib/firebase-admin";
+import { getServerSession } from "next-auth";
+import { authOptions } from "@/lib/auth";
+import { addPost, deletePost } from "@/app/actions";
+import DeleteButton from "@/components/DeleteButton";
 
 export const dynamic = 'force-dynamic';
 
 export default async function Blog() {
+  const session = await getServerSession(authOptions);
+  const userRole = (session?.user as any)?.role;
+  const canPost = userRole === 'SUPERADMIN' || userRole === 'ADMIN' || userRole === 'EDITOR';
+
   const snapshot = await adminDb.collection('posts').orderBy('createdAt', 'desc').get();
   const posts = snapshot.docs.map(doc => {
       const data = doc.data();
@@ -19,6 +27,38 @@ export default async function Blog() {
       <header style={{ padding: '12rem 5% 4rem', textAlign: 'center', background: 'radial-gradient(circle at center top, rgba(212, 175, 55, 0.15) 0%, var(--bg-dark) 80%)', borderBottom: 'var(--glass-border)' }}>
         <h1 className="serif-font" style={{ fontSize: '4rem', color: '#fff', marginBottom: '1rem' }}>Kulis Arkası</h1>
         <p style={{ color: 'var(--text-muted)', maxWidth: '600px', margin: '0 auto', fontSize: '1.1rem' }}>Kulübümüzle ilgili en güncel haberler, duyurular, prova notları ve sponsorluk gelişmeleri.</p>
+        
+        {/* EDİTÖR HIZLI YAZI PANELİ */}
+        {canPost && (
+          <div className="glass-card" style={{ maxWidth: '800px', margin: '3rem auto 0', textAlign: 'left', padding: '2rem' }}>
+            <h2 style={{ color: 'var(--primary-gold)', fontSize: '1.5rem', marginBottom: '1.5rem', display: 'flex', alignItems: 'center', gap: '0.8rem' }}>
+              <ion-icon name="create-outline"></ion-icon> Yeni Blog Yazısı Paylaş
+            </h2>
+            <form action={addPost} style={{ display: 'flex', flexDirection: 'column', gap: '1.2rem' }}>
+              <input 
+                type="text" 
+                name="title"
+                placeholder="Yazı Başlığı" 
+                style={{ padding: '1rem', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.1)', background: 'rgba(0,0,0,0.4)', color: '#fff', fontSize: '1.1rem' }}
+                required
+              />
+              <textarea 
+                name="content"
+                placeholder="Yazının içeriğini buraya dökün..." 
+                rows={6}
+                style={{ padding: '1rem', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.1)', background: 'rgba(0,0,0,0.4)', color: '#fff', fontSize: '1rem', lineHeight: '1.6' }}
+                required
+              ></textarea>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem' }}>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
+                  <label style={{ fontSize: '0.8rem', color: 'var(--text-muted)', fontWeight: 600 }}>Kapak Fotoğrafı (Opsiyonel):</label>
+                  <input type="file" name="image" accept="image/*" style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }} />
+                </div>
+                <button type="submit" className="btn btn-primary" style={{ padding: '0.8rem 2.5rem' }}>Hemen Yayınla</button>
+              </div>
+            </form>
+          </div>
+        )}
       </header>
 
       <section className="section">
@@ -43,7 +83,18 @@ export default async function Blog() {
                         </div>
                         <h2 className="serif-font" style={{ fontSize: '1.8rem', color: '#fff', marginBottom: '1rem', lineHeight: 1.3 }}>{post.title}</h2>
                         <p style={{ color: 'var(--text-muted)', marginBottom: '1.5rem' }}>{post.content.substring(0, 150)}...</p>
-                        <div><a href={`/blog/${post.id}`} style={{ color: 'var(--primary-gold)', fontWeight: 600, display: 'inline-flex', alignItems: 'center', gap: '0.5rem', textDecoration: 'none' }}>Devamını Oku</a></div>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: 'auto' }}>
+                          <a href={`/blog/${post.id}`} style={{ color: 'var(--primary-gold)', fontWeight: 600, display: 'inline-flex', alignItems: 'center', gap: '0.5rem', textDecoration: 'none' }}>Devamını Oku</a>
+                          {canPost && (
+                            <DeleteButton 
+                              action={deletePost} 
+                              id={post.id} 
+                              name={post.title} 
+                              idFieldName="postId" 
+                              confirmMessage="Bu yazıyı silmek istediğine emin misin?"
+                            />
+                          )}
+                        </div>
                     </div>
                 </article>
               </ScrollReveal>

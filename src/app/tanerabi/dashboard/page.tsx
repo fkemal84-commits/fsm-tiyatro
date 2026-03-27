@@ -12,8 +12,8 @@ export default async function Dashboard() {
     if (!session) redirect('/login');
     
     const role = (session.user as any).role;
-    // Sadece yetkililer girebilir (Superadmin, Admin, Editör)
-    if (role !== 'SUPERADMIN' && role !== 'ADMIN' && role !== 'EDITOR') {
+    // Sadece Üst Yöneticiler girebilir (Superadmin, Admin)
+    if (role !== 'SUPERADMIN' && role !== 'ADMIN') {
       redirect('/');
     }
 
