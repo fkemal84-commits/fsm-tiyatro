@@ -7,6 +7,7 @@ import { signOut } from 'next-auth/react';
 
 export default function Navbar({ session }: { session?: any }) {
   const [scrolled, setScrolled] = useState(false);
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
   const pathname = usePathname();
 
   useEffect(() => {
@@ -17,58 +18,61 @@ export default function Navbar({ session }: { session?: any }) {
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
+  // Sayfa değiştiğinde menüyü otomatik kapat
+  useEffect(() => {
+    setIsMenuOpen(false);
+  }, [pathname]);
+
   const role = session?.user?.role;
 
   return (
-    <nav className={`navbar ${scrolled ? 'scrolled' : ''}`}>
-      <Link href="/" className="nav-logo">FSM<span>Tiyatro</span></Link>
-      
-      <ul className="nav-links">
-        <li><Link href="/" className={pathname === '/' ? 'active' : ''}>Ana Sayfa</Link></li>
-        <li><Link href="/plays" className={pathname === '/plays' ? 'active' : ''}>Oyunlarımız</Link></li>
-        <li><Link href="/blog" className={pathname === '/blog' ? 'active' : ''}>Blog & Haberler</Link></li>
+    <nav className={`navbar ${scrolled ? 'scrolled' : ''} ${isMenuOpen ? 'menu-open' : ''}`}>
+      <div className="nav-container">
+        <Link href="/" className="nav-logo">FSM<span>Tiyatro</span></Link>
         
-        {session && (
-          <li><Link href="/members" className={pathname === '/members' ? 'active' : ''}>Üye Panosu</Link></li>
-        )}
+        {/* MOBİL MENÜ BUTONU */}
+        <button className="mobile-toggle" onClick={() => setIsMenuOpen(!isMenuOpen)}>
+          <ion-icon name={isMenuOpen ? "close-outline" : "menu-outline"}></ion-icon>
+        </button>
 
-        {(role === 'SUPERADMIN' || role === 'ADMIN') && (
-          <li>
-            <Link href="/tanerabi/dashboard" className={pathname.startsWith('/tanerabi') ? 'active' : ''} style={{ color: 'var(--primary-gold)' }}>
-              Yönetim Paneli
-            </Link>
-          </li>
-        )}
+        <div className={`nav-content ${isMenuOpen ? 'open' : ''}`}>
+          <ul className="nav-links">
+            <li><Link href="/" className={pathname === '/' ? 'active' : ''}>Ana Sayfa</Link></li>
+            <li><Link href="/plays" className={pathname === '/plays' ? 'active' : ''}>Oyunlarımız</Link></li>
+            <li><Link href="/blog" className={pathname === '/blog' ? 'active' : ''}>Blog & Haberler</Link></li>
+            
+            {session && (
+              <li><Link href="/members" className={pathname === '/members' ? 'active' : ''}>Üye Panosu</Link></li>
+            )}
 
-        {role === 'EDITOR' && (
-          <li>
-            <Link href="/tanerabi/dashboard" className={pathname.startsWith('/tanerabi') ? 'active' : ''} style={{ color: 'var(--primary-gold)' }}>
-              Yazı Ekle
-            </Link>
-          </li>
-        )}
-      </ul>
+            {(role === 'SUPERADMIN' || role === 'ADMIN' || role === 'EDITOR') && (
+              <li>
+                <Link href="/tanerabi/dashboard" className={pathname.startsWith('/tanerabi') ? 'active' : ''} style={{ color: 'var(--primary-gold)' }}>
+                  {role === 'EDITOR' ? 'İçerik Stüdyosu' : 'Yönetim Paneli'}
+                </Link>
+              </li>
+            )}
+          </ul>
 
-      <div style={{ display: 'flex', gap: '1.5rem', alignItems: 'center' }}>
-        {session ? (
-          <>
-            <Link href="/profile" style={{ color: 'var(--text-main)', textDecoration: 'none', fontWeight: 600, transition: 'var(--transition)' }}>
-              Profilim
-            </Link>
-            <button 
-              onClick={() => signOut({ callbackUrl: '/' })} 
-              className="btn" 
-              style={{ padding: '0.4rem 1.2rem', fontSize: '0.9rem', border: '1px solid var(--accent-red)', color: 'var(--accent-red)', background: 'transparent' }}
-            >
-              Çıkış Yap
-            </button>
-          </>
-        ) : (
-          <>
-            <Link href="/login" style={{ color: 'var(--text-main)', textDecoration: 'none', fontWeight: 600, transition: 'var(--transition)' }}>Üye Girişi</Link>
-            <Link href="/register" className="btn btn-primary" style={{ padding: '0.6rem 1.8rem', fontSize: '0.9rem' }}>Yeni Kayıt Ol</Link>
-          </>
-        )}
+          <div className="nav-actions">
+            {session ? (
+              <>
+                <Link href="/profile" className="profile-link">Profilim</Link>
+                <button 
+                  onClick={() => signOut({ callbackUrl: '/' })} 
+                  className="btn btn-logout"
+                >
+                  Çıkış Yap
+                </button>
+              </>
+            ) : (
+              <>
+                <Link href="/login" className="login-link">Üye Girişi</Link>
+                <Link href="/register" className="btn btn-primary nav-reg-btn">Yeni Kayıt Ol</Link>
+              </>
+            )}
+          </div>
+        </div>
       </div>
     </nav>
   );
