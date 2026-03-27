@@ -1,4 +1,5 @@
 import { addPost, addPlay, changeUserRole, deletePost, deletePlay } from '@/app/actions';
+import DeleteButton from '@/components/DeleteButton';
 import { adminDb } from '@/lib/firebase-admin';
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
@@ -165,10 +166,13 @@ export default async function Dashboard() {
                 {posts.map((p: any) => (
                   <div key={p.id} style={{ padding: '0.8rem', background: 'rgba(255,255,255,0.05)', borderRadius: '8px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                     <span style={{ color: '#fff', fontSize: '0.9rem' }}>{p.title}</span>
-                    <form action={deletePost}>
-                      <input type="hidden" name="postId" value={p.id} />
-                      <button type="submit" className="btn btn-outline" style={{ color: '#ff4d4d', borderColor: '#ff4d4d', padding: '0.3rem 0.6rem', fontSize: '0.75rem' }} onClick={(e) => { if(!confirm('Bu yazıyı sonsuza dek silmek istediğine emin misin?')) e.preventDefault(); }}>Kaldır</button>
-                    </form>
+                    <DeleteButton 
+                      action={deletePost} 
+                      id={p.id} 
+                      name={p.title} 
+                      confirmMessage="Bu yazıyı sonsuza dek silmek istediğine emin misin?" 
+                      idFieldName="postId"
+                    />
                   </div>
                 ))}
                 {posts.length === 0 && <p style={{ color: 'var(--text-muted)', fontSize: '0.8rem' }}>Henüz hiç yazı paylaşılmamış.</p>}
@@ -183,10 +187,13 @@ export default async function Dashboard() {
                   <div key={p.id} style={{ padding: '0.8rem', background: 'rgba(255,255,255,0.05)', borderRadius: '8px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                     <span style={{ color: '#fff', fontSize: '0.9rem' }}>{p.title} ({p.year})</span>
                     {(role === 'SUPERADMIN' || role === 'ADMIN') ? (
-                      <form action={deletePlay}>
-                        <input type="hidden" name="playId" value={p.id} />
-                        <button type="submit" className="btn btn-outline" style={{ color: '#ff4d4d', borderColor: '#ff4d4d', padding: '0.3rem 0.6rem', fontSize: '0.75rem' }} onClick={(e) => { if(!confirm('Bu oyunu sahneden tamamen kaldırmak istediğine emin misin?')) e.preventDefault(); }}>Kaldır</button>
-                      </form>
+                      <DeleteButton 
+                        action={deletePlay} 
+                        id={p.id} 
+                        name={p.title} 
+                        confirmMessage="Bu oyunu sahneden tamamen kaldırmak istediğine emin misin?" 
+                        idFieldName="playId"
+                      />
                     ) : (
                       <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>Yetkiniz Yok</span>
                     )}
