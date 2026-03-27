@@ -16,15 +16,21 @@ export default async function Dashboard() {
   }
 
   // Veritabanından tüm üyeleri çek
-  const usersSnapshot = await adminDb.collection('users').orderBy('createdAt', 'desc').get();
-  const users = usersSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() as any }));
+  const usersSnapshot = await adminDb.collection('users').get();
+  const users = usersSnapshot.docs
+    .map(doc => ({ id: doc.id, ...doc.data() as any }))
+    .sort((a, b) => new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime());
 
   // Mevcut içerikleri çek
-  const postsSnapshot = await adminDb.collection('posts').orderBy('createdAt', 'desc').get();
-  const posts = postsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() as any }));
+  const postsSnapshot = await adminDb.collection('posts').get();
+  const posts = postsSnapshot.docs
+    .map(doc => ({ id: doc.id, ...doc.data() as any }))
+    .sort((a, b) => new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime());
 
-  const playsSnapshot = await adminDb.collection('plays').orderBy('createdAt', 'desc').get();
-  const plays = playsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() as any }));
+  const playsSnapshot = await adminDb.collection('plays').get();
+  const plays = playsSnapshot.docs
+    .map(doc => ({ id: doc.id, ...doc.data() as any }))
+    .sort((a, b) => new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime());
 
   return (
     <div style={{ padding: '8rem 5% 4rem', minHeight: '100vh', background: 'var(--bg-dark)' }}>
