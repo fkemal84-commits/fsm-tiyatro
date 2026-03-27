@@ -117,6 +117,15 @@ export default async function Dashboard() {
                 style={{ padding: '1rem', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.2)', background: 'rgba(0,0,0,0.3)', color: '#fff' }}
                 required
               ></textarea>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                <label style={{ fontSize: '0.85rem', color: 'var(--primary-gold)' }}>Kapak Fotoğrafı Seçiniz:</label>
+                <input 
+                  type="file" 
+                  name="image" 
+                  accept="image/*" 
+                  style={{ color: 'var(--text-muted)', fontSize: '0.85rem' }} 
+                />
+              </div>
               <button type="submit" className="btn btn-primary" style={{ marginTop: '0.5rem' }}>Yayınla ve Siteyi Güncelle</button>
             </form>
           </div>
@@ -128,12 +137,12 @@ export default async function Dashboard() {
               <form action={addPlay} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
                 <input 
                   type="text" 
-                  name="title"
+                  name="title" 
                   placeholder="Oyun Adı (Örn: Hamlet)" 
                   style={{ padding: '1rem', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.2)', background: 'rgba(0,0,0,0.3)', color: '#fff' }}
                   required
                 />
-                 <input 
+                <input 
                   type="text" 
                   name="year"
                   placeholder="Sezon (Örn: 2026 SEZONU)" 
@@ -147,6 +156,21 @@ export default async function Dashboard() {
                   style={{ padding: '1rem', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.2)', background: 'rgba(0,0,0,0.3)', color: '#fff' }}
                   required
                 ></textarea>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                  <label style={{ fontSize: '0.85rem', color: 'var(--primary-gold)' }}>Oyun Afişi (Poster):</label>
+                  <input 
+                    type="file" 
+                    name="poster" 
+                    accept="image/*" 
+                    style={{ color: 'var(--text-muted)', fontSize: '0.85rem' }} 
+                  />
+                </div>
+                <input 
+                  type="text" 
+                  name="videoUrl" 
+                  placeholder="YouTube Video Linki (Opsiyonel)" 
+                  style={{ padding: '1rem', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.2)', background: 'rgba(0,0,0,0.3)', color: '#fff' }}
+                />
                 <button type="submit" className="btn btn-primary" style={{ marginTop: '0.5rem' }}>Oyunu Portfolyoya Ekle</button>
               </form>
             </div>

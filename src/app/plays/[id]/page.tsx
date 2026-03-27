@@ -11,6 +11,15 @@ export default async function PlayDetail({ params }: { params: Promise<{ id: str
   // Virgülle ayrılmış çok sayıdaki imajı diziye (Array) dökme
   const gallery = play.galleryUrls ? (play.galleryUrls as string).split(',').filter((u: string) => u.trim() !== '') : [];
 
+  // YouTube ID Ayıklayıcı
+  const getYoutubeId = (url: string) => {
+    const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|\&v=)([^#\&\?]*).*/;
+    const match = url.match(regExp);
+    return (match && match[2].length === 11) ? match[2] : null;
+  };
+
+  const videoId = play.videoUrl ? getYoutubeId(play.videoUrl) : null;
+
   return (
     <div style={{ minHeight: '100vh', background: 'var(--bg-dark)' }}>
       {/* PARALLAX HERO SECTION */}
@@ -39,6 +48,22 @@ export default async function PlayDetail({ params }: { params: Promise<{ id: str
           <span style={{ padding: '0.4rem 1rem', background: 'rgba(212,175,55,0.1)', color: 'var(--primary-gold)', borderRadius: '20px', fontWeight: 'bold' }}>{play.year.toUpperCase()}</span>
         </div>
         
+        {/* VİDEO PLAYER (EĞER VARSA) */}
+        {videoId && (
+          <div style={{ marginBottom: '3rem', borderRadius: '12px', overflow: 'hidden', border: 'var(--glass-border)', boxShadow: '0 10px 30px rgba(0,0,0,0.5)' }}>
+            <div style={{ position: 'relative', paddingBottom: '56.25%', height: 0 }}>
+              <iframe
+                style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%' }}
+                src={`https://www.youtube.com/embed/${videoId}`}
+                title={`${play.title} Video`}
+                frameBorder="0"
+                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                allowFullScreen
+              ></iframe>
+            </div>
+          </div>
+        )}
+
         <p style={{ fontSize: '1.2rem', lineHeight: '1.8', color: 'var(--text-main)', whiteSpace: 'pre-wrap' }}>
           {play.description}
         </p>

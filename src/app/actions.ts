@@ -7,18 +7,47 @@ import bcrypt from 'bcryptjs';
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 
+// Firebase Storage Yükleme Yardımcısı
+async function uploadToStorage(file: File, folder: string) {
+  const bytes = await file.arrayBuffer();
+  const buffer = Buffer.from(bytes);
+  const uniquePrefix = Date.now() + '-' + Math.round(Math.random() * 1E9);
+  const safeName = file.name.replace(/[^a-zA-Z0-9.-]/g, '');
+  const filename = `${folder}/${uniquePrefix}-${safeName}`;
+  
+  const bucket = adminStorage.bucket();
+  const fileRef = bucket.file(filename);
+
+  await fileRef.save(buffer, {
+    metadata: { contentType: file.type },
+    public: true 
+  });
+  
+  return fileRef.publicUrl();
+}
+
 export async function addPost(formData: FormData) {
   const title = formData.get('title') as string;
   const content = formData.get('content') as string;
+  const imageFile = formData.get('image') as File;
   
   if (!title || !content) return;
+
+  let imageUrl = '/default-cover.svg';
+  if (imageFile && imageFile.size > 0) {
+    try {
+      imageUrl = await uploadToStorage(imageFile, 'blog_images');
+    } catch (error) {
+      console.error("Blog resim yükleme hatası:", error);
+    }
+  }
 
   await adminDb.collection('posts').add({
     title,
     content,
     category: 'KULİS',
     author: 'Admin',
-    imageUrl: '/default-cover.svg',
+    imageUrl,
     createdAt: new Date().toISOString()
   });
 
@@ -30,14 +59,26 @@ export async function addPlay(formData: FormData) {
   const title = formData.get('title') as string;
   const description = formData.get('description') as string;
   const year = formData.get('year') as string;
+  const posterFile = formData.get('poster') as File;
+  const videoUrl = formData.get('videoUrl') as string;
 
   if (!title || !description || !year) return;
+
+  let imageUrl = '/default-cover.svg';
+  if (posterFile && posterFile.size > 0) {
+    try {
+      imageUrl = await uploadToStorage(posterFile, 'play_posters');
+    } catch (error) {
+      console.error("Oyun afiş yükleme hatası:", error);
+    }
+  }
 
   await adminDb.collection('plays').add({
     title,
     description,
     year,
-    imageUrl: '/default-cover.svg',
+    imageUrl,
+    videoUrl: videoUrl || '',
     createdAt: new Date().toISOString()
   });
 
