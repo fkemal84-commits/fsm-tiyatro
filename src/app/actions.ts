@@ -68,12 +68,14 @@ export async function addPost(formData: FormData) {
   if (role !== 'SUPERADMIN' && role !== 'ADMIN' && role !== 'EDITOR') return;
 
   const authorName = session?.user?.name || 'Anonim';
+  const authorEmail = session?.user?.email || '';
 
   await adminDb.collection('posts').add({
     title,
     content,
     category: 'KULİS',
     author: authorName,
+    authorEmail,
     imageUrl,
     createdAt: new Date().toISOString()
   });
@@ -396,7 +398,19 @@ export async function deletePost(formData: FormData) {
 
   if (role !== 'ADMIN' && role !== 'SUPERADMIN' && role !== 'EDITOR') return;
 
-  await adminDb.collection('posts').doc(postId).delete();
+  const postRef = adminDb.collection('posts').doc(postId);
+  const postDoc = await postRef.get();
+  
+  if (!postDoc.exists) return;
+  const postData = postDoc.data();
+
+  // Güvenlik Kalkanı: Editör sadece kendi yazdığı yazıyı silebilir.
+  // Admin ve Superadmin her şeyi silebilir.
+  if (role === 'EDITOR' && postData?.authorEmail !== session?.user?.email) {
+    return;
+  }
+
+  await postRef.delete();
   revalidatePath('/blog');
   revalidatePath('/tanerabi/dashboard');
 }

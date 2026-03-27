@@ -100,7 +100,7 @@ export default async function Blog() {
                         <p style={{ color: 'var(--text-muted)', marginBottom: '1.5rem' }}>{post.content.substring(0, 150)}...</p>
                         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: 'auto' }}>
                           <a href={`/blog/${post.id}`} style={{ color: 'var(--primary-gold)', fontWeight: 600, display: 'inline-flex', alignItems: 'center', gap: '0.5rem', textDecoration: 'none' }}>Devamını Oku</a>
-                          {canPost && (
+                          {(userRole === 'SUPERADMIN' || userRole === 'ADMIN' || (userRole === 'EDITOR' && post.authorEmail === session?.user?.email)) && (
                             <DeleteButton 
                               action={deletePost} 
                               id={post.id} 
