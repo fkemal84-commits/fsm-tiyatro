@@ -9,7 +9,17 @@ export const dynamic = 'force-dynamic';
 
 export default async function Blog() {
   const session = await getServerSession(authOptions);
-  const userRole = (session?.user as any)?.role;
+  let userRole = (session?.user as any)?.role;
+
+  // Güvenlik ve Güncellik Katmanı: Eğer session var ama rol gelmediyse veya 
+  // kullanıcı yeni yetkilendirildiyse DB'den en güncel hali çekiyoruz.
+  if (session?.user?.email) {
+      const uSnap = await adminDb.collection('users').where('email', '==', session.user.email).limit(1).get();
+      if (!uSnap.empty) {
+          userRole = uSnap.docs[0].data().role;
+      }
+  }
+
   const canPost = userRole === 'SUPERADMIN' || userRole === 'ADMIN' || userRole === 'EDITOR';
 
   const snapshot = await adminDb.collection('posts').orderBy('createdAt', 'desc').get();
