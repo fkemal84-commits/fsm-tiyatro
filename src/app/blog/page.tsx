@@ -32,8 +32,14 @@ export default async function Blog() {
                 <article style={{ display: 'flex', background: 'var(--bg-card)', border: 'var(--glass-border)', borderRadius: '16px', overflow: 'hidden' }}>
                     <img src={post.imageUrl || ''} alt={post.title} style={{ width: '350px', height: '100%', objectFit: 'cover', borderRight: '1px solid rgba(255,255,255,0.05)' }} />
                     <div style={{ padding: '2.5rem', display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
-                        <div style={{ display: 'flex', gap: '1rem', marginBottom: '1rem', fontSize: '0.85rem', color: 'var(--primary-gold)', fontWeight: 600, letterSpacing: '1px' }}>
+                        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '1rem', marginBottom: '1rem', fontSize: '0.85rem', color: 'var(--primary-gold)', fontWeight: 600, letterSpacing: '1px' }}>
                             <span>{post.category}</span><span>&bull;</span><span>{post.createdAt.toLocaleDateString('tr-TR')}</span>
+                            {post.author && (
+                              <>
+                                <span>&bull;</span>
+                                <span style={{ color: '#fff', opacity: 0.9 }}>🖋️ {post.author} yazdı</span>
+                              </>
+                            )}
                         </div>
                         <h2 className="serif-font" style={{ fontSize: '1.8rem', color: '#fff', marginBottom: '1rem', lineHeight: 1.3 }}>{post.title}</h2>
                         <p style={{ color: 'var(--text-muted)', marginBottom: '1.5rem' }}>{post.content.substring(0, 150)}...</p>

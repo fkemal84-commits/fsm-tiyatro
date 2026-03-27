@@ -42,11 +42,14 @@ export async function addPost(formData: FormData) {
     }
   }
 
+  const session = await getServerSession(authOptions);
+  const authorName = session?.user?.name || 'Anonim';
+
   await adminDb.collection('posts').add({
     title,
     content,
     category: 'KULİS',
-    author: 'Admin',
+    author: authorName,
     imageUrl,
     createdAt: new Date().toISOString()
   });
