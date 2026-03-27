@@ -84,22 +84,35 @@ export default async function Blog() {
           ) : (
             posts.map(post => (
               <ScrollReveal key={post.id}>
-                <article style={{ display: 'flex', background: 'var(--bg-card)', border: 'var(--glass-border)', borderRadius: '16px', overflow: 'hidden' }}>
-                    <img src={post.imageUrl || ''} alt={post.title} style={{ width: '350px', height: '100%', objectFit: 'cover', borderRight: '1px solid rgba(255,255,255,0.05)' }} />
-                    <div style={{ padding: '2.5rem', display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
-                        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '1rem', marginBottom: '1rem', fontSize: '0.85rem', color: 'var(--primary-gold)', fontWeight: 600, letterSpacing: '1px' }}>
+                <article className="flex flex-col md:flex-row bg-[rgba(20,20,24,0.6)] backdrop-blur-md border border-white/10 rounded-2xl overflow-hidden transition-all duration-300 hover:-translate-y-2 hover:border-[#D4AF3744] h-full">
+                    {post.imageUrl && (
+                      <div className="w-full md:w-[420px] md:min-w-[420px] max-h-[50vh] md:max-h-none overflow-hidden">
+                        <img 
+                          src={post.imageUrl} 
+                          alt={post.title} 
+                          className="w-full h-full object-cover"
+                        />
+                      </div>
+                    )}
+                    <div className="p-6 md:p-10 flex flex-col justify-center flex-1">
+                        <div className="flex flex-wrap gap-4 mb-4 text-[0.85rem] text-[#D4AF37] font-semibold tracking-wider">
                             <span>{post.category}</span><span>&bull;</span><span>{post.createdAt.toLocaleDateString('tr-TR')}</span>
                             {post.author && (
                               <>
                                 <span>&bull;</span>
-                                <span style={{ color: '#fff', opacity: 0.9 }}>🖋️ {post.author} yazdı</span>
+                                <span className="text-white/90">🖋️ {post.author}</span>
                               </>
                             )}
                         </div>
-                        <h2 className="serif-font" style={{ fontSize: '1.8rem', color: '#fff', marginBottom: '1rem', lineHeight: 1.3 }}>{post.title}</h2>
-                        <p style={{ color: 'var(--text-muted)', marginBottom: '1.5rem' }}>{post.content.substring(0, 150)}...</p>
-                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: 'auto' }}>
-                          <a href={`/blog/${post.id}`} style={{ color: 'var(--primary-gold)', fontWeight: 600, display: 'inline-flex', alignItems: 'center', gap: '0.5rem', textDecoration: 'none' }}>Devamını Oku</a>
+                        <h2 className="serif-font text-[1.8rem] text-white mb-4 leading-tight">{post.title}</h2>
+                        
+                        {/* Karakter sınırını 1200'e çekip, desktop'ta 12 satıra kadar izin verdik (dikey fotoyu doldurur) */}
+                        <p className="text-[#a0a0b0] mb-8 text-[1.05rem] leading-relaxed line-clamp-5 md:line-clamp-[12]">
+                          {post.content.length > 1200 ? `${post.content.substring(0, 1200)}...` : post.content}
+                        </p>
+                        
+                        <div className="flex justify-between items-center mt-auto">
+                          <a href={`/blog/${post.id}`} className="text-[#D4AF37] font-semibold inline-flex items-center gap-2 no-underline hover:brightness-125 transition-all text-[1.1rem]">Devamını Oku</a>
                           {(userRole === 'SUPERADMIN' || userRole === 'ADMIN' || (userRole === 'EDITOR' && post.authorEmail === session?.user?.email)) && (
                             <DeleteButton 
                               action={deletePost} 

@@ -9,15 +9,19 @@ import { authOptions } from "@/lib/auth";
 
 // Firebase Storage Yükleme Yardımcısı (Güvenlikli)
 async function uploadToStorage(file: File, folder: string) {
+  console.log(`[STORAGE] Sisteme dosya yükleniyor: ${file.name} (${file.size} bytes, ${file.type})`);
+
   // 1. Dosya Boyutu Kontrolü (Maksimum 2MB)
   const MAX_SIZE = 2 * 1024 * 1024;
   if (file.size > MAX_SIZE) {
+    console.error(`[STORAGE] Hata: Dosya boyutu limitin üzerinde! (${file.size} > ${MAX_SIZE})`);
     throw new Error("Dosya boyutu çok büyük! Maksimum 2 MB yükleyebilirsiniz.");
   }
 
   // 2. Dosya Formatı Kontrolü (JPG, PNG, WEBP)
   const allowedTypes = ['image/jpeg', 'image/png', 'image/webp'];
   if (!allowedTypes.includes(file.type)) {
+    console.error(`[STORAGE] Hata: Geçersiz format! (${file.type})`);
     throw new Error("Geçersiz dosya formatı! Sadece JPG, PNG ve WEBP yükleyebilirsiniz.");
   }
 
@@ -27,15 +31,42 @@ async function uploadToStorage(file: File, folder: string) {
   const safeName = file.name.replace(/[^a-zA-Z0-9.-]/g, '');
   const filename = `${folder}/${uniquePrefix}-${safeName}`;
   
-  const bucket = adminStorage.bucket();
+  const bucketName = process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET;
+  console.log(`[STORAGE] Hedef Yol: ${filename}, Bucket: ${bucketName || 'Varsayılan'}`);
+
+  const bucket = adminStorage.bucket(bucketName);
   const fileRef = bucket.file(filename);
 
-  await fileRef.save(buffer, {
-    metadata: { contentType: file.type },
-    public: true 
-  });
-  
-  return fileRef.publicUrl();
+  try {
+    await fileRef.save(buffer, {
+      metadata: { 
+        contentType: file.type,
+        cacheControl: 'public, max-age=31536000'
+      }
+    });
+    
+    // 3. Dosyayı public hale getirmeyi dene (Hata alırsa bucket seviyesinde yetki beklenir)
+    try {
+      await fileRef.makePublic();
+    } catch (e: any) {
+      console.warn(`[STORAGE] makePublic() uyarısı (Uniform Access açık olabilir): ${e.message}`);
+    }
+    
+    // 4. URL Oluşturma: Hem Cloud Storage hem Firebase formatını desteklemek için
+    // Eğer bucket ismi varsa manuel oluşturmak bazen daha güvenlidir
+    let publicUrl = "";
+    if (bucketName) {
+      publicUrl = `https://storage.googleapis.com/${bucketName}/${filename}`;
+    } else {
+      publicUrl = fileRef.publicUrl();
+    }
+    
+    console.log(`[STORAGE] Yükleme başarılı! URL: ${publicUrl}`);
+    return publicUrl;
+  } catch (error: any) {
+    console.error("[STORAGE] Firebase kayıt hatası:", error.message);
+    throw new Error("Görsel yüklenirken sunucu hatası oluştu: " + error.message);
+  }
 }
 
 export async function addPost(formData: FormData) {
@@ -49,8 +80,10 @@ export async function addPost(formData: FormData) {
   if (imageFile && imageFile.size > 0) {
     try {
       imageUrl = await uploadToStorage(imageFile, 'blog_images');
-    } catch (error) {
+    } catch (error: any) {
       console.error("Blog resim yükleme hatası:", error);
+      // Hata olduğunda durmuyoruz ama logluyoruz. 
+      // İleride UI'da toast göstermek için error state eklenebilir.
     }
   }
 
@@ -289,35 +322,21 @@ export async function uploadAvatar(formData: FormData) {
   const session = await getServerSession(authOptions);
   if (!session?.user?.email) return { error: "Yetki ihlali." };
 
-  const bytes = await file.arrayBuffer();
-  const buffer = Buffer.from(bytes);
-  
-  // Firebase Storage için Kusursuz dosya ID üretimi
-  const uniquePrefix = Date.now() + '-' + Math.round(Math.random() * 1E9);
-  const filename = `avatars/${session.user.email.replace(/[@.]/g, '_')}/${uniquePrefix}-${file.name.replace(/[^a-zA-Z0-9.-]/g, '')}`;
-  
-  const bucket = adminStorage.bucket();
-  const fileRef = bucket.file(filename);
-
   try {
-      await fileRef.save(buffer, {
-        metadata: { contentType: file.type },
-        public: true 
-      });
-  } catch (error) {
-      console.error("Firebase Storage Yükleme Hatası:", error);
-      return { error: "Bulut sunucusu (Firebase) resmi reddetti. Storage kovası veya API ayarınızı kontrol edin." };
-  }
-  
-  const publicUrl = fileRef.publicUrl();
+    const folder = `avatars/${session.user.email.replace(/[@.]/g, '_')}`;
+    const publicUrl = await uploadToStorage(file, folder);
 
-  const querySnapshot = await adminDb.collection('users').where('email', '==', session.user.email).limit(1).get();
-  if (!querySnapshot.empty) {
-      await querySnapshot.docs[0].ref.update({ photoUrl: publicUrl });
-  }
+    const querySnapshot = await adminDb.collection('users').where('email', '==', session.user.email).limit(1).get();
+    if (!querySnapshot.empty) {
+        await querySnapshot.docs[0].ref.update({ photoUrl: publicUrl });
+    }
 
-  revalidatePath('/profile');
-  return { success: true, photoUrl: publicUrl };
+    revalidatePath('/profile');
+    return { success: true, photoUrl: publicUrl };
+  } catch (error: any) {
+    console.error("Avatar yükleme hatası:", error);
+    return { error: error.message || "Bulut sunucusu (Firebase) resmi reddetti." };
+  }
 }
 
 // KVKK Madde 7: Hard Delete (Unutulma Hakkı) ve Yazar Yıkımı
