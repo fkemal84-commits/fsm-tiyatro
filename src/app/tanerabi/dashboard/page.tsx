@@ -142,7 +142,7 @@ export default async function Dashboard() {
           {/* Blog Ekleme Formu - EDİTÖR, ADMIN VE SUPERADMIN GÖREBİLİR */}
           <div className="glass-card">
             <h2 style={{ color: '#fff', marginBottom: '1.5rem', fontSize: '1.5rem' }}>Yeni Blog Yazısı Ekle</h2>
-            <form action={addPost} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+            <form action={addPost} encType="multipart/form-data" style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
               <input 
                 type="text" 
                 name="title"
@@ -174,7 +174,7 @@ export default async function Dashboard() {
           {(role === 'SUPERADMIN' || role === 'ADMIN') && (
             <div className="glass-card">
               <h2 style={{ color: '#fff', marginBottom: '1.5rem', fontSize: '1.5rem' }}>Sahnede İz Bırakanlar'a Oyun Ekle</h2>
-              <form action={addPlay} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+              <form action={addPlay} encType="multipart/form-data" style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
                 <input 
                   type="text" 
                   name="title" 

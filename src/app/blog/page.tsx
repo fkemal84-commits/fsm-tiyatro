@@ -44,7 +44,7 @@ export default async function Blog() {
             <h2 style={{ color: 'var(--primary-gold)', fontSize: '1.5rem', marginBottom: '1.5rem', display: 'flex', alignItems: 'center', gap: '0.8rem' }}>
               <ion-icon name="create-outline"></ion-icon> Yeni Blog Yazısı Paylaş
             </h2>
-            <form action={addPost} style={{ display: 'flex', flexDirection: 'column', gap: '1.2rem' }}>
+            <form action={addPost} encType="multipart/form-data" style={{ display: 'flex', flexDirection: 'column', gap: '1.2rem' }}>
               <input 
                 type="text" 
                 name="title"
