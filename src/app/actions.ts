@@ -291,3 +291,29 @@ export async function deleteUserRecord(formData: FormData) {
   revalidatePath('/tanerabi/dashboard');
   redirect('/tanerabi/dashboard');
 }
+
+export async function deletePost(formData: FormData) {
+  const postId = formData.get('postId') as string;
+  if (!postId) return;
+
+  const session = await getServerSession(authOptions);
+  const role = (session?.user as any)?.role;
+  if (role !== 'ADMIN' && role !== 'SUPERADMIN' && role !== 'EDITOR') return;
+
+  await adminDb.collection('posts').doc(postId).delete();
+  revalidatePath('/blog');
+  revalidatePath('/tanerabi/dashboard');
+}
+
+export async function deletePlay(formData: FormData) {
+  const playId = formData.get('playId') as string;
+  if (!playId) return;
+
+  const session = await getServerSession(authOptions);
+  const role = (session?.user as any)?.role;
+  if (role !== 'ADMIN' && role !== 'SUPERADMIN') return;
+
+  await adminDb.collection('plays').doc(playId).delete();
+  revalidatePath('/plays');
+  revalidatePath('/tanerabi/dashboard');
+}

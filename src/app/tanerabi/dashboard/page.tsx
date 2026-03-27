@@ -1,4 +1,4 @@
-import { addPost, addPlay, changeUserRole } from '@/app/actions';
+import { addPost, addPlay, changeUserRole, deletePost, deletePlay } from '@/app/actions';
 import { adminDb } from '@/lib/firebase-admin';
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
@@ -18,6 +18,13 @@ export default async function Dashboard() {
   // Veritabanından tüm üyeleri çek
   const usersSnapshot = await adminDb.collection('users').orderBy('createdAt', 'desc').get();
   const users = usersSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() as any }));
+
+  // Mevcut içerikleri çek
+  const postsSnapshot = await adminDb.collection('posts').orderBy('createdAt', 'desc').get();
+  const posts = postsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() as any }));
+
+  const playsSnapshot = await adminDb.collection('plays').orderBy('createdAt', 'desc').get();
+  const plays = playsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() as any }));
 
   return (
     <div style={{ padding: '8rem 5% 4rem', minHeight: '100vh', background: 'var(--bg-dark)' }}>
@@ -137,6 +144,51 @@ export default async function Dashboard() {
           </div>
         )}
         
+      </div>
+
+      {/* İÇERİK YÖNETİMİ (SİLME) ALANI */}
+      <div className="glass-card" style={{ maxWidth: '1000px', margin: '2rem auto', padding: '2rem' }}>
+        <h2 style={{ color: '#fff', marginBottom: '1.5rem', fontSize: '1.5rem', borderBottom: '1px solid rgba(255,255,255,0.1)', paddingBottom: '0.5rem' }}>📑 Mevcut İçerikleri Düzenle</h2>
+        
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '2rem' }}>
+          {/* Blog Yönetimi */}
+          <div>
+            <h3 style={{ color: 'var(--primary-gold)', marginBottom: '1rem', fontSize: '1.1rem' }}>Sistemdeki Blog Yazıları</h3>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+              {posts.map((p: any) => (
+                <div key={p.id} style={{ padding: '0.8rem', background: 'rgba(255,255,255,0.05)', borderRadius: '8px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <span style={{ color: '#fff', fontSize: '0.9rem' }}>{p.title}</span>
+                  <form action={deletePost}>
+                    <input type="hidden" name="postId" value={p.id} />
+                    <button type="submit" className="btn btn-outline" style={{ color: '#ff4d4d', borderColor: '#ff4d4d', padding: '0.3rem 0.6rem', fontSize: '0.75rem' }} onClick={(e) => { if(!confirm('Bu yazıyı sonsuza dek silmek istediğine emin misin?')) e.preventDefault(); }}>Kaldır</button>
+                  </form>
+                </div>
+              ))}
+              {posts.length === 0 && <p style={{ color: 'var(--text-muted)', fontSize: '0.8rem' }}>Henüz hiç yazı paylaşılmamış.</p>}
+            </div>
+          </div>
+
+          {/* Oyun Yönetimi */}
+          <div>
+            <h3 style={{ color: 'var(--primary-gold)', marginBottom: '1rem', fontSize: '1.1rem' }}>Sistemdeki Oyunlar</h3>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+              {plays.map((p: any) => (
+                <div key={p.id} style={{ padding: '0.8rem', background: 'rgba(255,255,255,0.05)', borderRadius: '8px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <span style={{ color: '#fff', fontSize: '0.9rem' }}>{p.title} ({p.year})</span>
+                  {(role === 'SUPERADMIN' || role === 'ADMIN') ? (
+                    <form action={deletePlay}>
+                      <input type="hidden" name="playId" value={p.id} />
+                      <button type="submit" className="btn btn-outline" style={{ color: '#ff4d4d', borderColor: '#ff4d4d', padding: '0.3rem 0.6rem', fontSize: '0.75rem' }} onClick={(e) => { if(!confirm('Bu oyunu sahneden tamamen kaldırmak istediğine emin misin?')) e.preventDefault(); }}>Kaldır</button>
+                    </form>
+                  ) : (
+                    <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>Yetkiniz Yok</span>
+                  )}
+                </div>
+              ))}
+              {plays.length === 0 && <p style={{ color: 'var(--text-muted)', fontSize: '0.8rem' }}>Henüz hiç oyun eklenmemiş.</p>}
+            </div>
+          </div>
+        </div>
       </div>
     </div>
   );
