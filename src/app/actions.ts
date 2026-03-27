@@ -55,7 +55,16 @@ export async function addPost(formData: FormData) {
   }
 
   const session = await getServerSession(authOptions);
-  const role = (session?.user as any)?.role;
+  let role = (session?.user as any)?.role;
+
+  // Canlı Rol Senkronizasyonu: Session bayatlamış olabilir, DB'den teyit alıyoruz
+  if (session?.user?.email) {
+    const uSnap = await adminDb.collection('users').where('email', '==', session.user.email).limit(1).get();
+    if (!uSnap.empty) {
+      role = uSnap.docs[0].data().role;
+    }
+  }
+
   if (role !== 'SUPERADMIN' && role !== 'ADMIN' && role !== 'EDITOR') return;
 
   const authorName = session?.user?.name || 'Anonim';
@@ -375,7 +384,16 @@ export async function deletePost(formData: FormData) {
   if (!postId) return;
 
   const session = await getServerSession(authOptions);
-  const role = (session?.user as any)?.role;
+  let role = (session?.user as any)?.role;
+
+  // Canlı Rol Senkronizasyonu (Stale Session Koruması)
+  if (session?.user?.email) {
+    const uSnap = await adminDb.collection('users').where('email', '==', session.user.email).limit(1).get();
+    if (!uSnap.empty) {
+      role = uSnap.docs[0].data().role;
+    }
+  }
+
   if (role !== 'ADMIN' && role !== 'SUPERADMIN' && role !== 'EDITOR') return;
 
   await adminDb.collection('posts').doc(postId).delete();
