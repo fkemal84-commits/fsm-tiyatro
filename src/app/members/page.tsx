@@ -9,11 +9,15 @@ export default async function MembersDashboard() {
   const role = (session?.user as any)?.role;
   const canAdd = role === 'ADMIN' || role === 'SUPERADMIN';
 
-  const rehearsalsSnapshot = await adminDb.collection('rehearsals').orderBy('createdAt', 'desc').get();
-  const rehearsals = rehearsalsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() as any }));
+  const rehearsalsSnapshot = await adminDb.collection('rehearsals').get();
+  const rehearsals = rehearsalsSnapshot.docs
+    .map(doc => ({ id: doc.id, ...doc.data() as any }))
+    .sort((a, b) => new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime());
 
-  const teamNeedsSnapshot = await adminDb.collection('teamNeeds').where('isActive', '==', true).orderBy('createdAt', 'desc').get();
-  const teamNeeds = teamNeedsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() as any }));
+  const teamNeedsSnapshot = await adminDb.collection('teamNeeds').where('isActive', '==', true).get();
+  const teamNeeds = teamNeedsSnapshot.docs
+    .map(doc => ({ id: doc.id, ...doc.data() as any }))
+    .sort((a, b) => new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime());
 
   return (
     <div style={{ padding: '8rem 5% 4rem', minHeight: '100vh', background: 'var(--bg-dark)' }}>
