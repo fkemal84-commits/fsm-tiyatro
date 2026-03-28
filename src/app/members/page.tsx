@@ -4,8 +4,10 @@ import { adminDb } from "@/lib/firebase-admin";
 import { addTeamNeed, joinEvent, addEvent } from "@/app/actions";
 import { getWhatsAppEventLink } from "@/lib/utils";
 import { Metadata } from "next";
-import JoinEventButton from "@/components/JoinEventButton";
+import JoinEventButton from "../../components/JoinEventButton";
 import TestPushButton from "@/components/TestPushButton";
+import ScriptVault from "@/components/ScriptVault";
+import ScrollReveal from "@/components/ScrollReveal";
 
 export const metadata: Metadata = {
   title: "Üye Panosu",
@@ -21,6 +23,13 @@ export default async function MembersDashboard() {
   const events = rehearsalsSnapshot.docs
     .map(doc => ({ id: doc.id, ...doc.data() as any }))
     .sort((a, b) => new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime());
+
+  const scriptsSnapshot = await adminDb.collection('scripts').get();
+  const scripts = scriptsSnapshot.docs
+    .map(doc => ({ id: doc.id, ...doc.data() as any }))
+    .sort((a, b) => new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime());
+
+  const canManageScripts = ['SUPERADMIN', 'ADMIN', 'DIRECTOR', 'ASST_DIRECTOR'].includes(role);
 
   const teamNeedsSnapshot = await adminDb.collection('teamNeeds').where('isActive', '==', true).get();
   const teamNeeds = teamNeedsSnapshot.docs
@@ -43,7 +52,8 @@ export default async function MembersDashboard() {
         </p>
       </header>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-7xl mx-auto">
+      <ScrollReveal>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-7xl mx-auto">
         
         {/* PROVALAR KARTI */}
         <div className="glass-card">
@@ -127,7 +137,13 @@ export default async function MembersDashboard() {
           )}
         </div>
 
+        {/* SENARYO KÜTÜPHANESİ - Sadece yetkililere/oyunculara özel */}
+        <div className="md:col-span-2">
+          <ScriptVault initialScripts={scripts} canManage={canManageScripts} />
+        </div>
+
       </div>
+      </ScrollReveal>
     </div>
   );
 }

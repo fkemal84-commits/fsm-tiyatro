@@ -1,13 +1,26 @@
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
-    // Tüm kullanıcılara okuma izni (Bloglar, oyunlar vb.)
-    match /{document=**} {
-      allow read: if true;
+    // 1. Genel Okuma: Bloglar, Oyunlar ve Etkinlikler herkese açık
+    match /posts/{doc} { allow read: if true; }
+    match /plays/{doc} { allow read: if true; }
+    match /events/{doc} { allow read: if true; }
+    
+    // 2. Kullanıcı Profil Verileri: Sadece kişi kendininkini veya Admin görebilir
+    match /users/{userId} {
+      allow read: if request.auth != null && (request.auth.token.email == resource.data.email || get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role in ['ADMIN', 'SUPERADMIN']);
     }
     
-    // Yazma işlemleri Sunucu (Admin SDK) üzerinden yapıldığı için 
-    // istemci tarafı yazma erişimleri tamamen kapalı tutulmalıdır.
+    // 3. Bildirim Tokenları ve Talepler: Sadece Adminler veya Sahibi
+    match /fcmTokens/{token} {
+      allow read, write: if false; // Sadece Server-Side (Admin SDK) müdahale edebilir
+    }
+    
+    match /eventRequests/{reqId} {
+      allow read: if request.auth != null && (request.auth.token.email == resource.data.userEmail || get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role in ['ADMIN', 'SUPERADMIN']);
+    }
+
+    // Varsayılan: Tüm istemci tarafı yazma erişimleri tamamen kapalı
     match /{document=**} {
       allow write: if false; 
     }

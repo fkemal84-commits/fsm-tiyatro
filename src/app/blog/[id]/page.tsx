@@ -2,6 +2,9 @@ import { adminDb } from '@/lib/firebase-admin';
 import { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import Image from 'next/image';
+import { getServerSession } from "next-auth";
+import { authOptions } from "@/lib/auth";
+import BlogInteractions from '@/components/BlogInteractions';
 
 export async function generateMetadata({ params }: { params: Promise<{ id: string }> }): Promise<Metadata> {
   const resolvedParams = await params;
@@ -26,6 +29,14 @@ export default async function BlogDetail({ params }: { params: Promise<{ id: str
   
   if (!docSnap.exists) notFound();
   const post = docSnap.data() as any;
+
+  // Yorumları çek
+  const commentsSnap = await adminDb.collection('posts').doc(resolvedParams.id).collection('comments').orderBy('createdAt', 'desc').get();
+  const comments = commentsSnap.docs.map(doc => ({ id: doc.id, ...doc.data() as any }));
+
+  // Oturum bilgisini çek
+  const session = await getServerSession(authOptions);
+  const currentUserEmail = session?.user?.email || undefined;
 
   return (
     <div style={{ minHeight: '100vh', background: 'var(--bg-dark)' }}>
@@ -56,6 +67,13 @@ export default async function BlogDetail({ params }: { params: Promise<{ id: str
         <p style={{ fontSize: '1.2rem', lineHeight: '1.8', color: 'var(--text-main)', whiteSpace: 'pre-wrap' }}>
           {post.content}
         </p>
+
+        <BlogInteractions 
+          postId={resolvedParams.id} 
+          initialLikes={post.likes || []} 
+          initialComments={comments} 
+          currentUserEmail={currentUserEmail}
+        />
       </div>
     </div>
   );

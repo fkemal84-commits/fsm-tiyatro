@@ -5,6 +5,7 @@ import { addRehearsal, deleteRehearsal } from "@/app/actions";
 import NudgeButton from "@/components/NudgeButton";
 import { getWhatsAppRehearsalLink } from "@/lib/utils";
 import DeleteButton from "@/components/DeleteButton";
+import AttendanceManager from "@/components/AttendanceManager";
 import { redirect } from "next/navigation";
 import { Metadata } from "next";
 
@@ -18,7 +19,7 @@ export default async function RehearsalsPage() {
   const role = (session?.user as any)?.role;
 
   // Sadece Admin, Aktör ve Yönetmenler girebilir
-  const allowedRoles = ['SUPERADMIN', 'ADMIN', 'DIRECTOR', 'ASST_DIRECTOR', 'AKTOR', 'PLAYER']; // Geçiş aşaması için PLAYER'ı da tutuyoruz
+  const allowedRoles = ['SUPERADMIN', 'ADMIN', 'DIRECTOR', 'ASST_DIRECTOR', 'AKTOR'];
   if (!allowedRoles.includes(role)) {
     console.log(`[ACCESS] Reddedildi: Role=${role}`);
     redirect('/members');
@@ -30,6 +31,13 @@ export default async function RehearsalsPage() {
   const rehearsals = rehearsalsSnapshot.docs
     .map(doc => ({ id: doc.id, ...doc.data() as any }))
     .sort((a, b) => new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime());
+
+  // Yoklama için kullanıcıları çek (Sadece Aktör ve Üyeler yeterli)
+  const usersSnap = await adminDb.collection('users').get();
+  const allTeam = usersSnap.docs
+    .map(doc => ({ id: doc.id, name: doc.data().name, surname: doc.data().surname, role: doc.data().role }))
+    .filter(u => u.name && u.role !== 'USER')
+    .sort((a, b) => a.name.localeCompare(b.name));
 
   return (
     <div className="pt-32 pb-16 px-[5%] min-h-screen bg-[var(--bg-dark)]">
@@ -124,6 +132,14 @@ export default async function RehearsalsPage() {
                       <h4 className="text-xs font-bold text-[var(--primary-gold)] uppercase mb-2">Yönetmen Notu:</h4>
                       <p className="text-[var(--text-muted)] text-sm italic">{r.notes}</p>
                     </div>
+                  )}
+
+                  {canManage && (
+                    <AttendanceManager 
+                      rehearsalId={r.id} 
+                      allUsers={allTeam} 
+                      initialAttendance={r.attendance || []} 
+                    />
                   )}
                 </div>
               ))}

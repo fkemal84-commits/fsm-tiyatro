@@ -98,76 +98,78 @@ export default async function Blog() {
       </header>
 
       <section className="section">
-        <div className="max-w-[1000px] mx-auto flex flex-col gap-16">
-          
-          {categories.map(category => {
-            const categoryPosts = allPosts.filter(p => p.category?.toUpperCase() === category.toUpperCase());
-            if (categoryPosts.length === 0) return null;
+        <ScrollReveal>
+          <div className="max-w-[1000px] mx-auto flex flex-col gap-16">
+            
+            {categories.map(category => {
+              const categoryPosts = allPosts.filter(p => p.category?.toUpperCase() === category.toUpperCase());
+              if (categoryPosts.length === 0) return null;
 
-            return (
-              <div key={category} className="flex flex-col gap-8">
-                <div className="flex items-center gap-4">
-                  <h2 className="serif-font text-3xl text-[#D4AF37]">{category}</h2>
-                  <div className="h-[1px] flex-1 bg-gradient-to-r from-[#D4AF3744] to-transparent"></div>
-                </div>
+              return (
+                <div key={category} className="flex flex-col gap-8">
+                  <div className="flex items-center gap-4">
+                    <h2 className="serif-font text-3xl text-[#D4AF37]">{category}</h2>
+                    <div className="h-[1px] flex-1 bg-gradient-to-r from-[#D4AF3744] to-transparent"></div>
+                  </div>
 
-                <div className="flex flex-col gap-8">
-                  {categoryPosts.map(post => (
-                    <ScrollReveal key={post.id}>
-                      <article className="flex flex-col md:flex-row bg-[rgba(20,20,24,0.6)] backdrop-blur-md border border-white/10 rounded-2xl overflow-hidden transition-all duration-300 hover:-translate-y-2 hover:border-[#D4AF3744] h-full">
-                          {post.imageUrl && (
-                            <div className="relative w-full md:w-[420px] md:min-w-[420px] h-[300px] md:h-auto overflow-hidden">
-                              <Image 
-                                src={post.imageUrl} 
-                                alt={post.title} 
-                                fill
-                                className="object-cover"
-                                sizes="(max-width: 768px) 100vw, 420px"
-                              />
-                            </div>
-                          )}
-                          <div className="p-6 md:p-10 flex flex-col justify-center flex-1">
-                              <div className="flex flex-wrap gap-4 mb-4 text-[0.85rem] text-[#D4AF37] font-semibold tracking-wider uppercase">
-                                  <span>{post.category}</span><span>&bull;</span><span>{post.createdAt.toLocaleDateString('tr-TR')}</span>
-                                  {post.author && (
-                                    <>
-                                      <span>&bull;</span>
-                                      <span className="text-white/90 normal-case font-normal">🖋️ {post.author} yazdı</span>
-                                    </>
+                  <div className="flex flex-col gap-8">
+                    {categoryPosts.map(post => (
+                      <ScrollReveal key={post.id}>
+                        <article className="flex flex-col md:flex-row bg-[rgba(20,20,24,0.6)] backdrop-blur-md border border-white/10 rounded-2xl overflow-hidden transition-all duration-300 hover:-translate-y-2 hover:border-[#D4AF3744] h-full">
+                            {post.imageUrl && (
+                              <div className="relative w-full md:w-[420px] md:min-w-[420px] h-[300px] md:h-auto overflow-hidden">
+                                <Image 
+                                  src={post.imageUrl} 
+                                  alt={post.title} 
+                                  fill
+                                  className="object-cover"
+                                  sizes="(max-width: 768px) 100vw, 420px"
+                                />
+                              </div>
+                            )}
+                            <div className="p-6 md:p-10 flex flex-col justify-center flex-1">
+                                <div className="flex flex-wrap gap-4 mb-4 text-[0.85rem] text-[#D4AF37] font-semibold tracking-wider uppercase">
+                                    <span>{post.category}</span><span>&bull;</span><span>{post.createdAt.toLocaleDateString('tr-TR')}</span>
+                                    {post.author && (
+                                      <>
+                                        <span>&bull;</span>
+                                        <span className="text-white/90 normal-case font-normal">🖋️ {post.author} yazdı</span>
+                                      </>
+                                    )}
+                                </div>
+                                <h2 className="serif-font text-[1.8rem] text-white mb-4 leading-tight">{post.title}</h2>
+                                
+                                <p className="text-[#a0a0b0] mb-8 text-[1.05rem] leading-relaxed line-clamp-5 md:line-clamp-[12]">
+                                  {post.content.length > 1200 ? `${post.content.substring(0, 1200)}...` : post.content}
+                                </p>
+                                
+                                <div className="flex justify-between items-center mt-auto">
+                                  <a href={`/blog/${post.id}`} className="text-[#D4AF37] font-semibold inline-flex items-center gap-2 no-underline hover:brightness-125 transition-all text-[1.1rem]">Devamını Oku</a>
+                                  {(userRole === 'SUPERADMIN' || userRole === 'ADMIN' || (userRole === 'EDITOR' && post.authorEmail === session?.user?.email)) && (
+                                    <DeleteButton 
+                                      action={deletePost} 
+                                      id={post.id} 
+                                      name={post.title} 
+                                      idFieldName="postId" 
+                                      confirmMessage="Bu yazıyı silmek istediğine emin misin?"
+                                    />
                                   )}
-                              </div>
-                              <h2 className="serif-font text-[1.8rem] text-white mb-4 leading-tight">{post.title}</h2>
-                              
-                              <p className="text-[#a0a0b0] mb-8 text-[1.05rem] leading-relaxed line-clamp-5 md:line-clamp-[12]">
-                                {post.content.length > 1200 ? `${post.content.substring(0, 1200)}...` : post.content}
-                              </p>
-                              
-                              <div className="flex justify-between items-center mt-auto">
-                                <a href={`/blog/${post.id}`} className="text-[#D4AF37] font-semibold inline-flex items-center gap-2 no-underline hover:brightness-125 transition-all text-[1.1rem]">Devamını Oku</a>
-                                {(userRole === 'SUPERADMIN' || userRole === 'ADMIN' || (userRole === 'EDITOR' && post.authorEmail === session?.user?.email)) && (
-                                  <DeleteButton 
-                                    action={deletePost} 
-                                    id={post.id} 
-                                    name={post.title} 
-                                    idFieldName="postId" 
-                                    confirmMessage="Bu yazıyı silmek istediğine emin misin?"
-                                  />
-                                )}
-                              </div>
-                          </div>
-                      </article>
-                    </ScrollReveal>
-                  ))}
+                                </div>
+                            </div>
+                        </article>
+                      </ScrollReveal>
+                    ))}
+                  </div>
                 </div>
-              </div>
-            );
-          })}
+              );
+            })}
 
-          {allPosts.length === 0 && (
-            <p className="text-center text-[#a0a0b0] py-10 italic">Henüz bir blog yazısı eklenmemiş.</p>
-          )}
+            {allPosts.length === 0 && (
+              <p className="text-center text-[#a0a0b0] py-10 italic">Henüz bir blog yazısı eklenmemiş.</p>
+            )}
 
-        </div>
+          </div>
+        </ScrollReveal>
       </section>
     </main>
   );

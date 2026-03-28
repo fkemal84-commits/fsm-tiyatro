@@ -2,20 +2,20 @@
 @import "tailwindcss";
 
 :root {
-  --bg-dark: #050505;
-  --bg-card: rgba(20, 20, 24, 0.6);
+  --bg-dark: #030304;
+  --bg-card: rgba(15, 15, 18, 0.7);
   --primary-gold: #D4AF37;
-  --primary-gold-dim: rgba(212, 175, 55, 0.2);
+  --primary-gold-dim: rgba(212, 175, 55, 0.15);
   --accent-red: #8B0000;
-  --accent-red-dim: rgba(139, 0, 0, 0.2);
+  --accent-red-dim: rgba(139, 0, 0, 0.15);
   --text-main: #f0f0f5;
-  --text-muted: #a0a0b0;
+  --text-muted: #808090;
   
   --glass-border: 1px solid rgba(255, 255, 255, 0.08);
-  --glass-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
-  --glass-blur: blur(12px);
+  --glass-shadow: 0 15px 35px -5px rgba(0, 0, 0, 0.5);
+  --glass-blur: blur(20px);
   
-  --transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+  --transition: all 0.4s cubic-bezier(0.19, 1, 0.22, 1);
 }
 
 * {
@@ -35,14 +35,34 @@ body {
   font-family: 'Outfit', sans-serif;
   background-color: var(--bg-dark);
   color: var(--text-main);
-  line-height: 1.6;
+  line-height: 1.7;
   overflow-x: hidden;
   margin: 0;
+  -webkit-font-smoothing: antialiased;
+  position: relative;
+}
+
+body::before {
+  content: "";
+  position: fixed;
+  top: 0; left: 0; width: 100%; height: 100%;
+  background: 
+    radial-gradient(circle at 50% 50%, rgba(212, 175, 55, 0.03) 0%, transparent 60%),
+    radial-gradient(circle at 10% 10%, rgba(139, 0, 0, 0.02) 0%, transparent 40%),
+    radial-gradient(circle at 90% 90%, rgba(212, 175, 55, 0.02) 0%, transparent 40%);
+  pointer-events: none;
+  z-index: -1;
+  animation: spotlightMove 20s infinite alternate ease-in-out;
+}
+
+@keyframes spotlightMove {
+  0% { transform: scale(1) translate(0, 0); }
+  100% { transform: scale(1.1) translate(20px, 10px); }
 }
 
 h1, h2, h3, h4, .serif-font {
   font-family: 'Playfair Display', serif;
-  letter-spacing: -1px;
+  letter-spacing: -0.02em;
 }
 
 /* Nav */
@@ -260,7 +280,8 @@ h1, h2, h3, h4, .serif-font {
   background: transparent;
   border-color: var(--primary-gold);
   color: var(--primary-gold);
-  box-shadow: 0 0 20px var(--primary-gold-dim);
+  box-shadow: 0 0 30px rgba(212, 175, 55, 0.3), inset 0 0 10px rgba(212, 175, 55, 0.2);
+  transform: translateY(-2px);
 }
 
 .btn-outline {

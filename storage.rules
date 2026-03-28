@@ -1,14 +1,19 @@
 rules_version = '2';
 service firebase.storage {
   match /b/{bucket}/o {
-    match /{allPaths=**} {
-      // 1. Okuma İzni (Public): Tüm görseller herkes tarafından görülebilir
-      allow read: if true;
+    // 1. Kamuya Açık Dosyalar: Blog resimleri ve oyun afişleri
+    match /blog_images/{allPaths=**} { allow read: if true; }
+    match /play_posters/{allPaths=**} { allow read: if true; }
+    
+    // 2. Özel Dosyalar: Avatarlar (Sadece giriş yapmış kullanıcılar görebilir)
+    match /avatars/{allPaths=**} {
+      allow read: if request.auth != null;
+    }
 
-      // 2. Yazma İzni (Güvenlikli):
-      // Sadece sunucu tarafı (Admin SDK) üzerinden yükleme yapıldığı için 
-      // istemci tarafı yazma istekleri tamamen engellenmiştir.
+    // 3. Yazma İzni: Sadece Admin SDK (Server) yüklenebilir
+    match /{allPaths=**} {
       allow write: if false; 
+      allow read: if false; // Geri kalan her şey kapalı
     }
   }
 }

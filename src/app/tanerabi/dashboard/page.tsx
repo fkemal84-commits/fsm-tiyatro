@@ -159,7 +159,6 @@ export default async function Dashboard() {
                                 <option value="DIRECTOR">YÖNETMEN</option>
                                 <option value="ASST_DIRECTOR">YRD. YÖNETMEN</option>
                                 <option value="AKTOR">AKTÖR</option>
-                                <option value="PLAYER">PLAYER (Eski)</option>
                                 <option value="MEMBER">ÜYE</option>
                               </select>
                               <button type="submit" className="btn btn-outline" style={{ padding: '0.3rem 0.6rem', fontSize: '0.75rem', borderColor: 'var(--text-muted)' }}>Mührü Ver</button>

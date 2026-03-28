@@ -17,15 +17,22 @@ async function requireAuth(allowedRoles: string[]) {
   const session = await getServerSession(authOptions);
   if (!session?.user?.email) throw new Error("Yetkisiz erişim! Lütfen giriş yapın.");
 
-  let role = (session.user as any).role;
   const uSnap = await adminDb.collection('users').where('email', '==', session.user.email).limit(1).get();
   if (uSnap.empty) throw new Error("Kullanıcı kaydı bulunamadı.");
   
-  role = uSnap.docs[0].data().role;
-  if (!allowedRoles.includes(role)) {
-    throw new Error("Bu işlemi yapmaya yetkiniz yok.");
+  const user = uSnap.docs[0].data();
+  const uid = uSnap.docs[0].id;
+  
+  if (!allowedRoles.includes(user.role)) {
+    // Geriye dönük uyumluluk: Eğer izin verilenlerde AKTOR varsa PLAYER'a da izin ver
+    if (allowedRoles.includes('AKTOR') && user.role === 'PLAYER') {
+      // Geçerli
+    } else {
+      throw new Error("Bu işlemi yapmaya yetkiniz yok.");
+    }
   }
-  return session;
+  
+  return { session, user, uid };
 }
 
 /**
@@ -251,43 +258,47 @@ export async function changePassword(formData: FormData) {
   if (newPassword !== newPasswordConfirm) return { error: "Yazdığınız yeni şifreler eşleşmiyor!" };
   if (newPassword.length < 6) return { error: "Girdiğiniz yeni şifre en az 6 karakter olmalıdır." };
 
-  const session = await getServerSession(authOptions);
-  if (!session?.user?.email) return { error: "Yetki reddedildi. Tekrar giriş yapın." };
+  try {
+    const { user, uid } = await requireAuth(['MEMBER', 'AKTOR', 'EDITOR', 'DIRECTOR', 'ASST_DIRECTOR', 'ADMIN', 'SUPERADMIN']);
 
-  const querySnapshot = await adminDb.collection('users').where('email', '==', session.user.email).limit(1).get();
-  if (querySnapshot.empty) return { error: "Kullanıcı kaydı bulunamadı." };
+    const isPasswordValid = await bcrypt.compare(currentPassword, user.password);
+    if (!isPasswordValid) return { error: "Girdiğiniz mevcut şifreniz yanlış." };
 
-  const userDoc = querySnapshot.docs[0];
-  const userData = userDoc.data();
+    const hashedPassword = await bcrypt.hash(newPassword, 10);
+    await adminDb.collection('users').doc(uid).update({ password: hashedPassword });
 
-  const isPasswordValid = await bcrypt.compare(currentPassword, userData.password);
-  if (!isPasswordValid) return { error: "Girdiğiniz mevcut şifreniz yanlış." };
-
-  const hashedPassword = await bcrypt.hash(newPassword, 10);
-  await userDoc.ref.update({ password: hashedPassword });
-
-  return { success: true };
+    return { success: true };
+  } catch (error: any) {
+    return { error: error.message };
+  }
 }
 
 export async function updateProfile(formData: FormData) {
   const photoUrl = formData.get('photoUrl') as string;
   const department = formData.get('department') as string;
   const hobbies = formData.get('hobbies') as string;
+  const pastPlays = formData.get('pastPlays') as string;
+  const skills = formData.get('skills') as string;
+  const bio = formData.get('bio') as string;
 
-  const session = await getServerSession(authOptions);
-  if (!session?.user?.email) return { error: "Yetkisiz erişim." };
+  try {
+    const { uid } = await requireAuth(['MEMBER', 'AKTOR', 'EDITOR', 'DIRECTOR', 'ASST_DIRECTOR', 'ADMIN', 'SUPERADMIN']);
+    
+    await adminDb.collection('users').doc(uid).update({
+        ...(photoUrl ? { photoUrl } : {}),
+        department: department || '',
+        hobbies: hobbies || '',
+        pastPlays: pastPlays || '',
+        skills: skills || '',
+        bio: bio || '',
+        updatedAt: new Date().toISOString()
+    });
 
-  const querySnapshot = await adminDb.collection('users').where('email', '==', session.user.email).limit(1).get();
-  if (!querySnapshot.empty) {
-      await querySnapshot.docs[0].ref.update({
-          ...(photoUrl ? { photoUrl } : {}),
-          ...(department ? { department } : {}),
-          ...(hobbies ? { hobbies } : {})
-      });
+    revalidatePath('/profile');
+    return { success: true };
+  } catch (error: any) {
+    return { error: error.message };
   }
-
-  revalidatePath('/profile');
-  return { success: true };
 }
 
 
@@ -375,7 +386,7 @@ export async function addRehearsal(formData: FormData) {
 
   if (!title || !date || !location) return;
 
-  await requireAuth(['SUPERADMIN', 'ADMIN', 'DIRECTOR', 'ASST_DIRECTOR', 'AKTOR', 'PLAYER']);
+  await requireAuth(['SUPERADMIN', 'ADMIN', 'DIRECTOR', 'ASST_DIRECTOR', 'AKTOR']);
 
   await adminDb.collection('rehearsals').add({ 
       title, 
@@ -427,7 +438,7 @@ export async function addEvent(formData: FormData) {
 // Dürtme bildirimi
 export async function nudgePlayers() {
   try {
-    await requireAuth(['SUPERADMIN', 'ADMIN', 'DIRECTOR', 'ASST_DIRECTOR', 'AKTOR', 'PLAYER']);
+    await requireAuth(['SUPERADMIN', 'ADMIN', 'DIRECTOR', 'ASST_DIRECTOR', 'AKTOR']);
     
     const messages = [
       "🎭 Beyler/Bayanlar, ezberler ne alemde? Reji masasında bekliyoruz! 🎬👀",
@@ -493,24 +504,16 @@ export async function uploadAvatar(formData: FormData) {
   const file = formData.get('file') as File;
   if (!file) return { error: "Yüklenecek dijital veri tespiti başarısız." };
 
-  const session = await getServerSession(authOptions);
-  if (!session?.user?.email) return { error: "Yetki ihlali. Oturumunuz kapanmış olabilir." };
-
   try {
-    const email = session.user.email.toLowerCase();
+    const { user, uid } = await requireAuth(['MEMBER', 'AKTOR', 'EDITOR', 'DIRECTOR', 'ASST_DIRECTOR', 'ADMIN', 'SUPERADMIN']);
+    
+    const email = user.email.toLowerCase();
     const folder = `avatars/${email.replace(/[@.]/g, '_')}`;
     console.log(`[AVATAR] ${email} için avatar yüklemesi başlatıldı...`);
     
     const publicUrl = await uploadToStorage(file, folder);
 
-    const querySnapshot = await adminDb.collection('users').where('email', '==', email).limit(1).get();
-    
-    if (querySnapshot.empty) {
-      console.error(`[AVATAR] Hata: ${email} için kullanıcı kaydı bulunamadı!`);
-      return { error: "Profil kaydınız bulunamadı. Lütfen yöneticiye danışın." };
-    }
-
-    await querySnapshot.docs[0].ref.update({ photoUrl: publicUrl });
+    await adminDb.collection('users').doc(uid).update({ photoUrl: publicUrl });
     console.log(`[AVATAR] Kullanıcı dökümanı güncellendi: ${publicUrl}`);
 
     revalidatePath('/profile');
@@ -633,9 +636,157 @@ export async function deleteRehearsal(formData: FormData) {
   const rehearsalId = formData.get('rehearsalId') as string;
   if (!rehearsalId) return;
 
-  await requireAuth(['SUPERADMIN', 'ADMIN', 'DIRECTOR', 'ASST_DIRECTOR', 'AKTOR', 'PLAYER']);
+  await requireAuth(['SUPERADMIN', 'ADMIN', 'DIRECTOR', 'ASST_DIRECTOR', 'AKTOR']);
   await adminDb.collection('rehearsals').doc(rehearsalId).delete();
 
   revalidatePath('/members/rehearsals');
+}
+
+// --- EKOSİSTEM GENİŞLEME AKSİYONLARI ---
+
+export async function uploadScript(formData: FormData) {
+  const file = formData.get('file') as File;
+  const title = formData.get('title') as string;
+  const playId = formData.get('playId') as string;
+
+  if (!file || !title) return { error: "Dosya ve başlık zorunludur." };
+  if (file.size > 10 * 1024 * 1024) return { error: "Dosya çok büyük! Maksimum 10MB PDF yükleyebilirsiniz." };
+  if (file.type !== 'application/pdf') return { error: "Sadece PDF dosyaları kabul edilmektedir." };
+
+  try {
+    const { user } = await requireAuth(['SUPERADMIN', 'ADMIN', 'DIRECTOR', 'ASST_DIRECTOR']);
+    
+    const uniquePrefix = Date.now() + '-' + Math.round(Math.random() * 1E9);
+    const safeName = file.name.replace(/[^a-zA-Z0-9.-]/g, '');
+    const filename = `scripts/${uniquePrefix}-${safeName}`;
+    
+    const bucketName = process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET;
+    const bucket = adminStorage.bucket(bucketName);
+    const fileRef = bucket.file(filename);
+
+    const bytes = await file.arrayBuffer();
+    const buffer = Buffer.from(bytes);
+
+    await fileRef.save(buffer, {
+      metadata: { 
+        contentType: 'application/pdf',
+        cacheControl: 'public, max-age=31536000'
+      }
+    });
+
+    try { await fileRef.makePublic(); } catch (e) {}
+
+    const fileUrl = `https://storage.googleapis.com/${bucketName}/${filename}`;
+
+    await adminDb.collection('scripts').add({
+      title,
+      playId: playId || 'GENEL',
+      fileUrl,
+      author: user.name,
+      authorEmail: user.email,
+      createdAt: new Date().toISOString()
+    });
+
+    revalidatePath('/members');
+    return { success: true };
+  } catch (error: any) {
+    return { error: error.message };
+  }
+}
+
+export async function deleteScript(formData: FormData) {
+  const scriptId = formData.get('scriptId') as string;
+  if (!scriptId) return;
+
+  try {
+    await requireAuth(['SUPERADMIN', 'ADMIN', 'DIRECTOR']);
+    
+    const scriptRef = adminDb.collection('scripts').doc(scriptId);
+    const scriptDoc = await scriptRef.get();
+    
+    if (scriptDoc.exists) {
+      const data = scriptDoc.data();
+      if (data?.fileUrl) {
+        await deleteStorageFile(data.fileUrl);
+      }
+      await scriptRef.delete();
+    }
+
+    revalidatePath('/members');
+    return { success: true };
+  } catch (error: any) {
+    return { error: error.message };
+  }
+}
+
+export async function toggleLike(postId: string) {
+  try {
+    const { user } = await requireAuth(['MEMBER', 'AKTOR', 'EDITOR', 'DIRECTOR', 'ASST_DIRECTOR', 'ADMIN', 'SUPERADMIN']);
+    const email = user.email.toLowerCase();
+    
+    const postRef = adminDb.collection('posts').doc(postId);
+    const postDoc = await postRef.get();
+    
+    if (!postDoc.exists) return { error: "Yazı bulunamadı." };
+    
+    const likes = postDoc.data()?.likes || [];
+    const isLiked = likes.includes(email);
+    
+    if (isLiked) {
+      await postRef.update({
+        likes: likes.filter((e: string) => e !== email)
+      });
+    } else {
+      await postRef.update({
+        likes: [...likes, email]
+      });
+    }
+    
+    revalidatePath(`/blog/${postId}`);
+    revalidatePath('/blog');
+    return { success: true, isLiked: !isLiked };
+  } catch (error: any) {
+    return { error: error.message };
+  }
+}
+
+export async function addComment(formData: FormData) {
+  const postId = formData.get('postId') as string;
+  const content = formData.get('content') as string;
+
+  if (!postId || !content) return { error: "Mesaj boş olamaz." };
+
+  try {
+    const { user } = await requireAuth(['MEMBER', 'AKTOR', 'EDITOR', 'DIRECTOR', 'ASST_DIRECTOR', 'ADMIN', 'SUPERADMIN']);
+    
+    await adminDb.collection('posts').doc(postId).collection('comments').add({
+      content,
+      author: user.name,
+      authorEmail: user.email,
+      photoUrl: user.photoUrl || '',
+      createdAt: new Date().toISOString()
+    });
+
+    revalidatePath(`/blog/${postId}`);
+    return { success: true };
+  } catch (error: any) {
+    return { error: error.message };
+  }
+}
+
+export async function markAttendance(rehearsalId: string, userIds: string[]) {
+  try {
+    await requireAuth(['SUPERADMIN', 'ADMIN', 'DIRECTOR', 'ASST_DIRECTOR']);
+    
+    await adminDb.collection('rehearsals').doc(rehearsalId).update({
+      attendance: userIds,
+      attendanceUpdatedAt: new Date().toISOString()
+    });
+
+    revalidatePath('/members/rehearsals');
+    return { success: true };
+  } catch (error: any) {
+    return { error: error.message };
+  }
 }
 

@@ -135,15 +135,27 @@ export default function ProfileClient({ user }: { user: any }) {
           <form onSubmit={handleProfileSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
             <input 
               type="text" name="department" placeholder="Okuduğunuz Bölüm (Örn: Hukuk Fakültesi)" defaultValue={user?.department || ''}
-              style={{ padding: '1rem', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.2)', background: 'rgba(0,0,0,0.3)', color: '#fff', fontSize: '1rem' }} 
+              className="w-full p-4 rounded-xl bg-black/40 border border-white/10 text-white focus:ring-1 focus:ring-[var(--primary-gold)] transition-all"
             />
             <textarea 
-              name="hobbies" placeholder="Hobileriniz, ilgi alanlarınız veya sahne tecrübeleriniz..." rows={3} defaultValue={user?.hobbies || ''}
-              style={{ padding: '1rem', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.2)', background: 'rgba(0,0,0,0.3)', color: '#fff', fontSize: '1rem', resize: 'vertical' }} 
+              name="pastPlays" placeholder="Daha Önce Oynadığınız Oyunlar (FSM Tiyatro veya Dışarısı)" rows={2} defaultValue={user?.pastPlays || ''}
+              className="w-full p-4 rounded-xl bg-black/40 border border-white/10 text-white focus:ring-1 focus:ring-[var(--primary-gold)] transition-all resize-none"
             ></textarea>
+            <input 
+              type="text" name="skills" placeholder="Özel Yetenekler (Örn: Eskrim, Şan, Dans, Enstrüman)" defaultValue={user?.skills || ''}
+              className="w-full p-4 rounded-xl bg-black/40 border border-white/10 text-white focus:ring-1 focus:ring-[var(--primary-gold)] transition-all"
+            />
+            <textarea 
+              name="bio" placeholder="Kendiniz hakkında kısa bir biyografi... (Sahne tecrübesi, motivasyon vb.)" rows={3} defaultValue={user?.bio || ''}
+              className="w-full p-4 rounded-xl bg-black/40 border border-white/10 text-white focus:ring-1 focus:ring-[var(--primary-gold)] transition-all resize-none"
+            ></textarea>
+            <input 
+              type="text" name="hobbies" placeholder="İlgi alanlarınız / Hobileriniz" defaultValue={user?.hobbies || ''}
+              className="w-full p-4 rounded-xl bg-black/40 border border-white/10 text-white focus:ring-1 focus:ring-[var(--primary-gold)] transition-all"
+            />
             
-            <button type="submit" className="btn" style={{ marginTop: '0.5rem', width: '100%', background: 'var(--primary-gold)', color: '#000', fontWeight: 'bold' }} disabled={profileLoading}>
-              {profileLoading ? 'Kaydediliyor...' : 'Metin Bilgilerini Güncelle'}
+            <button type="submit" className="btn btn-primary mt-2 w-full py-4 font-bold tracking-widest" disabled={profileLoading}>
+              {profileLoading ? 'GÜNCELLENİYOR...' : 'PORTFOLYO BİLGİLERİNİ KAYDET'}
             </button>
           </form>
         </div>
