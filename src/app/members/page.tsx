@@ -5,6 +5,7 @@ import { addTeamNeed, joinEvent, addEvent } from "@/app/actions";
 import { getWhatsAppEventLink } from "@/lib/utils";
 import { Metadata } from "next";
 import JoinEventButton from "@/components/JoinEventButton";
+import TestPushButton from "@/components/TestPushButton";
 
 export const metadata: Metadata = {
   title: "Üye Panosu",
@@ -36,8 +37,9 @@ export default async function MembersDashboard() {
           ) : (
             <>FSM Vakıf Üniversitesi Sinema ve Tiyatro Kulübü <span className="text-white font-bold">Dijital Panosu</span></>
           )}
-          <br/> 
-          Kulüp etkinlikleri, duyurular ve ekip ihtiyaçları aşağıdadır.
+          <div className="mt-6 flex justify-center">
+            <TestPushButton />
+          </div>
         </p>
       </header>
 
