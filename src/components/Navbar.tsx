@@ -131,15 +131,17 @@ export default function Navbar({ session }: { session?: any }) {
 
             <div className="mobile-nav-footer">
               {session ? (
-                <>
-                  <Link href="/profile" onClick={() => setIsMenuOpen(false)}>Profilim</Link>
+                <div className="flex flex-col gap-3 w-full">
+                  <Link href="/profile" className="mobile-footer-link" onClick={() => setIsMenuOpen(false)}>
+                    <ion-icon name="person-circle-outline"></ion-icon> Profilim
+                  </Link>
                   <button onClick={() => signOut({ callbackUrl: '/' })} className="btn-logout-mobile">Çıkış Yap</button>
-                </>
+                </div>
               ) : (
-                <>
-                  <Link href="/login" onClick={() => setIsMenuOpen(false)}>Giriş</Link>
-                  <Link href="/register" className="btn-primary-mobile" onClick={() => setIsMenuOpen(false)}>Kayıt Ol</Link>
-                </>
+                <div className="mobile-auth-grid">
+                  <Link href="/login" className="mobile-auth-btn secondary" onClick={() => setIsMenuOpen(false)}>Giriş</Link>
+                  <Link href="/register" className="mobile-auth-btn primary" onClick={() => setIsMenuOpen(false)}>Kayıt Ol</Link>
+                </div>
               )}
             </div>
           </div>
