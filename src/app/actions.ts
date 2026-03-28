@@ -192,7 +192,8 @@ export async function registerUser(formData: FormData) {
   const surname = formData.get('surname') as string;
   const email = formData.get('email') as string;
   const countryCode = formData.get('countryCode') as string;
-  const rawPhone = formData.get('phone') as string;
+  const rawPhoneWithSpaces = formData.get('phone') as string;
+  const rawPhone = rawPhoneWithSpaces.replace(/\s/g, ''); // Boşlukları temizle
   const password = formData.get('password') as string;
   const consent = formData.get('consent') ? true : false;
 

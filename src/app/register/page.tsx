@@ -9,6 +9,25 @@ export default function Register() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [successMessage, setSuccessMessage] = useState('');
+  const [phoneDisplay, setPhoneDisplay] = useState('');
+
+  const formatPhone = (val: string) => {
+    const digits = val.replace(/\D/g, '');
+    const limited = digits.substring(0, 10);
+    
+    let formatted = '';
+    if (limited.length > 0) {
+      formatted += limited.substring(0, 3);
+      if (limited.length > 3) formatted += ' ' + limited.substring(3, 6);
+      if (limited.length > 6) formatted += ' ' + limited.substring(6, 8);
+      if (limited.length > 8) formatted += ' ' + limited.substring(8, 10);
+    }
+    return formatted;
+  };
+
+  const handlePhoneChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setPhoneDisplay(formatPhone(e.target.value));
+  };
 
   const handleRegister = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -86,11 +105,13 @@ export default function Register() {
                 <input 
                   type="tel" 
                   name="phone" 
+                  value={phoneDisplay}
+                  onChange={handlePhoneChange}
                   placeholder="5XX XXX XX XX" 
+                  inputMode="numeric"
                   style={{ flex: 1, padding: '0.8rem', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.2)', background: 'rgba(0,0,0,0.3)', color: '#fff' }} 
                   required 
-                  pattern="[0-9]{10}"
-                  title="Lütfen 10 haneli telefon numaranızı başında 0 olmadan giriniz (Örn: 5321234567)"
+                  title="Lütfen 10 haneli telefon numaranızı başında 0 olmadan giriniz (Örn: 532 123 45 67)"
                 />
               </div>
               <input type="password" name="password" placeholder="Sisteme Giriş Şifrenizi Belirleyin" style={{ padding: '0.8rem', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.2)', background: 'rgba(0,0,0,0.3)', color: '#fff' }} required minLength={6} />
