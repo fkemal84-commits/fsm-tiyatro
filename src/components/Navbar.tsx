@@ -32,7 +32,7 @@ export default function Navbar({ session }: { session?: any }) {
         <Link href="/" className="flex items-center gap-3 group">
           <div className="relative w-10 h-10 overflow-hidden rounded-lg border border-[var(--primary-gold)]/20 group-hover:border-[var(--primary-gold)] transition-all">
             <Image 
-              src="/logo.jpg" 
+              src="/brand-logo-v1.jpg" 
               alt="FSM Tiyatro Logo" 
               fill 
               className="object-cover"

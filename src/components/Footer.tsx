@@ -5,7 +5,7 @@ export default function Footer() {
     <footer style={{ padding: '4rem 5%', textAlign: 'center', borderTop: 'var(--glass-border)', marginTop: '4rem', background: 'rgba(0,0,0,0.5)' }}>
       <div className="relative w-16 h-16 mx-auto mb-4 overflow-hidden rounded-xl border border-[var(--primary-gold)]/20">
         <Image 
-          src="/logo.jpg" 
+          src="/brand-logo-v1.jpg" 
           alt="FSM Tiyatro Logo" 
           fill 
           className="object-cover"
