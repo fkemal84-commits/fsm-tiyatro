@@ -23,7 +23,7 @@
 }
 
 a, button, input[type="submit"], input[type="checkbox"], label {
-  cursor: none !important;
+  
 }
 
 button:disabled, input:disabled {
@@ -40,7 +40,7 @@ body {
   margin: 0;
   -webkit-font-smoothing: antialiased;
   position: relative;
-  cursor: none !important;
+  
 }
 
 body::before {
@@ -360,7 +360,7 @@ h1, h2, h3, h4, .serif-font {
   font-weight: 500;
   padding: 0.5rem 0;
   transition: color 0.3s;
-  cursor: none !important;
+  
 }
 
 .dropdown-trigger:hover {
