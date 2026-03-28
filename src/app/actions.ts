@@ -7,6 +7,52 @@ import bcrypt from 'bcryptjs';
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 
+// --- YARDIMCI FONKSİYONLAR & GÜVENLİK ---
+
+/**
+ * Kullanıcı oturumunu ve yetkisini doğrular. 
+ * Revalidation yaparak stale session (bayat oturum) saldırılarını engeller.
+ */
+async function requireAuth(allowedRoles: string[]) {
+  const session = await getServerSession(authOptions);
+  if (!session?.user?.email) throw new Error("Yetkisiz erişim! Lütfen giriş yapın.");
+
+  let role = (session.user as any).role;
+  const uSnap = await adminDb.collection('users').where('email', '==', session.user.email).limit(1).get();
+  if (uSnap.empty) throw new Error("Kullanıcı kaydı bulunamadı.");
+  
+  role = uSnap.docs[0].data().role;
+  if (!allowedRoles.includes(role)) {
+    throw new Error("Bu işlemi yapmaya yetkiniz yok.");
+  }
+  return session;
+}
+
+/**
+ * Firebase Storage'dan dosya imha eder (KVKK & Temizlik)
+ */
+async function deleteStorageFile(publicUrl: string) {
+  if (!publicUrl || !publicUrl.includes('storage.googleapis.com')) return;
+  try {
+    const urlObj = new URL(publicUrl);
+    const pathname = decodeURI(urlObj.pathname);
+    const bucketName = process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET;
+    
+    // Path format: /bucket-name/folder/filename
+    const pathParts = pathname.split('/');
+    const bucketIndex = pathParts.findIndex(p => p === bucketName);
+    const filePath = bucketIndex !== -1 ? pathParts.slice(bucketIndex + 1).join('/') : pathname;
+
+    if (filePath) {
+      await adminStorage.bucket(bucketName).file(filePath).delete().catch(err => {
+        if (err.code !== 404) console.error(`[CLEANUP] Dosya silinemedi (${filePath}):`, err.message);
+      });
+    }
+  } catch (err) {
+    console.error("[CLEANUP] URL ayrıştırma hatası:", err);
+  }
+}
+
 // Firebase Storage Yükleme Yardımcısı (Güvenlikli)
 async function uploadToStorage(file: File, folder: string) {
   console.log(`[STORAGE] Sisteme dosya yükleniyor: ${file.name} (${file.size} bytes, ${file.type})`);
@@ -89,18 +135,8 @@ export async function addPost(formData: FormData) {
     }
   }
 
+  await requireAuth(['SUPERADMIN', 'ADMIN', 'EDITOR']);
   const session = await getServerSession(authOptions);
-  let role = (session?.user as any)?.role;
-
-  // Canlı Rol Senkronizasyonu: Session bayatlamış olabilir, DB'den teyit alıyoruz
-  if (session?.user?.email) {
-    const uSnap = await adminDb.collection('users').where('email', '==', session.user.email).limit(1).get();
-    if (!uSnap.empty) {
-      role = uSnap.docs[0].data().role;
-    }
-  }
-
-  if (role !== 'SUPERADMIN' && role !== 'ADMIN' && role !== 'EDITOR') return;
 
   const authorName = session?.user?.name || 'Anonim';
   const authorEmail = session?.user?.email || '';
@@ -136,6 +172,7 @@ export async function addPlay(formData: FormData) {
       console.error("Oyun afiş yükleme hatası:", error);
     }
   }
+  await requireAuth(['SUPERADMIN', 'ADMIN']);
 
   await adminDb.collection('plays').add({
     title,
@@ -187,9 +224,7 @@ export async function approveUser(formData: FormData) {
   const userId = formData.get('userId') as string;
   if (!userId) return;
 
-  const session = await getServerSession(authOptions);
-  const currentUserRole = (session?.user as any)?.role;
-  if (currentUserRole !== 'SUPERADMIN' && currentUserRole !== 'ADMIN') return;
+  await requireAuth(['SUPERADMIN', 'ADMIN']);
 
   await adminDb.collection('users').doc(userId).update({
     role: 'MEMBER'
@@ -292,11 +327,8 @@ export async function changeUserRole(formData: FormData) {
 
   if (!targetUserId || !newRole) return;
 
-  const session = await getServerSession(authOptions);
-  const currentUserRole = (session?.user as any)?.role;
-
-  // Güvenlik Kalkanı 1: Yalnızca yöneticiler yetki komutu gönderebilir
-  if (currentUserRole !== 'SUPERADMIN' && currentUserRole !== 'ADMIN') return;
+  const session = await requireAuth(['SUPERADMIN', 'ADMIN']);
+  const currentUserRole = (session.user as any).role;
 
   const targetDoc = await adminDb.collection('users').doc(targetUserId).get();
   if (!targetDoc.exists) return;
@@ -346,11 +378,8 @@ export async function deleteUserRecord(formData: FormData) {
   const targetUserId = formData.get('userId') as string;
   if (!targetUserId) return;
 
-  const session = await getServerSession(authOptions);
-  const currentUserRole = (session?.user as any)?.role;
-
-  // Sadece yetkililer imha komutu gönderebilir
-  if (currentUserRole !== 'SUPERADMIN' && currentUserRole !== 'ADMIN') return;
+  const session = await requireAuth(['SUPERADMIN', 'ADMIN']);
+  const currentUserRole = (session.user as any).role;
 
   const targetDoc = await adminDb.collection('users').doc(targetUserId).get();
   if (!targetDoc.exists) return;
@@ -364,35 +393,8 @@ export async function deleteUserRecord(formData: FormData) {
   if (targetRole === 'SUPERADMIN' && currentUserRole !== 'SUPERADMIN') return;
 
   // Firebase Bulut Deposundaki (Storage) Fotoğraf Dosyasını Uzaktan İmha Etme (Zero-Out)
-  if (targetData.photoUrl && targetData.photoUrl.includes('storage.googleapis.com')) {
-    // Extract file path from public URL
-    try {
-        const urlObj = new URL(targetData.photoUrl);
-        const pathname = urlObj.pathname; // /bucket-name/avatars/...
-        const parts = pathname.split('/');
-        // Assuming publicUrl() format is https://storage.googleapis.com/bucket-name/path/to/file
-        // We need 'path/to/file'
-        const bucketMatchIndex = parts.findIndex(p => p === process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET);
-        let filenamePaths = "";
-        if (bucketMatchIndex !== -1) {
-             filenamePaths = parts.slice(bucketMatchIndex + 1).join('/');
-        } else {
-             // fallback parsing
-             const avatarsIndex = parts.indexOf('avatars');
-             if(avatarsIndex !== -1) {
-                 filenamePaths = parts.slice(avatarsIndex).join('/');
-             }
-        }
-
-        if (filenamePaths) {
-          const fileRef = adminStorage.bucket().file(decodeURI(filenamePaths));
-          await fileRef.delete().catch(err => {
-              if(err.code !== 404) console.error("Bulut imhası (Firebase Storage) hata verdi: ", err);
-          });
-        }
-    } catch(err) {
-        console.error("URL parse error: ", err);
-    }
+  if (targetData.photoUrl) {
+    await deleteStorageFile(targetData.photoUrl);
   }
 
   // Firestore Veritabanından Kullanıcıyı Sil
@@ -406,18 +408,8 @@ export async function deletePost(formData: FormData) {
   const postId = formData.get('postId') as string;
   if (!postId) return;
 
-  const session = await getServerSession(authOptions);
-  let role = (session?.user as any)?.role;
-
-  // Canlı Rol Senkronizasyonu (Stale Session Koruması)
-  if (session?.user?.email) {
-    const uSnap = await adminDb.collection('users').where('email', '==', session.user.email).limit(1).get();
-    if (!uSnap.empty) {
-      role = uSnap.docs[0].data().role;
-    }
-  }
-
-  if (role !== 'ADMIN' && role !== 'SUPERADMIN' && role !== 'EDITOR') return;
+  const session = await requireAuth(['SUPERADMIN', 'ADMIN', 'EDITOR']);
+  const role = (session.user as any).role;
 
   const postRef = adminDb.collection('posts').doc(postId);
   const postDoc = await postRef.get();
@@ -426,9 +418,13 @@ export async function deletePost(formData: FormData) {
   const postData = postDoc.data();
 
   // Güvenlik Kalkanı: Editör sadece kendi yazdığı yazıyı silebilir.
-  // Admin ve Superadmin her şeyi silebilir.
-  if (role === 'EDITOR' && postData?.authorEmail !== session?.user?.email) {
+  if (role === 'EDITOR' && postData?.authorEmail !== session.user?.email) {
     return;
+  }
+
+  // Asset Cleanup
+  if (postData?.imageUrl) {
+    await deleteStorageFile(postData.imageUrl);
   }
 
   await postRef.delete();
@@ -440,11 +436,15 @@ export async function deletePlay(formData: FormData) {
   const playId = formData.get('playId') as string;
   if (!playId) return;
 
-  const session = await getServerSession(authOptions);
-  const role = (session?.user as any)?.role;
-  if (role !== 'ADMIN' && role !== 'SUPERADMIN') return;
+  await requireAuth(['SUPERADMIN', 'ADMIN']);
 
-  await adminDb.collection('plays').doc(playId).delete();
+  const playRef = adminDb.collection('plays').doc(playId);
+  const playDoc = await playRef.get();
+  if (playDoc.exists && playDoc.data()?.imageUrl) {
+    await deleteStorageFile(playDoc.data()?.imageUrl);
+  }
+
+  await playRef.delete();
   revalidatePath('/plays');
   revalidatePath('/tanerabi/dashboard');
 }
