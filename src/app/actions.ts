@@ -379,7 +379,7 @@ export async function addRehearsal(formData: FormData) {
 
   if (!title || !date || !location) return;
 
-  await requireAuth(['SUPERADMIN', 'ADMIN', 'DIRECTOR', 'ASST_DIRECTOR']);
+  await requireAuth(['SUPERADMIN', 'ADMIN', 'DIRECTOR', 'ASST_DIRECTOR', 'AKTOR', 'PLAYER']);
 
   await adminDb.collection('rehearsals').add({ 
       title, 
@@ -430,7 +430,7 @@ export async function addEvent(formData: FormData) {
 
 // Dürtme bildirimi
 export async function nudgePlayers() {
-  await requireAuth(['SUPERADMIN', 'ADMIN', 'DIRECTOR', 'ASST_DIRECTOR']);
+  await requireAuth(['SUPERADMIN', 'ADMIN', 'DIRECTOR', 'ASST_DIRECTOR', 'AKTOR', 'PLAYER']);
   
   const messages = [
     "🎭 Beyler/Bayanlar, ezberler ne alemde? Reji masasında bekliyoruz! 🎬👀",
@@ -632,7 +632,7 @@ export async function deleteRehearsal(formData: FormData) {
   const rehearsalId = formData.get('rehearsalId') as string;
   if (!rehearsalId) return;
 
-  await requireAuth(['SUPERADMIN', 'ADMIN', 'DIRECTOR', 'ASST_DIRECTOR']);
+  await requireAuth(['SUPERADMIN', 'ADMIN', 'DIRECTOR', 'ASST_DIRECTOR', 'AKTOR', 'PLAYER']);
   await adminDb.collection('rehearsals').doc(rehearsalId).delete();
 
   revalidatePath('/members/rehearsals');
