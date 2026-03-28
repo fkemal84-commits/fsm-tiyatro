@@ -1,0 +1,21 @@
+{
+  "name": "FSM Tiyatro Portal",
+  "short_name": "FSM Tiyatro",
+  "description": "FSM Vakıf Üniversitesi Sinema ve Tiyatro Kulübü Dijital Panosu",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#050505",
+  "theme_color": "#050505",
+  "icons": [
+    {
+      "src": "/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}

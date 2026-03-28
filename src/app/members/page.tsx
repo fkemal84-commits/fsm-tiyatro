@@ -1,7 +1,7 @@
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { adminDb } from "@/lib/firebase-admin";
-import { addTeamNeed, joinEvent, addEvent } from "@/app/actions";
+import { addTeamNeed, joinEvent, addEvent, getWhatsAppEventLink } from "@/app/actions";
 import { Metadata } from "next";
 import JoinEventButton from "@/components/JoinEventButton";
 
@@ -69,6 +69,17 @@ export default async function MembersDashboard() {
                 <li key={e.id} className="p-4 bg-black/30 rounded-lg border border-white/5 hover:border-[var(--primary-gold-dim)] transition-all">
                   <div className="flex justify-between items-start mb-2">
                     <h4 className="text-[var(--primary-gold)] font-bold text-lg">📢 {e.title}</h4>
+                    {canAdd && (
+                      <a 
+                        href={getWhatsAppEventLink(e)} 
+                        target="_blank" 
+                        rel="noopener noreferrer"
+                        className="bg-[#25D366] text-white p-2 rounded-lg flex items-center justify-center hover:scale-105 transition-all text-xs gap-1"
+                        title="WhatsApp grubunda duyur"
+                      >
+                        <ion-icon name="logo-whatsapp"></ion-icon> Duyur
+                      </a>
+                    )}
                   </div>
                   <div className="text-sm text-white/90">⏰ {e.date}</div>
                   <div className="text-sm text-white/90 mb-3">📍 {e.location}</div>

@@ -1,7 +1,7 @@
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { adminDb } from "@/lib/firebase-admin";
-import { addRehearsal, deleteRehearsal } from "@/app/actions";
+import { addRehearsal, deleteRehearsal, getWhatsAppRehearsalLink } from "@/app/actions";
 import DeleteButton from "@/components/DeleteButton";
 import { redirect } from "next/navigation";
 import { Metadata } from "next";
@@ -75,13 +75,24 @@ export default async function RehearsalsPage() {
                         PROVA
                       </div>
                       {canManage && (
-                        <DeleteButton 
-                          action={deleteRehearsal} 
-                          id={r.id} 
-                          name={r.title} 
-                          confirmMessage="Bu provayı takvimden silmek istediğine emin misin?" 
-                          idFieldName="rehearsalId"
-                        />
+                        <>
+                          <a 
+                            href={getWhatsAppRehearsalLink(r)} 
+                            target="_blank" 
+                            rel="noopener noreferrer"
+                            className="bg-[#25D366] text-white p-2 rounded-lg flex items-center justify-center hover:scale-105 transition-all shadow-lg"
+                            title="WhatsApp grubunda duyur"
+                          >
+                            <ion-icon name="logo-whatsapp" style={{ fontSize: '1.2rem' }}></ion-icon>
+                          </a>
+                          <DeleteButton 
+                            action={deleteRehearsal} 
+                            id={r.id} 
+                            name={r.title} 
+                            confirmMessage="Bu provayı takvimden silmek istediğine emin misin?" 
+                            idFieldName="rehearsalId"
+                          />
+                        </>
                       )}
                     </div>
                   </div>
