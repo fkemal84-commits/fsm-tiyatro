@@ -166,6 +166,23 @@ h1, h2, h3, h4, .serif-font {
   color: var(--primary-gold);
 }
 
+.admin-badge {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  background: rgba(212, 175, 55, 0.1);
+  border: 1px solid rgba(212, 175, 55, 0.3);
+  color: var(--primary-gold);
+  padding: 0.4rem 0.8rem;
+  border-radius: 20px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  letter-spacing: 0.5px;
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  animation: fadeUp 0.5s ease;
+}
+
 .btn-logout {
   padding: 0.4rem 1.2rem;
   font-size: 0.9rem;

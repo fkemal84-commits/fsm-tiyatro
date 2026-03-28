@@ -9,7 +9,8 @@ export const authOptions: NextAuthOptions = {
       name: "Credentials",
       credentials: {
         email: { label: "Email", type: "email" },
-        password: { label: "Password", type: "password" }
+        password: { label: "Password", type: "password" },
+        isAdminEntry: { label: "IsAdminEntry", type: "text" }
       },
       async authorize(credentials) {
         if (!credentials?.email || !credentials?.password) return null;
@@ -26,7 +27,26 @@ export const authOptions: NextAuthOptions = {
         // Onay bekleyen kullanıcıları engelle
         if (user.role === 'PENDING') return null;
 
-        return { id: userDoc.id, email: user.email, name: `${user.name} ${user.surname}`, role: user.role };
+        const isAdminEntry = credentials.isAdminEntry === "true";
+        const realRole = user.role;
+        
+        // GİZLİ YOL MANTIĞI: Eğer /tanerabi üzerinden girilmediyse, 
+        // admin olsa bile oturumu MEMBER olarak başlat.
+        let sessionRole = 'MEMBER';
+        let isAdminMode = false;
+
+        if (isAdminEntry && (realRole === 'ADMIN' || realRole === 'SUPERADMIN' || realRole === 'DIRECTOR')) {
+          sessionRole = realRole;
+          isAdminMode = true;
+        }
+
+        return { 
+          id: userDoc.id, 
+          email: user.email, 
+          name: `${user.name} ${user.surname}`, 
+          role: sessionRole,
+          isAdminMode: isAdminMode
+        };
       }
     })
   ],
@@ -34,12 +54,14 @@ export const authOptions: NextAuthOptions = {
     async jwt({ token, user }) {
       if (user) {
         token.role = (user as any).role;
+        token.isAdminMode = (user as any).isAdminMode;
       }
       return token;
     },
     async session({ session, token }) {
       if (session.user) {
         (session.user as any).role = token.role;
+        (session.user as any).isAdminMode = token.isAdminMode;
         (session.user as any).id = token.sub;
       }
       return session;

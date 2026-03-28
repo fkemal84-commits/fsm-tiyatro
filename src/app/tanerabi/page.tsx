@@ -18,6 +18,7 @@ export default function AdminSecretLogin() {
       redirect: false,
       email,
       password,
+      isAdminEntry: "true",
     });
 
     if (res?.error) {

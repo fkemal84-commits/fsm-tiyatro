@@ -20,6 +20,7 @@ export default function Login() {
       redirect: false,
       email,
       password,
+      isAdminEntry: "false",
     });
 
     if (res?.error) {

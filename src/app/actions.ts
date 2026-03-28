@@ -23,6 +23,15 @@ async function requireAuth(allowedRoles: string[]) {
   const user = uSnap.docs[0].data();
   const uid = uSnap.docs[0].id;
   
+  // GİZLİ YOL DENETİMİ: Eğer hassas (Admin/Superadmin) bir yetki isteniyorsa, 
+  // oturumun mutlaka /tanerabi üzerinden açılmış olması gerekir.
+  const isAdminAction = allowedRoles.some(role => ['ADMIN', 'SUPERADMIN', 'DIRECTOR'].includes(role));
+  const isAdminMode = (session.user as any)?.isAdminMode === true;
+
+  if (isAdminAction && !isAdminMode) {
+      throw new Error("Bu işlem için yönetici modunda (güvenli kanal) giriş yapmalısınız.");
+  }
+
   if (!allowedRoles.includes(user.role)) {
     // Geriye dönük uyumluluk: Eğer izin verilenlerde AKTOR varsa PLAYER'a da izin ver
     if (allowedRoles.includes('AKTOR') && user.role === 'PLAYER') {
@@ -123,131 +132,149 @@ async function uploadToStorage(file: File, folder: string) {
 }
 
 export async function addPost(formData: FormData) {
-  const title = formData.get('title') as string;
-  const content = formData.get('content') as string;
-  const imageFile = formData.get('image') as File;
-  
-  const category = (formData.get('category') as string) || 'KULİS';
-  
-  if (!title || !content) return;
+  try {
+    const title = formData.get('title') as string;
+    const content = formData.get('content') as string;
+    const imageFile = formData.get('image') as File;
+    const category = (formData.get('category') as string) || 'KULİS';
+    
+    if (!title || !content) return { error: "Başlık ve içerik gereklidir." };
 
-  let imageUrl = '/default-cover.svg';
-  if (imageFile && imageFile.size > 0) {
-    try {
-      imageUrl = await uploadToStorage(imageFile, 'blog_images');
-    } catch (error: any) {
-      console.error("Blog resim yükleme hatası:", error);
-      // Hata olduğunda durmuyoruz ama logluyoruz. 
-      // İleride UI'da toast göstermek için error state eklenebilir.
+    let imageUrl = '/default-cover.svg';
+    if (imageFile && imageFile.size > 0) {
+      try {
+        imageUrl = await uploadToStorage(imageFile, 'blog_images');
+      } catch (error: any) {
+        console.error("Blog resim yükleme hatası:", error);
+      }
     }
+
+    await requireAuth(['SUPERADMIN', 'ADMIN', 'EDITOR']);
+    const session = await getServerSession(authOptions);
+
+    const authorName = session?.user?.name || 'Anonim';
+    const authorEmail = session?.user?.email || '';
+
+    await adminDb.collection('posts').add({
+      title,
+      content,
+      category,
+      author: authorName,
+      authorEmail,
+      imageUrl,
+      createdAt: new Date().toISOString()
+    });
+
+    revalidatePath('/blog');
+  } catch (error: any) {
+    console.error("[ADD_POST] Hata:", error);
+    return { error: error.message || "Yazı eklenirken bir hata oluştu." };
   }
-
-  await requireAuth(['SUPERADMIN', 'ADMIN', 'EDITOR']);
-  const session = await getServerSession(authOptions);
-
-  const authorName = session?.user?.name || 'Anonim';
-  const authorEmail = session?.user?.email || '';
-
-  await adminDb.collection('posts').add({
-    title,
-    content,
-    category,
-    author: authorName,
-    authorEmail,
-    imageUrl,
-    createdAt: new Date().toISOString()
-  });
-
-  revalidatePath('/blog');
   redirect('/blog');
 }
 
 export async function addPlay(formData: FormData) {
-  const title = formData.get('title') as string;
-  const description = formData.get('description') as string;
-  const year = formData.get('year') as string;
-  const posterFile = formData.get('poster') as File;
-  const videoUrl = formData.get('videoUrl') as string;
+  try {
+    const title = formData.get('title') as string;
+    const description = formData.get('description') as string;
+    const year = formData.get('year') as string;
+    const posterFile = formData.get('poster') as File;
+    const videoUrl = formData.get('videoUrl') as string;
 
-  if (!title || !description || !year) return;
+    if (!title || !description || !year) return { error: "Gerekli alanları doldurun." };
 
-  let imageUrl = '/default-cover.svg';
-  if (posterFile && posterFile.size > 0) {
-    try {
-      imageUrl = await uploadToStorage(posterFile, 'play_posters');
-    } catch (error) {
-      console.error("Oyun afiş yükleme hatası:", error);
+    let imageUrl = '/default-cover.svg';
+    if (posterFile && posterFile.size > 0) {
+      try {
+        imageUrl = await uploadToStorage(posterFile, 'play_posters');
+      } catch (error) {
+        console.error("Oyun afiş yükleme hatası:", error);
+      }
     }
+    await requireAuth(['SUPERADMIN', 'ADMIN']);
+
+    await adminDb.collection('plays').add({
+      title,
+      description,
+      year,
+      imageUrl,
+      videoUrl: videoUrl || '',
+      createdAt: new Date().toISOString()
+    });
+
+    revalidatePath('/plays');
+  } catch (error: any) {
+    console.error("[ADD_PLAY] Hata:", error);
+    return { error: error.message || "Oyun eklenirken bir hata oluştu." };
   }
-  await requireAuth(['SUPERADMIN', 'ADMIN']);
-
-  await adminDb.collection('plays').add({
-    title,
-    description,
-    year,
-    imageUrl,
-    videoUrl: videoUrl || '',
-    createdAt: new Date().toISOString()
-  });
-
-  revalidatePath('/plays');
   redirect('/plays');
 }
 
 export async function registerUser(formData: FormData) {
-  const name = formData.get('name') as string;
-  const surname = formData.get('surname') as string;
-  const email = formData.get('email') as string;
-  const countryCode = formData.get('countryCode') as string;
-  const rawPhoneWithSpaces = formData.get('phone') as string;
-  const rawPhone = rawPhoneWithSpaces.replace(/\s/g, ''); // Boşlukları temizle
-  const password = formData.get('password') as string;
-  const consent = formData.get('consent') ? true : false;
+  try {
+    const name = formData.get('name') as string;
+    const surname = formData.get('surname') as string;
+    const email = formData.get('email') as string;
+    const countryCode = formData.get('countryCode') as string;
+    const rawPhoneWithSpaces = formData.get('phone') as string;
+    const rawPhone = rawPhoneWithSpaces.replace(/\s/g, ''); // Boşlukları temizle
+    const password = formData.get('password') as string;
+    const consent = formData.get('consent') ? true : false;
 
-  if (!email || !password || !rawPhone) return { error: "Tüm alanlar zorunludur." };
-  
-  // Telefon doğrulama (Sadece rakam ve 10 hane)
-  const phoneRegex = /^[0-9]{10}$/;
-  if (!phoneRegex.test(rawPhone)) {
-    return { error: "Lütfen geçerli bir telefon numarası giriniz (10 hane, başında 0 olmadan)." };
+    if (!email || !password || !rawPhone) return { error: "Tüm alanlar zorunludur." };
+    
+    // Telefon doğrulama (Sadece rakam ve 10 hane)
+    const phoneRegex = /^[0-9]{10}$/;
+    if (!phoneRegex.test(rawPhone)) {
+      return { error: "Lütfen geçerli bir telefon numarası giriniz (10 hane, başında 0 olmadan)." };
+    }
+
+    const phone = `${countryCode}${rawPhone}`;
+
+    const existingUsers = await adminDb.collection('users').where('email', '==', email).limit(1).get();
+    if (!existingUsers.empty) return { error: "Bu e-posta adresiyle zaten kayıt olunmuş." };
+
+    const hashedPassword = await bcrypt.hash(password, 10);
+
+    // OKUL MAİLİ KONTROLÜ (stu.fsm.edu.tr)
+    const isSchoolEmail = email.toLowerCase().endsWith('@stu.fsm.edu.tr');
+    const role = isSchoolEmail ? 'MEMBER' : 'PENDING';
+
+    await adminDb.collection('users').add({
+      name,
+      surname,
+      email: email.toLowerCase(),
+      phone,
+      password: hashedPassword,
+      consent,
+      role,
+      createdAt: new Date().toISOString()
+    });
+
+    return { success: true, pending: !isSchoolEmail };
+  } catch (error: any) {
+    console.error("[REGISTER] Hata:", error);
+    return { error: "Kayıt sırasında teknik bir hata oluştu." };
   }
-
-  const phone = `${countryCode}${rawPhone}`;
-
-  const existingUsers = await adminDb.collection('users').where('email', '==', email).limit(1).get();
-  if (!existingUsers.empty) return { error: "Bu e-posta adresiyle zaten kayıt olunmuş." };
-
-  const hashedPassword = await bcrypt.hash(password, 10);
-
-  // OKUL MAİLİ KONTROLÜ (stu.fsm.edu.tr)
-  const isSchoolEmail = email.toLowerCase().endsWith('@stu.fsm.edu.tr');
-  const role = isSchoolEmail ? 'MEMBER' : 'PENDING';
-
-  await adminDb.collection('users').add({
-    name,
-    surname,
-    email: email.toLowerCase(),
-    phone,
-    password: hashedPassword,
-    consent,
-    role,
-    createdAt: new Date().toISOString()
-  });
-
-  return { success: true, pending: !isSchoolEmail };
 }
 
 export async function approveUser(formData: FormData) {
-  const userId = formData.get('userId') as string;
-  if (!userId) return;
+  try {
+    const userId = formData.get('userId') as string;
+    if (!userId) return { error: "Kullanıcı ID gereklidir." };
 
-  await requireAuth(['SUPERADMIN', 'ADMIN']);
+    await requireAuth(['SUPERADMIN', 'ADMIN']);
 
-  await adminDb.collection('users').doc(userId).update({
-    role: 'MEMBER'
-  });
+    await adminDb.collection('users').doc(userId).update({
+      role: 'MEMBER'
+    });
 
-  revalidatePath('/tanerabi/dashboard');
+    revalidatePath('/tanerabi/dashboard');
+    return { success: true };
+  } catch (error: any) {
+    console.error("[APPROVE_USER] Hata:", error);
+    return { error: error.message };
+  }
 }
 
 export async function changePassword(formData: FormData) {
@@ -303,21 +330,25 @@ export async function updateProfile(formData: FormData) {
 
 
 export async function saveFCMToken(token: string) {
-  const session = await getServerSession(authOptions);
-  if (!session?.user?.email) {
-    console.warn("[PUSH] Token kaydedilemedi: Oturum bulunamadı.");
-    return;
-  }
+  try {
+    const session = await getServerSession(authOptions);
+    if (!session?.user?.email) {
+      console.warn("[PUSH] Token kaydedilemedi: Oturum bulunamadı.");
+      return { error: "Oturum açmalısınız." };
+    }
 
-  const email = session.user.email.toLowerCase();
-  console.log(`[PUSH] Token kaydediliyor: ${email} - ${token.substring(0, 10)}...`);
-  
-  await adminDb.collection('fcmTokens').doc(token).set({
-    email,
-    userId: (session.user as any).id || '',
-    updatedAt: new Date().toISOString()
-  });
-  console.log("[PUSH] Token başarıyla Firestore'a yazıldı.");
+    const email = session.user.email.toLowerCase();
+    
+    await adminDb.collection('fcmTokens').doc(token).set({
+      email,
+      userId: (session.user as any).id || '',
+      updatedAt: new Date().toISOString()
+    });
+    return { success: true };
+  } catch (error: any) {
+    console.error("[FCM_TOKEN_SAVE] Hata:", error);
+    return { error: error.message };
+  }
 }
 
 async function sendPushToAll(title: string, body: string, url: string = '/') {
@@ -325,24 +356,39 @@ async function sendPushToAll(title: string, body: string, url: string = '/') {
     const tokensSnap = await adminDb.collection('fcmTokens').get();
     const tokens = tokensSnap.docs.map(doc => doc.id);
 
-    console.log(`[PUSH] Toplu gönderim: ${tokens.length} cihaz.`);
-    if (tokens.length === 0) return { success: false, count: 0, failure: 0, error: "Hiç kayıtlı cihaz bulunamadı." };
+    if (tokens.length === 0) return { success: false, error: "Hiç kayıtlı cihaz bulunamadı." };
 
-    const message = {
-      notification: { title, body },
-      data: { url },
-      tokens: tokens
-    };
-
-    const response = await adminMessaging.sendEachForMulticast(message);
-    
-    if (response.failureCount > 0) {
-      response.responses.forEach((resp, idx) => {
-        if (!resp.success) console.error(`[PUSH] Hata (Token: ${tokens[idx].substring(0, 10)}...):`, resp.error);
-      });
+    // FCM has a limit of 500 tokens per multicast message
+    const batches = [];
+    for (let i = 0; i < tokens.length; i += 500) {
+      batches.push(tokens.slice(i, i + 500));
     }
 
-    return { success: true, count: response.successCount, failure: response.failureCount };
+    let successCount = 0;
+    let failureCount = 0;
+
+    for (const batch of batches) {
+      const message = {
+        notification: { title, body },
+        data: { url },
+        tokens: batch
+      };
+
+      const response = await adminMessaging.sendEachForMulticast(message);
+      successCount += response.successCount;
+      failureCount += response.failureCount;
+
+      if (response.failureCount > 0) {
+        response.responses.forEach((resp, idx) => {
+          if (!resp.success) {
+            // Clean up invalid tokens if needed (optional optimization)
+            // console.log(`[PUSH] Inactive token removed: ${batch[idx].substring(0, 10)}`);
+          }
+        });
+      }
+    }
+
+    return { success: true, count: successCount, failure: failureCount };
   } catch (error: any) {
     console.error('[PUSH] Kritik gönderim hatası:', error);
     return { error: error.message };
@@ -379,83 +425,91 @@ export async function testPushToSelf() {
 
 // Prova eklendiğinde bildirim gönder
 export async function addRehearsal(formData: FormData) {
-  const title = formData.get('title') as string;
-  const rehearsalDate = formData.get('rehearsalDate') as string;
-  const rehearsalTime = formData.get('rehearsalTime') as string;
-  const location = formData.get('location') as string;
-  const notes = formData.get('notes') as string;
+  try {
+    const title = formData.get('title') as string;
+    const rehearsalDate = formData.get('rehearsalDate') as string;
+    const rehearsalTime = formData.get('rehearsalTime') as string;
+    const location = formData.get('location') as string;
+    const notes = formData.get('notes') as string;
 
-  if (!title || !rehearsalDate || !rehearsalTime || !location) return;
+    if (!title || !rehearsalDate || !rehearsalTime || !location) return { error: "Gerekli alanlar eksik." };
 
-  // Tarihi daha okunaklı bir formata çevirelim
-  const dateObj = new Date(rehearsalDate);
-  const formattedDate = dateObj.toLocaleDateString('tr-TR', { 
-    day: 'numeric', 
-    month: 'long', 
-    year: 'numeric',
-    weekday: 'long'
-  });
-  
-  const date = `${formattedDate} - Saat: ${rehearsalTime}`;
+    const dateObj = new Date(rehearsalDate);
+    const formattedDate = dateObj.toLocaleDateString('tr-TR', { 
+      day: 'numeric', 
+      month: 'long', 
+      year: 'numeric',
+      weekday: 'long'
+    });
+    
+    const date = `${formattedDate} - Saat: ${rehearsalTime}`;
 
-  await requireAuth(['SUPERADMIN', 'ADMIN', 'DIRECTOR', 'ASST_DIRECTOR', 'AKTOR']);
+    await requireAuth(['SUPERADMIN', 'ADMIN', 'DIRECTOR', 'ASST_DIRECTOR', 'AKTOR']);
 
-  await adminDb.collection('rehearsals').add({ 
-      title, 
-      date, 
-      location, 
-      notes,
-      createdAt: new Date().toISOString()
-  });
+    await adminDb.collection('rehearsals').add({ 
+        title, 
+        date, 
+        location, 
+        notes,
+        createdAt: new Date().toISOString()
+    });
 
-  // PUSH BİLDİRİMİ
-  await sendPushToAll(
-    "🎭 Yeni Prova Eklendi!",
-    `${title} - ${date} tarihinde ${location} konumunda yapılacak.`,
-    '/members/rehearsals'
-  );
+    await sendPushToAll(
+      "🎭 Yeni Prova Eklendi!",
+      `${title} - ${date} tarihinde ${location} konumunda yapılacak.`,
+      '/members/rehearsals'
+    );
 
-  revalidatePath('/members');
+    revalidatePath('/members');
+    return { success: true };
+  } catch (error: any) {
+    console.error("[ADD_REHEARSAL] Hata:", error);
+    return { error: error.message };
+  }
 }
 
 // Etkinlik eklendiğinde bildirim gönder
 export async function addEvent(formData: FormData) {
-  const title = formData.get('title') as string;
-  const eventDate = formData.get('eventDate') as string;
-  const eventTime = formData.get('eventTime') as string;
-  const location = formData.get('location') as string;
-  const description = formData.get('description') as string;
+  try {
+    const title = formData.get('title') as string;
+    const eventDate = formData.get('eventDate') as string;
+    const eventTime = formData.get('eventTime') as string;
+    const location = formData.get('location') as string;
+    const description = formData.get('description') as string;
 
-  if (!title || !eventDate || !eventTime || !location) return;
+    if (!title || !eventDate || !eventTime || !location) return { error: "Gerekli alanlar eksik." };
 
-  // Tarihi daha okunaklı bir formata çevirelim
-  const dateObj = new Date(eventDate);
-  const formattedDate = dateObj.toLocaleDateString('tr-TR', { 
-    day: 'numeric', 
-    month: 'long', 
-    year: 'numeric'
-  });
-  
-  const date = `${formattedDate} - Saat: ${eventTime}`;
+    const dateObj = new Date(eventDate);
+    const formattedDate = dateObj.toLocaleDateString('tr-TR', { 
+      day: 'numeric', 
+      month: 'long', 
+      year: 'numeric'
+    });
+    
+    const date = `${formattedDate} - Saat: ${eventTime}`;
 
-  await requireAuth(['SUPERADMIN', 'ADMIN']);
+    await requireAuth(['SUPERADMIN', 'ADMIN']);
 
-  await adminDb.collection('events').add({ 
-      title, 
-      date, 
-      location, 
-      description: description || '',
-      createdAt: new Date().toISOString()
-  });
+    await adminDb.collection('events').add({ 
+        title, 
+        date, 
+        location, 
+        description: description || '',
+        createdAt: new Date().toISOString()
+    });
 
-  // PUSH BİLDİRİMİ
-  await sendPushToAll(
-    "📢 Yeni Etkinlik Duyurusu!",
-    `${title} - ${date} tarihinde sizi bekliyoruz.`,
-    '/members'
-  );
+    await sendPushToAll(
+      "📢 Yeni Etkinlik Duyurusu!",
+      `${title} - ${date} tarihinde sizi bekliyoruz.`,
+      '/members'
+    );
 
-  revalidatePath('/members');
+    revalidatePath('/members');
+    return { success: true };
+  } catch (error: any) {
+    console.error("[ADD_EVENT] Hata:", error);
+    return { error: error.message };
+  }
 }
 
 // Dürtme bildirimi

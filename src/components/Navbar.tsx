@@ -13,10 +13,19 @@ export default function Navbar({ session }: { session?: any }) {
   const pathname = usePathname();
 
   useEffect(() => {
+    let ticking = false;
     const handleScroll = () => {
-      setScrolled(window.scrollY > 50);
+      if (!ticking) {
+        window.requestAnimationFrame(() => {
+          const isScrolled = window.scrollY > 50;
+          setScrolled(prev => prev !== isScrolled ? isScrolled : prev);
+          ticking = false;
+        });
+        ticking = true;
+      }
     };
-    window.addEventListener('scroll', handleScroll);
+    
+    window.addEventListener('scroll', handleScroll, { passive: true });
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
@@ -151,6 +160,11 @@ export default function Navbar({ session }: { session?: any }) {
         <div className="desktop-actions">
           {session ? (
             <>
+              {session.user.isAdminMode && (
+                <span className="admin-badge">
+                  <ion-icon name="shield-checkmark-outline"></ion-icon> Yönetici Modu
+                </span>
+              )}
               <Link href="/profile" className="profile-link">Profilim</Link>
               <button onClick={() => signOut({ callbackUrl: '/' })} className="btn btn-logout">Çıkış Yap</button>
             </>
