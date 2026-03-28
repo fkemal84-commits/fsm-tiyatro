@@ -1,0 +1,15 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Tüm kullanıcılara okuma izni (Bloglar, oyunlar vb.)
+    match /{document=**} {
+      allow read: if true;
+    }
+    
+    // Yazma işlemleri Sunucu (Admin SDK) üzerinden yapıldığı için 
+    // istemci tarafı yazma erişimleri tamamen kapalı tutulmalıdır.
+    match /{document=**} {
+      allow write: if false; 
+    }
+  }
+}
