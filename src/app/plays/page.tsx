@@ -1,4 +1,11 @@
 import ScrollReveal from "@/components/ScrollReveal";
+import DeleteButton from "@/components/DeleteButton";
+import { Metadata } from "next";
+
+export const metadata: Metadata = {
+  title: "Sahnede İz Bırakanlar",
+  description: "FSM Tiyatro'nun geçmişten bugüne sergilediği tüm oyunlar ve başarı hikayelerimiz.",
+};
 import { adminDb } from "@/lib/firebase-admin";
 
 export const dynamic = 'force-dynamic';

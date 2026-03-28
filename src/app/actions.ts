@@ -288,9 +288,7 @@ export async function addRehearsal(formData: FormData) {
 
   if (!title || !date || !location) return;
 
-  const session = await getServerSession(authOptions);
-  const role = (session?.user as any)?.role;
-  if (role !== 'ADMIN' && role !== 'SUPERADMIN') return;
+  await requireAuth(['SUPERADMIN', 'ADMIN']);
 
   await adminDb.collection('rehearsals').add({ 
       title, 
@@ -308,9 +306,7 @@ export async function addTeamNeed(formData: FormData) {
 
   if (!roleName || !description) return;
 
-  const session = await getServerSession(authOptions);
-  const role = (session?.user as any)?.role;
-  if (role !== 'ADMIN' && role !== 'SUPERADMIN') return;
+  await requireAuth(['SUPERADMIN', 'ADMIN']);
 
   await adminDb.collection('teamNeeds').add({ 
       roleName, 
