@@ -553,3 +553,44 @@ export async function deletePlay(formData: FormData) {
   revalidatePath('/tanerabi/dashboard');
 }
 
+export async function joinEvent(formData: FormData) {
+  const eventId = formData.get('eventId') as string;
+  const eventTitle = formData.get('eventTitle') as string;
+
+  const session = await getServerSession(authOptions);
+  if (!session?.user?.email) return { error: "Giriş yapmalısınız." };
+
+  await adminDb.collection('eventRequests').add({
+    eventId,
+    eventTitle,
+    userId: (session.user as any).id || '',
+    userName: session.user.name || 'İsimsiz Üye',
+    userEmail: session.user.email,
+    status: 'PENDING',
+    createdAt: new Date().toISOString()
+  });
+
+  return { success: true };
+}
+
+export async function deleteEvent(formData: FormData) {
+  const eventId = formData.get('eventId') as string;
+  if (!eventId) return;
+
+  await requireAuth(['SUPERADMIN', 'ADMIN']);
+  await adminDb.collection('events').doc(eventId).delete();
+
+  revalidatePath('/members');
+  revalidatePath('/tanerabi/dashboard');
+}
+
+export async function deleteRehearsal(formData: FormData) {
+  const rehearsalId = formData.get('rehearsalId') as string;
+  if (!rehearsalId) return;
+
+  await requireAuth(['SUPERADMIN', 'ADMIN', 'DIRECTOR', 'ASST_DIRECTOR']);
+  await adminDb.collection('rehearsals').doc(rehearsalId).delete();
+
+  revalidatePath('/members/rehearsals');
+}
+
