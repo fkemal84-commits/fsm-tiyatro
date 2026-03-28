@@ -1,7 +1,8 @@
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { adminDb } from "@/lib/firebase-admin";
-import { addRehearsal, deleteRehearsal, getWhatsAppRehearsalLink } from "@/app/actions";
+import { addRehearsal, deleteRehearsal } from "@/app/actions";
+import { getWhatsAppRehearsalLink } from "@/lib/utils";
 import DeleteButton from "@/components/DeleteButton";
 import { redirect } from "next/navigation";
 import { Metadata } from "next";

@@ -1,7 +1,8 @@
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { adminDb } from "@/lib/firebase-admin";
-import { addTeamNeed, joinEvent, addEvent, getWhatsAppEventLink } from "@/app/actions";
+import { addTeamNeed, joinEvent, addEvent } from "@/app/actions";
+import { getWhatsAppEventLink } from "@/lib/utils";
 import { Metadata } from "next";
 import JoinEventButton from "@/components/JoinEventButton";
 
