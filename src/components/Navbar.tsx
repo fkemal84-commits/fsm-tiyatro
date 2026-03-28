@@ -57,36 +57,48 @@ export default function Navbar({ session }: { session?: any }) {
         </button>
 
         <div className={`nav-content ${isMenuOpen ? 'open' : ''}`}>
-          <ul className="nav-links">
-            <li><Link href="/" className={pathname === '/' ? 'active' : ''}>Ana Sayfa</Link></li>
-            
-            {/* KULÜP DROPDOWN */}
-            <li className={`nav-dropdown ${activeDropdown === 'klub' ? 'mobile-active' : ''}`}>
-              <span className="dropdown-trigger" onClick={() => toggleDropdown('klub')}>
-                Kulüp <ion-icon name="chevron-down-outline"></ion-icon>
-              </span>
-              <ul className="dropdown-menu">
-                <li><Link href="/plays">Oyunlarımız 🎭</Link></li>
-                <li><Link href="/#about">Hakkımızda ℹ️</Link></li>
-                <li><Link href="/members">Üye Panosu 📋</Link></li>
-              </ul>
+          <ul className={`nav-links ${activeDropdown ? 'level-secondary' : ''}`}>
+            {/* LEVEL 1: MAIN LINKS */}
+            <li className="nav-level">
+              <Link href="/" className={pathname === '/' ? 'active' : ''}>Ana Sayfa</Link>
+              
+              <div className="dropdown-trigger" onClick={() => toggleDropdown('klub')}>
+                <span>Kulüp</span>
+                <ion-icon name="chevron-forward-outline"></ion-icon>
+              </div>
+
+              <Link href="/blog" className={pathname === '/blog' ? 'active' : ''}>Blog</Link>
+              
+              {(role === 'AKTOR' || role === 'SUPERADMIN' || role === 'ADMIN' || role === 'PLAYER' || role === 'DIRECTOR') && (
+                <div className="dropdown-trigger" style={{ color: 'var(--primary-gold)' }} onClick={() => toggleDropdown('stage')}>
+                  <span>Sahne Arkası</span>
+                  <ion-icon name="chevron-forward-outline"></ion-icon>
+                </div>
+              )}
             </li>
 
-            <li><Link href="/blog" className={pathname === '/blog' ? 'active' : ''}>Blog</Link></li>
-            
-            {/* SAHNE ARKASI (DROPDOWN - AKTOR+) */}
-            {(role === 'AKTOR' || role === 'SUPERADMIN' || role === 'ADMIN' || role === 'PLAYER' || role === 'DIRECTOR') && (
-              <li className={`nav-dropdown ${activeDropdown === 'stage' ? 'mobile-active' : ''}`}>
-                <span className="dropdown-trigger" style={{ color: 'var(--primary-gold)' }} onClick={() => toggleDropdown('stage')}>
-                  Sahne Arkası <ion-icon name="star-outline"></ion-icon>
-                </span>
-                <ul className="dropdown-menu">
-                  <li><Link href="/members/rehearsals">Prova Takvimi 📅</Link></li>
-                  <li><Link href="/members/team">Ekip Rehberi 👥</Link></li>
-                  <li><Link href="/members/scripts">Senaryo Kasası 📄</Link></li>
+            {/* LEVEL 2: SUB-MENU (ACTIVE DROPDOWN) */}
+            <li className="nav-level secondary-level">
+              <div className="back-button" onClick={() => setActiveDropdown(null)}>
+                <ion-icon name="arrow-back-outline"></ion-icon> Geri
+              </div>
+
+              {activeDropdown === 'klub' && (
+                <ul className="dropdown-menu-mobile">
+                  <li><Link href="/plays">Oyunlarımız</Link></li>
+                  <li><Link href="/#about">Hakkımızda</Link></li>
+                  <li><Link href="/members">Üye Panosu</Link></li>
                 </ul>
-              </li>
-            )}
+              )}
+
+              {activeDropdown === 'stage' && (
+                <ul className="dropdown-menu-mobile">
+                  <li><Link href="/members/rehearsals">Prova Takvimi</Link></li>
+                  <li><Link href="/members/team">Ekip Rehberi</Link></li>
+                  <li><Link href="/members/scripts">Senaryo Kasası</Link></li>
+                </ul>
+              )}
+            </li>
           </ul>
 
           <div className="nav-actions">

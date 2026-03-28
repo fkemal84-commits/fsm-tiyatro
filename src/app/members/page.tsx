@@ -54,7 +54,7 @@ export default async function MembersDashboard() {
         {/* PROVALAR KARTI */}
         <div className="glass-card frame-glow">
           <h2 className="text-white text-2xl mb-6 border-b border-white/10 pb-4 flex items-center gap-2">
-            ✨ Yaklaşan Etkinlikler
+            Yaklaşan Etkinlikler
           </h2>
           
           {canAdd && (
@@ -104,7 +104,7 @@ export default async function MembersDashboard() {
         {/* EKİP İHTİYAÇLARI */}
         <div className="glass-card frame-glow">
           <h2 className="text-white text-2xl mb-6 border-b border-white/10 pb-4 flex items-center gap-2">
-            🤝 Ekip İhtiyaç İlanları
+            Ekip İhtiyaç İlanları
           </h2>
 
           {canAdd && (
