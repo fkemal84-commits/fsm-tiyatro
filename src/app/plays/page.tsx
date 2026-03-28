@@ -118,6 +118,7 @@ export default async function Plays() {
                ))
             )}
 
+            </div>
           </div>
         </ScrollReveal>
       </section>

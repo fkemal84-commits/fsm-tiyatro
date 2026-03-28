@@ -65,9 +65,32 @@ export default async function RehearsalsPage() {
             </h2>
             <form action={addRehearsal} className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <input type="text" name="title" placeholder="Prova Konusu / Sahne No" className="p-3 rounded-lg bg-black/50 text-white border-white/10 focus:ring-1 focus:ring-[var(--primary-gold)]" required />
-              <input type="text" name="date" placeholder="Tarih & Saat" className="p-3 rounded-lg bg-black/50 text-white border-white/10 focus:ring-1 focus:ring-[var(--primary-gold)]" required />
-              <input type="text" name="location" placeholder="Konum / Sahne" className="p-3 rounded-lg bg-black/50 text-white border-white/10 focus:ring-1 focus:ring-[var(--primary-gold)]" required />
-              <input type="text" name="notes" placeholder="Yönetmen Notu (Opsiyonel)" className="p-3 rounded-lg bg-black/50 text-white border-white/10 focus:ring-1 focus:ring-[var(--primary-gold)]" />
+              <div className="flex flex-col md:flex-row gap-4 md:col-span-2">
+                <div className="flex-1 relative">
+                  <span className="absolute left-3 top-1/2 -translate-y-1/2 text-[var(--primary-gold)] pointer-events-none">
+                    <ion-icon name="calendar-outline"></ion-icon>
+                  </span>
+                  <input 
+                    type="date" 
+                    name="rehearsalDate" 
+                    className="w-full p-3 pl-10 rounded-lg bg-black/50 text-white border border-white/10 focus:ring-1 focus:ring-[var(--primary-gold)] appearance-none" 
+                    required 
+                  />
+                </div>
+                <div className="flex-1 relative">
+                  <span className="absolute left-3 top-1/2 -translate-y-1/2 text-[var(--primary-gold)] pointer-events-none">
+                    <ion-icon name="time-outline"></ion-icon>
+                  </span>
+                  <input 
+                    type="time" 
+                    name="rehearsalTime" 
+                    className="w-full p-3 pl-10 rounded-lg bg-black/50 text-white border border-white/10 focus:ring-1 focus:ring-[var(--primary-gold)] appearance-none" 
+                    required 
+                  />
+                </div>
+              </div>
+              <input type="text" name="location" placeholder="Konum / Sahne" className="p-3 rounded-lg bg-black/50 text-white border border-white/10 focus:ring-1 focus:ring-[var(--primary-gold)]" required />
+              <input type="text" name="notes" placeholder="Yönetmen Notu (Opsiyonel)" className="p-3 rounded-lg bg-black/50 text-white border border-white/10 focus:ring-1 focus:ring-[var(--primary-gold)]" />
               <button type="submit" className="md:col-span-2 btn btn-primary py-3 font-bold tracking-widest uppercase text-xs">
                 Takvime İşle
               </button>

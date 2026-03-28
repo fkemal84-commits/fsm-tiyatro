@@ -61,7 +61,30 @@ export default async function MembersDashboard() {
             <form action={addEvent} className="mb-6 bg-white/5 p-6 rounded-xl flex flex-col gap-3 border border-dashed border-[var(--primary-gold)]">
               <h4 className="text-[var(--primary-gold)] text-sm font-semibold">+ Yeni Etkinlik Ekle (Yönetici)</h4>
               <input type="text" name="title" placeholder="Etkinlik Adı" className="p-3 rounded-lg bg-black/50 text-white border-none focus:ring-1 focus:ring-[var(--primary-gold)]" required />
-              <input type="text" name="date" placeholder="Tarih & Saat" className="p-3 rounded-lg bg-black/50 text-white border-none focus:ring-1 focus:ring-[var(--primary-gold)]" required />
+              <div className="flex flex-col md:flex-row gap-3">
+                <div className="flex-1 relative">
+                  <span className="absolute left-3 top-1/2 -translate-y-1/2 text-[var(--primary-gold)] pointer-events-none text-sm">
+                    <ion-icon name="calendar-outline"></ion-icon>
+                  </span>
+                  <input 
+                    type="date" 
+                    name="eventDate" 
+                    className="w-full p-3 pl-9 rounded-lg bg-black/50 text-white border-none focus:ring-1 focus:ring-[var(--primary-gold)] appearance-none text-sm" 
+                    required 
+                  />
+                </div>
+                <div className="flex-1 relative">
+                  <span className="absolute left-3 top-1/2 -translate-y-1/2 text-[var(--primary-gold)] pointer-events-none text-sm">
+                    <ion-icon name="time-outline"></ion-icon>
+                  </span>
+                  <input 
+                    type="time" 
+                    name="eventTime" 
+                    className="w-full p-3 pl-9 rounded-lg bg-black/50 text-white border-none focus:ring-1 focus:ring-[var(--primary-gold)] appearance-none text-sm" 
+                    required 
+                  />
+                </div>
+              </div>
               <input type="text" name="location" placeholder="Konum" className="p-3 rounded-lg bg-black/50 text-white border-none focus:ring-1 focus:ring-[var(--primary-gold)]" required />
               <textarea name="description" placeholder="Etkinlik Detayları..." className="p-3 rounded-lg bg-black/50 text-white border-none focus:ring-1 focus:ring-[var(--primary-gold)]" rows={2}></textarea>
               <button type="submit" className="btn btn-outline border-[var(--primary-gold)] text-[var(--primary-gold)] hover:bg-[var(--primary-gold)] hover:text-black mt-2">

@@ -380,11 +380,23 @@ export async function testPushToSelf() {
 // Prova eklendiğinde bildirim gönder
 export async function addRehearsal(formData: FormData) {
   const title = formData.get('title') as string;
-  const date = formData.get('date') as string;
+  const rehearsalDate = formData.get('rehearsalDate') as string;
+  const rehearsalTime = formData.get('rehearsalTime') as string;
   const location = formData.get('location') as string;
   const notes = formData.get('notes') as string;
 
-  if (!title || !date || !location) return;
+  if (!title || !rehearsalDate || !rehearsalTime || !location) return;
+
+  // Tarihi daha okunaklı bir formata çevirelim
+  const dateObj = new Date(rehearsalDate);
+  const formattedDate = dateObj.toLocaleDateString('tr-TR', { 
+    day: 'numeric', 
+    month: 'long', 
+    year: 'numeric',
+    weekday: 'long'
+  });
+  
+  const date = `${formattedDate} - Saat: ${rehearsalTime}`;
 
   await requireAuth(['SUPERADMIN', 'ADMIN', 'DIRECTOR', 'ASST_DIRECTOR', 'AKTOR']);
 
@@ -409,11 +421,22 @@ export async function addRehearsal(formData: FormData) {
 // Etkinlik eklendiğinde bildirim gönder
 export async function addEvent(formData: FormData) {
   const title = formData.get('title') as string;
-  const date = formData.get('date') as string;
+  const eventDate = formData.get('eventDate') as string;
+  const eventTime = formData.get('eventTime') as string;
   const location = formData.get('location') as string;
   const description = formData.get('description') as string;
 
-  if (!title || !date || !location) return;
+  if (!title || !eventDate || !eventTime || !location) return;
+
+  // Tarihi daha okunaklı bir formata çevirelim
+  const dateObj = new Date(eventDate);
+  const formattedDate = dateObj.toLocaleDateString('tr-TR', { 
+    day: 'numeric', 
+    month: 'long', 
+    year: 'numeric'
+  });
+  
+  const date = `${formattedDate} - Saat: ${eventTime}`;
 
   await requireAuth(['SUPERADMIN', 'ADMIN']);
 
