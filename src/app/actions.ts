@@ -309,6 +309,28 @@ export async function saveFCMToken(token: string) {
   console.log("[PUSH] Token başarıyla Firestore'a yazıldı.");
 }
 
+async function sendPushToAll(title: string, body: string, url: string = '/') {
+  try {
+    const tokensSnap = await adminDb.collection('fcmTokens').get();
+    const tokens = tokensSnap.docs.map(doc => doc.id);
+
+    console.log(`[PUSH] Toplu gönderim: ${tokens.length} cihaz.`);
+    if (tokens.length === 0) return { success: false, count: 0, failure: 0, error: "Hiç kayıtlı cihaz bulunamadı." };
+
+    const message = {
+      notification: { title, body },
+      data: { url },
+      tokens: tokens
+    };
+
+    const response = await adminMessaging.sendEachForMulticast(message);
+    
+    if (response.failureCount > 0) {
+      response.responses.forEach((resp, idx) => {
+        if (!resp.success) console.error(`[PUSH] Hata (Token: ${tokens[idx].substring(0, 10)}...):`, resp.error);
+      });
+    }
+
     return { success: true, count: response.successCount, failure: response.failureCount };
   } catch (error: any) {
     console.error('[PUSH] Kritik gönderim hatası:', error);
