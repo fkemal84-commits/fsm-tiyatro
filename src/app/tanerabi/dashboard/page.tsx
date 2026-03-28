@@ -158,13 +158,14 @@ export default async function Dashboard() {
                                 <option value="EDITOR">İÇERİK EDİTÖRÜ</option>
                                 <option value="DIRECTOR">YÖNETMEN</option>
                                 <option value="ASST_DIRECTOR">YRD. YÖNETMEN</option>
-                                <option value="PLAYER">OYUNCU</option>
+                                <option value="AKTOR">AKTÖR</option>
+                                <option value="PLAYER">PLAYER (Eski)</option>
                                 <option value="MEMBER">ÜYE</option>
                               </select>
                               <button type="submit" className="btn btn-outline" style={{ padding: '0.3rem 0.6rem', fontSize: '0.75rem', borderColor: 'var(--text-muted)' }}>Mührü Ver</button>
                             </form>
                           ) : (
-                            <span style={{ color: u.role === 'SUPERADMIN' ? '#ff4d4d' : u.role === 'ADMIN' ? 'var(--primary-gold)' : 'var(--text-muted)', fontWeight: 'bold' }}>{u.role === 'EDITOR' ? 'İÇERİK EDİTÖRÜ' : u.role === 'DIRECTOR' ? 'YÖNETMEN 🎭' : u.role === 'ASST_DIRECTOR' ? 'YRD. YÖNETMEN 🎬' : u.role === 'PLAYER' ? 'OYUNCU 🎭' : u.role === 'MEMBER' ? 'ÜYE' : u.role}</span>
+                            <span style={{ color: u.role === 'SUPERADMIN' ? '#ff4d4d' : u.role === 'ADMIN' ? 'var(--primary-gold)' : 'var(--text-muted)', fontWeight: 'bold' }}>{u.role === 'EDITOR' ? 'İÇERİK EDİTÖRÜ' : u.role === 'DIRECTOR' ? 'YÖNETMEN 🎭' : u.role === 'ASST_DIRECTOR' ? 'YRD. YÖNETMEN 🎬' : u.role === 'AKTOR' ? 'AKTÖR 🎭' : u.role === 'PLAYER' ? 'OYUNCU (Eski) 🎭' : u.role === 'MEMBER' ? 'ÜYE' : u.role}</span>
                           )}
                         </td>
                         <td style={{ padding: '1rem' }}>{u.email}</td>

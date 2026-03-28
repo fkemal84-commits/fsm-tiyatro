@@ -16,9 +16,10 @@ export default async function RehearsalsPage() {
   const session = await getServerSession(authOptions);
   const role = (session?.user as any)?.role;
 
-  // Sadece Admin, Oyuncu ve Yönetmenler girebilir
-  const allowedRoles = ['SUPERADMIN', 'ADMIN', 'DIRECTOR', 'ASST_DIRECTOR', 'PLAYER'];
+  // Sadece Admin, Aktör ve Yönetmenler girebilir
+  const allowedRoles = ['SUPERADMIN', 'ADMIN', 'DIRECTOR', 'ASST_DIRECTOR', 'AKTOR', 'PLAYER']; // Geçiş aşaması için PLAYER'ı da tutuyoruz
   if (!allowedRoles.includes(role)) {
+    console.log(`[ACCESS] Reddedildi: Role=${role}`);
     redirect('/members');
   }
 
