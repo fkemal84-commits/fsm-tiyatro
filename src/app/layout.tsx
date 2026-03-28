@@ -70,7 +70,7 @@ export default async function RootLayout({
         }} />
       </head>
       <body className="antialiased">
-        <PushNotificationManager />
+        <PushNotificationManager session={session} />
         <Navbar session={session} />
         {children}
         <Footer />

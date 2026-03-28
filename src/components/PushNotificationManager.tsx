@@ -4,10 +4,8 @@ import { useEffect } from 'react';
 import { getToken, onMessage } from 'firebase/messaging';
 import { messaging } from '@/lib/firebase';
 import { saveFCMToken } from '@/app/actions';
-import { useSession } from 'next-auth/react';
 
-export default function PushNotificationManager() {
-  const { data: session } = useSession();
+export default function PushNotificationManager({ session }: { session: any }) {
 
   useEffect(() => {
     if (!session?.user?.email) return;
