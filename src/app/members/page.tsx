@@ -36,7 +36,7 @@ export default async function MembersDashboard() {
             <>FSM Vakıf Üniversitesi Sinema ve Tiyatro Kulübü <span className="text-white font-bold">Dijital Panosu</span></>
           )}
           <br/> 
-          Sadece üyelere özel prova saatleri ve ekip ihtiyaçları aşağıdadır.
+          Kulüp etkinlikleri, duyurular ve ekip ihtiyaçları aşağıdadır.
         </p>
       </header>
 

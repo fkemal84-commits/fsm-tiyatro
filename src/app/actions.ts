@@ -298,7 +298,8 @@ export async function addRehearsal(formData: FormData) {
 
   if (!title || !date || !location) return;
 
-  await requireAuth(['SUPERADMIN', 'ADMIN']);
+  // Prova ekleme yetkisi: Admin + Yönetmenler
+  await requireAuth(['SUPERADMIN', 'ADMIN', 'DIRECTOR', 'ASST_DIRECTOR']);
 
   await adminDb.collection('rehearsals').add({ 
       title, 
@@ -504,4 +505,14 @@ export async function deleteEvent(formData: FormData) {
 
   revalidatePath('/members');
   revalidatePath('/tanerabi/dashboard');
+}
+
+export async function deleteRehearsal(formData: FormData) {
+  const rehearsalId = formData.get('rehearsalId') as string;
+  if (!rehearsalId) return;
+
+  await requireAuth(['SUPERADMIN', 'ADMIN', 'DIRECTOR', 'ASST_DIRECTOR']);
+  await adminDb.collection('rehearsals').doc(rehearsalId).delete();
+
+  revalidatePath('/members/rehearsals');
 }

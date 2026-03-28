@@ -1,6 +1,8 @@
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { adminDb } from "@/lib/firebase-admin";
+import { addRehearsal, deleteRehearsal } from "@/app/actions";
+import DeleteButton from "@/components/DeleteButton";
 import { redirect } from "next/navigation";
 import { Metadata } from "next";
 
@@ -13,10 +15,13 @@ export default async function RehearsalsPage() {
   const session = await getServerSession(authOptions);
   const role = (session?.user as any)?.role;
 
-  // Sadece Admin ve Oyuncular girebilir
-  if (role !== 'SUPERADMIN' && role !== 'ADMIN' && role !== 'PLAYER') {
+  // Sadece Admin, Oyuncu ve Yönetmenler girebilir
+  const allowedRoles = ['SUPERADMIN', 'ADMIN', 'DIRECTOR', 'ASST_DIRECTOR', 'PLAYER'];
+  if (!allowedRoles.includes(role)) {
     redirect('/members');
   }
+
+  const canManage = ['SUPERADMIN', 'ADMIN', 'DIRECTOR', 'ASST_DIRECTOR'].includes(role);
 
   const rehearsalsSnapshot = await adminDb.collection('rehearsals').get();
   const rehearsals = rehearsalsSnapshot.docs
@@ -34,6 +39,23 @@ export default async function RehearsalsPage() {
       </header>
 
       <div className="max-w-4xl mx-auto">
+        {canManage && (
+          <div className="glass-card mb-12 border-dashed border-[var(--primary-gold)]">
+            <h2 className="text-[var(--primary-gold)] text-xl mb-6 flex items-center gap-2 font-bold">
+              <ion-icon name="add-circle-outline"></ion-icon> Yeni Prova Takvimi Ekle
+            </h2>
+            <form action={addRehearsal} className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <input type="text" name="title" placeholder="Prova Konusu / Sahne No" className="p-3 rounded-lg bg-black/50 text-white border-white/10 focus:ring-1 focus:ring-[var(--primary-gold)]" required />
+              <input type="text" name="date" placeholder="Tarih & Saat" className="p-3 rounded-lg bg-black/50 text-white border-white/10 focus:ring-1 focus:ring-[var(--primary-gold)]" required />
+              <input type="text" name="location" placeholder="Konum / Sahne" className="p-3 rounded-lg bg-black/50 text-white border-white/10 focus:ring-1 focus:ring-[var(--primary-gold)]" required />
+              <input type="text" name="notes" placeholder="Yönetmen Notu (Opsiyonel)" className="p-3 rounded-lg bg-black/50 text-white border-white/10 focus:ring-1 focus:ring-[var(--primary-gold)]" />
+              <button type="submit" className="md:col-span-2 btn btn-primary py-3 font-bold tracking-widest uppercase text-xs">
+                Takvime İşle
+              </button>
+            </form>
+          </div>
+        )}
+
         <div className="glass-card">
           <h2 className="text-white text-2xl mb-8 border-b border-white/10 pb-4">📌 Güncel Prova Listesi</h2>
           
@@ -48,8 +70,19 @@ export default async function RehearsalsPage() {
                       <h3 className="text-[var(--primary-gold)] text-xl font-bold">{r.title}</h3>
                       <p className="text-white/60 text-sm mt-1">Eklenme: {new Date(r.createdAt).toLocaleDateString('tr-TR')}</p>
                     </div>
-                    <div className="bg-[var(--primary-gold)] text-black px-4 py-1 rounded-full text-xs font-bold uppercase tracking-widest">
-                      PROVA
+                    <div className="flex gap-4 items-start">
+                      <div className="bg-[var(--primary-gold)] text-black px-4 py-1 rounded-full text-xs font-bold uppercase tracking-widest">
+                        PROVA
+                      </div>
+                      {canManage && (
+                        <DeleteButton 
+                          action={deleteRehearsal} 
+                          id={r.id} 
+                          name={r.title} 
+                          confirmMessage="Bu provayı takvimden silmek istediğine emin misin?" 
+                          idFieldName="rehearsalId"
+                        />
+                      )}
                     </div>
                   </div>
                   
