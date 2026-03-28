@@ -74,6 +74,8 @@ export async function addPost(formData: FormData) {
   const content = formData.get('content') as string;
   const imageFile = formData.get('image') as File;
   
+  const category = (formData.get('category') as string) || 'KULİS';
+  
   if (!title || !content) return;
 
   let imageUrl = '/default-cover.svg';
@@ -106,7 +108,7 @@ export async function addPost(formData: FormData) {
   await adminDb.collection('posts').add({
     title,
     content,
-    category: 'KULİS',
+    category,
     author: authorName,
     authorEmail,
     imageUrl,
