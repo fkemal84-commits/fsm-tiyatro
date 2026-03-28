@@ -309,36 +309,10 @@ export async function saveFCMToken(token: string) {
   console.log("[PUSH] Token başarıyla Firestore'a yazıldı.");
 }
 
-async function sendPushToAll(title: string, body: string, url: string = '/') {
-  try {
-    const tokensSnap = await adminDb.collection('fcmTokens').get();
-    const tokens = tokensSnap.docs.map(doc => doc.id);
-
-    console.log(`[PUSH] Gönderim başlatılıyor. Toplam hedef token: ${tokens.length}`);
-    if (tokens.length === 0) {
-      console.warn("[PUSH] Gönderim iptal edildi: Hiç kayıtlı token bulunamadı.");
-      return;
-    }
-
-    const message = {
-      notification: { title, body },
-      data: { url },
-      tokens: tokens
-    };
-
-    const response = await adminMessaging.sendEachForMulticast(message);
-    console.log(`[PUSH] Sonuç: ${response.successCount} başarılı, ${response.failureCount} başarısız.`);
-    
-    // Geçersiz token temizliği (opsiyonel ama iyi olur)
-    if (response.failureCount > 0) {
-      response.responses.forEach((resp, idx) => {
-        if (!resp.success) {
-          console.error(`[PUSH] Hata (Token: ${tokens[idx].substring(0, 10)}...):`, resp.error);
-        }
-      });
-    }
-  } catch (error) {
+    return { success: true, count: response.successCount, failure: response.failureCount };
+  } catch (error: any) {
     console.error('[PUSH] Kritik gönderim hatası:', error);
+    return { error: error.message };
   }
 }
 
@@ -430,17 +404,22 @@ export async function addEvent(formData: FormData) {
 
 // Dürtme bildirimi
 export async function nudgePlayers() {
-  await requireAuth(['SUPERADMIN', 'ADMIN', 'DIRECTOR', 'ASST_DIRECTOR', 'AKTOR', 'PLAYER']);
-  
-  const messages = [
-    "🎭 Beyler/Bayanlar, ezberler ne alemde? Reji masasında bekliyoruz! 🎬👀",
-    "🎬 Ezber geçmeyen var mı? Akşam provada sahne sizi bekler! 😂🎭",
-    "🎭 Ezberler su gibi olsun arkadaşlar. Sahne aşkına! 🌊😂",
-    "📢 Bugün ezbersiz gelenlere ceza olarak dekora yardım var! 🎨🎭"
-  ];
-  const randomMsg = messages[Math.floor(Math.random() * messages.length)];
+  try {
+    await requireAuth(['SUPERADMIN', 'ADMIN', 'DIRECTOR', 'ASST_DIRECTOR', 'AKTOR', 'PLAYER']);
+    
+    const messages = [
+      "🎭 Beyler/Bayanlar, ezberler ne alemde? Reji masasında bekliyoruz! 🎬👀",
+      "🎬 Ezber geçmeyen var mı? Akşam provada sahne sizi bekler! 😂🎭",
+      "🎭 Ezberler su gibi olsun arkadaşlar. Sahne aşkına! 🌊😂",
+      "📢 Bugün ezbersiz gelenlere ceza olarak dekora yardım var! 🎨🎭"
+    ];
+    const randomMsg = messages[Math.floor(Math.random() * messages.length)];
 
-  await sendPushToAll("🎭 Yönetmen Dürtmesi!", randomMsg, '/members/rehearsals');
+    const res = await sendPushToAll("🎭 Yönetmen Dürtmesi!", randomMsg, '/members/rehearsals');
+    return { success: true, ...res };
+  } catch (error: any) {
+    return { error: error.message };
+  }
 }
 
 export async function addTeamNeed(formData: FormData) {
