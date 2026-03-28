@@ -32,8 +32,9 @@ export default function Home() {
           </ScrollReveal>
           
           <ScrollReveal className="glass-card">
-            <div style={{ fontSize: '2.5rem', color: 'var(--primary-gold)', marginBottom: '1rem', display: 'inline-block' }}>
-              <ion-icon name="color-palette-outline"></ion-icon>
+            <div style={{ fontSize: '2.5rem', color: 'var(--primary-gold)', marginBottom: '1rem', display: 'flex', gap: '0.5rem' }}>
+              <ion-icon name="happy-outline"></ion-icon>
+              <ion-icon name="sad-outline" style={{ transform: 'translateX(-5px)' }}></ion-icon>
             </div>
             <h3 style={{ fontSize: '1.5rem', color: '#fff', marginBottom: '1rem' }}>Tiyatro Ruhu</h3>
             <p style={{ color: 'var(--text-muted)' }}>Klasik eserlerden modern tiyatroya uzanan geniş bir yelpazede, profesyonel prodüksiyonlar çıkarıyoruz.</p>
