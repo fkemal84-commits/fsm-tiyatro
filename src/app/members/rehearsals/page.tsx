@@ -1,8 +1,8 @@
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { adminDb } from "@/lib/firebase-admin";
-import { addRehearsal, deleteRehearsal } from "@/app/actions";
-import { getWhatsAppRehearsalLink, getWhatsAppNudgeLink } from "@/lib/utils";
+import { addRehearsal, deleteRehearsal, nudgePlayers } from "@/app/actions";
+import { getWhatsAppRehearsalLink } from "@/lib/utils";
 import DeleteButton from "@/components/DeleteButton";
 import { redirect } from "next/navigation";
 import { Metadata } from "next";
@@ -38,15 +38,15 @@ export default async function RehearsalsPage() {
             <p className="text-white/60">Ekibin disiplini, sahnenin başarısıdır.</p>
           </div>
           {canManage && (
-            <a 
-              href={getWhatsAppNudgeLink()} 
-              target="_blank" 
-              rel="noopener noreferrer"
-              className="btn-primary flex items-center gap-2 bg-[#25D366] border-none hover:bg-[#128C7E] px-6"
-            >
-              <ion-icon name="hand-right-outline"></ion-icon>
-              Oyuncuları Dürt 🎭
-            </a>
+            <form action={nudgePlayers}>
+              <button 
+                type="submit"
+                className="btn-primary flex items-center gap-2 bg-[#var(--primary-gold)] border-none hover:opacity-80 px-6"
+              >
+                <ion-icon name="notifications-outline"></ion-icon>
+                Oyuncuları Dürt 🎭
+              </button>
+            </form>
           )}
         </div>
         <p className="text-[var(--text-muted)] max-w-2xl mx-auto">

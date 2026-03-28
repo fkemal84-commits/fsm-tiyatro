@@ -1,6 +1,6 @@
 'use server';
 
-import { adminDb, adminStorage } from '@/lib/firebase-admin';
+import { adminDb, adminStorage, adminMessaging } from '@/lib/firebase-admin';
 import { revalidatePath } from 'next/cache';
 import { redirect } from 'next/navigation';
 import bcrypt from 'bcryptjs';
@@ -290,6 +290,43 @@ export async function updateProfile(formData: FormData) {
   return { success: true };
 }
 
+
+export async function saveFCMToken(token: string) {
+  const session = await getServerSession(authOptions);
+  if (!session?.user?.email) return;
+
+  const email = session.user.email.toLowerCase();
+  
+  // Token'ı kullanıcı dökümanına veya ayrı bir koleksiyona kaydet
+  // Burada kolaylık olması için fcmTokens koleksiyonuna kaydediyoruz
+  await adminDb.collection('fcmTokens').doc(token).set({
+    email,
+    userId: (session.user as any).id || '',
+    updatedAt: new Date().toISOString()
+  });
+}
+
+async function sendPushToAll(title: string, body: string, url: string = '/') {
+  try {
+    const tokensSnap = await adminDb.collection('fcmTokens').get();
+    const tokens = tokensSnap.docs.map(doc => doc.id);
+
+    if (tokens.length === 0) return;
+
+    const message = {
+      notification: { title, body },
+      data: { url },
+      tokens: tokens
+    };
+
+    const response = await adminMessaging.sendEachForMulticast(message);
+    console.log(`[PUSH] ${response.successCount} bildirim başarıyla gönderildi.`);
+  } catch (error) {
+    console.error('[PUSH] Gönderim hatası:', error);
+  }
+}
+
+// Prova eklendiğinde bildirim gönder
 export async function addRehearsal(formData: FormData) {
   const title = formData.get('title') as string;
   const date = formData.get('date') as string;
@@ -298,7 +335,6 @@ export async function addRehearsal(formData: FormData) {
 
   if (!title || !date || !location) return;
 
-  // Prova ekleme yetkisi: Admin + Yönetmenler
   await requireAuth(['SUPERADMIN', 'ADMIN', 'DIRECTOR', 'ASST_DIRECTOR']);
 
   await adminDb.collection('rehearsals').add({ 
@@ -308,7 +344,59 @@ export async function addRehearsal(formData: FormData) {
       notes,
       createdAt: new Date().toISOString()
   });
+
+  // PUSH BİLDİRİMİ
+  await sendPushToAll(
+    "🎭 Yeni Prova Eklendi!",
+    `${title} - ${date} tarihinde ${location} konumunda yapılacak.`,
+    '/members/rehearsals'
+  );
+
   revalidatePath('/members');
+}
+
+// Etkinlik eklendiğinde bildirim gönder
+export async function addEvent(formData: FormData) {
+  const title = formData.get('title') as string;
+  const date = formData.get('date') as string;
+  const location = formData.get('location') as string;
+  const description = formData.get('description') as string;
+
+  if (!title || !date || !location) return;
+
+  await requireAuth(['SUPERADMIN', 'ADMIN']);
+
+  await adminDb.collection('events').add({ 
+      title, 
+      date, 
+      location, 
+      description: description || '',
+      createdAt: new Date().toISOString()
+  });
+
+  // PUSH BİLDİRİMİ
+  await sendPushToAll(
+    "📢 Yeni Etkinlik Duyurusu!",
+    `${title} - ${date} tarihinde sizi bekliyoruz.`,
+    '/members'
+  );
+
+  revalidatePath('/members');
+}
+
+// Dürtme bildirimi
+export async function nudgePlayers() {
+  await requireAuth(['SUPERADMIN', 'ADMIN', 'DIRECTOR', 'ASST_DIRECTOR']);
+  
+  const messages = [
+    "🎭 Beyler/Bayanlar, ezberler ne alemde? Reji masasında bekliyoruz! 🎬👀",
+    "🎬 Ezber geçmeyen var mı? Akşam provada sahne sizi bekler! 😂🎭",
+    "🎭 Ezberler su gibi olsun arkadaşlar. Sahne aşkına! 🌊😂",
+    "📢 Bugün ezbersiz gelenlere ceza olarak dekora yardım var! 🎨🎭"
+  ];
+  const randomMsg = messages[Math.floor(Math.random() * messages.length)];
+
+  await sendPushToAll("🎭 Yönetmen Dürtmesi!", randomMsg, '/members/rehearsals');
 }
 
 export async function addTeamNeed(formData: FormData) {
@@ -465,63 +553,3 @@ export async function deletePlay(formData: FormData) {
   revalidatePath('/tanerabi/dashboard');
 }
 
-export async function addEvent(formData: FormData) {
-  const title = formData.get('title') as string;
-  const date = formData.get('date') as string;
-  const location = formData.get('location') as string;
-  const description = formData.get('description') as string;
-
-  if (!title || !date || !location) return;
-
-  await requireAuth(['SUPERADMIN', 'ADMIN']);
-
-  await adminDb.collection('events').add({ 
-      title, 
-      date, 
-      location, 
-      description: description || '',
-      createdAt: new Date().toISOString()
-  });
-  revalidatePath('/members');
-}
-
-export async function joinEvent(formData: FormData) {
-  const eventId = formData.get('eventId') as string;
-  const eventTitle = formData.get('eventTitle') as string;
-
-  const session = await getServerSession(authOptions);
-  if (!session?.user?.email) return { error: "Giriş yapmalısınız." };
-
-  await adminDb.collection('eventRequests').add({
-    eventId,
-    eventTitle,
-    userId: (session.user as any).id || '',
-    userName: session.user.name || 'İsimsiz Üye',
-    userEmail: session.user.email,
-    status: 'PENDING',
-    createdAt: new Date().toISOString()
-  });
-
-  return { success: true };
-}
-
-export async function deleteEvent(formData: FormData) {
-  const eventId = formData.get('eventId') as string;
-  if (!eventId) return;
-
-  await requireAuth(['SUPERADMIN', 'ADMIN']);
-  await adminDb.collection('events').doc(eventId).delete();
-
-  revalidatePath('/members');
-  revalidatePath('/tanerabi/dashboard');
-}
-
-export async function deleteRehearsal(formData: FormData) {
-  const rehearsalId = formData.get('rehearsalId') as string;
-  if (!rehearsalId) return;
-
-  await requireAuth(['SUPERADMIN', 'ADMIN', 'DIRECTOR', 'ASST_DIRECTOR']);
-  await adminDb.collection('rehearsals').doc(rehearsalId).delete();
-
-  revalidatePath('/members/rehearsals');
-}

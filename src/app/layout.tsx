@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import "./globals.css";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
+import PushNotificationManager from "@/components/PushNotificationManager";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 
@@ -68,7 +69,8 @@ export default async function RootLayout({
           `
         }} />
       </head>
-      <body>
+      <body className="antialiased">
+        <PushNotificationManager />
         <Navbar session={session} />
         {children}
         <Footer />

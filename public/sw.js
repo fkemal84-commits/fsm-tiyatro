@@ -1,12 +1,32 @@
+self.addEventListener('push', (event) => {
+  if (event.data) {
+    const data = event.data.json();
+    const options = {
+      body: data.body,
+      icon: '/logo.jpg',
+      badge: '/logo.jpg',
+      vibrate: [100, 50, 100],
+      data: {
+        url: data.url || '/'
+      }
+    };
+    event.waitUntil(
+      self.registration.showNotification(data.title, options)
+    );
+  }
+});
+
+self.addEventListener('notificationclick', (event) => {
+  event.notification.close();
+  event.waitUntil(
+    clients.openWindow(event.notification.data.url)
+  );
+});
+
 self.addEventListener('install', (event) => {
-  console.log('Service Worker: Installed');
+  self.skipWaiting();
 });
 
 self.addEventListener('activate', (event) => {
-  console.log('Service Worker: Activated');
-});
-
-self.addEventListener('fetch', (event) => {
-  // Basic fetch handler (can be expanded for offline support)
-  event.respondWith(fetch(event.request));
+  event.waitUntil(clients.claim());
 });
