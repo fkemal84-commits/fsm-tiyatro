@@ -165,5 +165,3 @@ export default function PushNotificationManager({ session }: { session: any }) {
     </div>
   );
 }
-  );
-}
