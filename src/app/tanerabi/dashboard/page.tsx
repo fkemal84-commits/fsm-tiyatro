@@ -113,12 +113,12 @@ export default async function Dashboard() {
                                 {role === 'SUPERADMIN' && <option value="SUPERADMIN">SUPERADMIN</option>}
                                 {role === 'SUPERADMIN' && <option value="ADMIN">ADMIN</option>}
                                 <option value="EDITOR">İÇERİK EDİTÖRÜ</option>
-                                <option value="MEMBER">MEMBER</option>
+                                <option value="MEMBER">ÜYE</option>
                               </select>
                               <button type="submit" className="btn btn-outline" style={{ padding: '0.3rem 0.6rem', fontSize: '0.75rem', borderColor: 'var(--text-muted)' }}>Mührü Ver</button>
                             </form>
                           ) : (
-                            <span style={{ color: u.role === 'SUPERADMIN' ? '#ff4d4d' : u.role === 'ADMIN' ? 'var(--primary-gold)' : 'var(--text-muted)', fontWeight: 'bold' }}>{u.role === 'EDITOR' ? 'İÇERİK EDİTÖRÜ' : u.role}</span>
+                            <span style={{ color: u.role === 'SUPERADMIN' ? '#ff4d4d' : u.role === 'ADMIN' ? 'var(--primary-gold)' : 'var(--text-muted)', fontWeight: 'bold' }}>{u.role === 'EDITOR' ? 'İÇERİK EDİTÖRÜ' : u.role === 'MEMBER' ? 'ÜYE' : u.role}</span>
                           )}
                         </td>
                         <td style={{ padding: '1rem' }}>{u.email}</td>

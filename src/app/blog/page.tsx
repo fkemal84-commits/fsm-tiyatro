@@ -123,7 +123,7 @@ export default async function Blog() {
                                   {post.author && (
                                     <>
                                       <span>&bull;</span>
-                                      <span className="text-white/90">🖋️ {post.author} yazdı</span>
+                                      <span className="text-white/90 normal-case font-normal">🖋️ {post.author} yazdı</span>
                                     </>
                                   )}
                               </div>

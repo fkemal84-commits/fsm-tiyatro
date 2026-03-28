@@ -25,7 +25,7 @@ export const authOptions: NextAuthOptions = {
         // Onay bekleyen kullanıcıları engelle
         if (user.role === 'PENDING') return null;
 
-        return { id: userDoc.id, email: user.email, name: user.name, role: user.role };
+        return { id: userDoc.id, email: user.email, name: `${user.name} ${user.surname}`, role: user.role };
       }
     })
   ],

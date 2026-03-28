@@ -50,17 +50,45 @@ export default function Home() {
       </section>
 
       {/* Sponsorship Banner */}
-      <section className="section" id="sponsorluk" style={{ background: 'rgba(139, 0, 0, 0.1)', borderTop: 'var(--glass-border)', borderBottom: 'var(--glass-border)' }}>
+      <section className="section" id="sponsorluk" style={{ background: 'linear-gradient(to bottom, var(--bg-dark), #1a0505, var(--bg-dark))', borderTop: 'var(--glass-border)', borderBottom: 'var(--glass-border)' }}>
         <ScrollReveal className="section-head">
-          <h2 className="serif-font">Sahneye Güç Verin</h2>
-          <p>Sanatın ateşini harlamak için altın değerindeki destekçilerimizi bekliyoruz.</p>
+          <span style={{ color: 'var(--primary-gold)', fontSize: '0.9rem', fontWeight: 800, letterSpacing: '2px', textTransform: 'uppercase' }}>DESTEK & SPONSORLUK</span>
+          <h2 className="serif-font" style={{ marginTop: '0.5rem' }}>Sanatın Ateşini Birlikte Canlandıralım</h2>
+          <p>Üniversitemizin en köklü kulüplerinden biri olan FSM Tiyatro'nun bir parçası olun.</p>
         </ScrollReveal>
+        
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '2rem', maxWidth: '1200px', margin: '4rem auto' }}>
+          <ScrollReveal className="glass-card" style={{ textAlign: 'center' }}>
+            <h3 style={{ color: '#CD7F32', fontSize: '1.5rem', marginBottom: '1rem' }}>🥉 Bronz Destek</h3>
+            <p style={{ color: 'var(--text-muted)', marginBottom: '1.5rem' }}>Oyun broşürlerimizde ve sosyal medya paylaşımlarımızda logonuz yer alsın.</p>
+            <div style={{ color: 'var(--primary-gold)', fontSize: '1.2rem', fontWeight: 600 }}>Logolu Tanıtım</div>
+          </ScrollReveal>
+          
+          <ScrollReveal className="glass-card" style={{ textAlign: 'center', border: '1px solid var(--primary-gold)' }}>
+            <h3 style={{ color: '#C0C0C0', fontSize: '1.5rem', marginBottom: '1rem' }}>🥈 Gümüş Destek</h3>
+            <p style={{ color: 'var(--text-muted)', marginBottom: '1.5rem' }}>Öne çıkan marka entegrasyonu, temsil öncesi anons ve özel davetiye imkanı.</p>
+            <div style={{ color: 'var(--primary-gold)', fontSize: '1.2rem', fontWeight: 600 }}>Marka Entegrasyonu</div>
+          </ScrollReveal>
+          
+          <ScrollReveal className="glass-card" style={{ textAlign: 'center', boxShadow: '0 0 30px rgba(212, 175, 55, 0.2)' }}>
+            <h3 style={{ color: '#FFD700', fontSize: '1.5rem', marginBottom: '1rem' }}>🥇 Altın Sponsor</h3>
+            <p style={{ color: 'var(--text-muted)', marginBottom: '1.5rem' }}>"Sahne Senin" dediğimiz ana prodüksiyon partnerimiz olun, tüm görünürlüklerde en üst sırada yer alın.</p>
+            <div style={{ color: 'var(--primary-gold)', fontSize: '1.2rem', fontWeight: 600 }}>Stratejik Partnerlik</div>
+          </ScrollReveal>
+        </div>
+
         <ScrollReveal>
-          <div style={{ textAlign: 'center', maxWidth: '700px', margin: '0 auto' }}>
+          <div style={{ textAlign: 'center', maxWidth: '800px', margin: '0 auto', padding: '3rem', background: 'rgba(255,255,255,0.03)', borderRadius: '30px', border: '1px solid rgba(255,255,255,0.05)' }}>
+            <h4 style={{ color: '#fff', fontSize: '1.4rem', marginBottom: '1.5rem' }}>Kurumsal ve Bireysel Destek İçin</h4>
             <p style={{ marginBottom: '2.5rem', color: 'var(--text-muted)', fontSize: '1.1rem', lineHeight: 1.8 }}>
-              Sanatın üniversite ortamında yaşaması, öğrencilerimizin yeteneklerini sahnede sergileyebilmesi ve daha büyük prodüksiyonlara imza atmamız için kurumsal destekçiler arıyoruz. Siz de markanızla, geleceğin sanatçılarına "Sahne Senin!" deyin.
+              Sanatın üniversite ortamında yaşaması, öğrencilerimizin yeteneklerini sahnede sergileyebilmesi ve daha büyük prodüksiyonlara imza atmamız için yanımızda olun. Siz de markanızla geleceğin sanatçılarına "Mümkün" deyin.
             </p>
-            <a href="mailto:sponsorluk@fsmtiyatro.com" className="btn btn-primary" style={{ fontSize: '1.1rem', padding: '1rem 2.5rem' }}>Sponsorluk Dosyamızı İsteyin</a>
+            <div style={{ display: 'flex', gap: '1.5rem', justifyContent: 'center', flexWrap: 'wrap' }}>
+              <a href="mailto:sponsorluk@fsmtiyatro.com" className="btn btn-primary" style={{ padding: '1rem 2.5rem' }}>Sponsorluk Dosyasını İndir</a>
+              <a href="https://wa.me/905XXXXXXX" className="btn btn-outline" style={{ padding: '1rem 2.5rem' }}>
+                <ion-icon name="logo-whatsapp" style={{ marginRight: '0.8rem', fontSize: '1.2rem' }}></ion-icon> Anında İletişim
+              </a>
+            </div>
           </div>
         </ScrollReveal>
       </section>
