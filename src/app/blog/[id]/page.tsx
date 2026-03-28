@@ -1,5 +1,23 @@
 import { adminDb } from '@/lib/firebase-admin';
+import { Metadata } from 'next';
 import { notFound } from 'next/navigation';
+
+export async function generateMetadata({ params }: { params: Promise<{ id: string }> }): Promise<Metadata> {
+  const resolvedParams = await params;
+  const docSnap = await adminDb.collection('posts').doc(resolvedParams.id).get();
+  if (!docSnap.exists) return { title: 'Yazı Bulunamadı' };
+  const post = docSnap.data() as any;
+  
+  return {
+    title: post.title,
+    description: post.content.substring(0, 160) + "...",
+    openGraph: {
+      title: post.title,
+      description: post.content.substring(0, 160) + "...",
+      images: [post.imageUrl],
+    }
+  };
+}
 
 export default async function BlogDetail({ params }: { params: Promise<{ id: string }> }) {
   const resolvedParams = await params;

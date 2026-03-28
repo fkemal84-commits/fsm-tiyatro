@@ -1,8 +1,13 @@
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
-import { redirect } from "next/navigation";
 import { adminDb } from "@/lib/firebase-admin";
 import { addRehearsal, addTeamNeed } from "@/app/actions";
+import { Metadata } from "next";
+
+export const metadata: Metadata = {
+  title: "Üye Panosu",
+  description: "FSM Tiyatro üyelerine özel prova takvimi ve ekip duyuruları.",
+};
 
 export default async function MembersDashboard() {
   const session = await getServerSession(authOptions);
@@ -20,83 +25,94 @@ export default async function MembersDashboard() {
     .sort((a, b) => new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime());
 
   return (
-    <div style={{ padding: '8rem 5% 4rem', minHeight: '100vh', background: 'var(--bg-dark)' }}>
-      <header style={{ textAlign: 'center', marginBottom: '4rem' }}>
-        <h1 className="serif-font" style={{ fontSize: '3rem', color: 'var(--primary-gold)', marginBottom: '1rem' }}>Üye Panosu</h1>
-        <p style={{ color: 'var(--text-muted)' }}>
+    <div className="pt-32 pb-16 px-[5%] min-h-screen bg-[var(--bg-dark)]">
+      <header className="text-center mb-16">
+        <h1 className="serif-font text-5xl text-[var(--primary-gold)] mb-4">Üye Panosu</h1>
+        <p className="text-[var(--text-muted)] max-w-2xl mx-auto">
           {session ? (
-            <>Hoş geldin, <span style={{ color: '#fff', fontWeight: 'bold' }}>{session.user?.name || session.user?.email}</span>!</>
+            <>Hoş geldin, <span className="text-white font-bold">{session.user?.name || session.user?.email}</span>!</>
           ) : (
-            <>FSM Vakıf Üniversitesi Sinema ve Tiyatro Kulübü <span style={{ color: '#fff', fontWeight: 'bold' }}>Dijital Panosu</span></>
+            <>FSM Vakıf Üniversitesi Sinema ve Tiyatro Kulübü <span className="text-white font-bold">Dijital Panosu</span></>
           )}
           <br/> 
           Sadece üyelere özel prova saatleri ve ekip ihtiyaçları aşağıdadır.
         </p>
       </header>
 
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(350px, 1fr))', gap: '2rem', maxWidth: '1200px', margin: '0 auto' }}>
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-7xl mx-auto">
         
         {/* PROVALAR KARTI */}
         <div className="glass-card">
-          <h2 style={{ color: '#fff', fontSize: '1.5rem', marginBottom: '1.5rem', borderBottom: '1px solid rgba(255,255,255,0.1)', paddingBottom: '1rem' }}>
+          <h2 className="text-white text-2xl mb-6 border-b border-white/10 pb-4 flex items-center gap-2">
             🎭 Yaklaşan Provalar
           </h2>
           
-          {/* Admin / Superadmin'e Özel Form */}
           {canAdd && (
-            <form action={addRehearsal} style={{ marginBottom: '1.5rem', background: 'rgba(255,255,255,0.05)', padding: '1.5rem', borderRadius: '8px', display: 'flex', flexDirection: 'column', gap: '0.8rem', border: '1px dashed var(--primary-gold)' }}>
-              <h4 style={{ color: 'var(--primary-gold)', fontSize: '0.95rem' }}>+ Yeni Prova Ekle (Yönetici Yetkisi)</h4>
-              <input type="text" name="title" placeholder="Prova Konusu (Örn: Hamlet Prömiyer Provası)" style={{ padding: '0.8rem', borderRadius: '6px', background: 'rgba(0,0,0,0.5)', color: '#fff', border: 'none' }} required />
-              <input type="text" name="date" placeholder="Tarih & Saat" style={{ padding: '0.8rem', borderRadius: '6px', background: 'rgba(0,0,0,0.5)', color: '#fff', border: 'none' }} required />
-              <input type="text" name="location" placeholder="Konum (Sınıf, Sahne)" style={{ padding: '0.8rem', borderRadius: '6px', background: 'rgba(0,0,0,0.5)', color: '#fff', border: 'none' }} required />
-              <input type="text" name="notes" placeholder="Üyelere Ek Notlar (Opsiyonel)" style={{ padding: '0.8rem', borderRadius: '6px', background: 'rgba(0,0,0,0.5)', color: '#fff', border: 'none' }} />
-              <button type="submit" className="btn btn-outline" style={{ marginTop: '0.5rem', padding: '0.5rem', fontSize: '0.8.5rem', borderColor: 'var(--primary-gold)', color: 'var(--primary-gold)' }}>Üyelere Yayınla</button>
+            <form action={addRehearsal} className="mb-6 bg-white/5 p-6 rounded-xl flex flex-col gap-3 border border-dashed border-[var(--primary-gold)]">
+              <h4 className="text-[var(--primary-gold)] text-sm font-semibold">+ Yeni Prova Ekle (Yönetici)</h4>
+              <input type="text" name="title" placeholder="Prova Konusu" className="p-3 rounded-lg bg-black/50 text-white border-none focus:ring-1 focus:ring-[var(--primary-gold)]" required />
+              <input type="text" name="date" placeholder="Tarih & Saat" className="p-3 rounded-lg bg-black/50 text-white border-none focus:ring-1 focus:ring-[var(--primary-gold)]" required />
+              <input type="text" name="location" placeholder="Konum" className="p-3 rounded-lg bg-black/50 text-white border-none focus:ring-1 focus:ring-[var(--primary-gold)]" required />
+              <input type="text" name="notes" placeholder="Ek Notlar (Opsiyonel)" className="p-3 rounded-lg bg-black/50 text-white border-none focus:ring-1 focus:ring-[var(--primary-gold)]" />
+              <button type="submit" className="btn btn-outline border-[var(--primary-gold)] text-[var(--primary-gold)] hover:bg-[var(--primary-gold)] hover:text-black mt-2">
+                Üyelere Yayınla
+              </button>
             </form>
           )}
 
           {rehearsals.length === 0 ? (
-            <p style={{ color: 'var(--text-muted)' }}>Henüz planlanmış bir prova takvimi girilmemiş.</p>
+            <p className="text-[var(--text-muted)]">Henüz planlanmış bir prova takvimi girilmemiş.</p>
           ) : (
-            <ul style={{ listStyle: 'none', padding: 0 }}>
+            <ul className="space-y-4">
               {rehearsals.map((r: any) => (
-                <li key={r.id} style={{ marginBottom: '1rem', padding: '1rem', background: 'rgba(0,0,0,0.3)', borderRadius: '8px' }}>
-                  <h4 style={{ color: 'var(--primary-gold)', marginBottom: '0.3rem', fontSize: '1.1rem' }}>📌 {r.title}</h4>
-                  <div style={{ fontSize: '0.9rem', color: '#fff', marginBottom: '0.3rem' }}>⏰ {r.date}</div>
-                  <div style={{ fontSize: '0.9rem', color: '#fff', marginBottom: '0.5rem' }}>📍 {r.location}</div>
-                  {r.notes && <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)', fontStyle: 'italic' }}>Not: {r.notes}</p>}
+                <li key={r.id} className="p-4 bg-black/30 rounded-lg border border-white/5 hover:border-[var(--primary-gold-dim)] transition-all">
+                  <h4 className="text-[var(--primary-gold)] font-bold text-lg mb-1">📌 {r.title}</h4>
+                  <div className="text-sm text-white/90">⏰ {r.date}</div>
+                  <div className="text-sm text-white/90 mb-2">📍 {r.location}</div>
+                  {r.notes && <p className="text-xs text-[var(--text-muted)] italic bg-white/5 p-2 rounded">Not: {r.notes}</p>}
                 </li>
               ))}
             </ul>
           )}
         </div>
 
-        {/* CADI KARTI / İHTİYAÇLAR */}
+        {/* EKİP İHTİYAÇLARI */}
         <div className="glass-card">
-          <h2 style={{ color: '#fff', fontSize: '1.5rem', marginBottom: '1.5rem', borderBottom: '1px solid rgba(255,255,255,0.1)', paddingBottom: '1rem' }}>
+          <h2 className="text-white text-2xl mb-6 border-b border-white/10 pb-4 flex items-center gap-2">
             🤝 Ekip İhtiyaç İlanları
           </h2>
 
-          {/* Admin / Superadmin'e Özel Form */}
           {canAdd && (
-             <form action={addTeamNeed} style={{ marginBottom: '1.5rem', background: 'rgba(255,255,255,0.05)', padding: '1.5rem', borderRadius: '8px', display: 'flex', flexDirection: 'column', gap: '0.8rem', border: '1px dashed var(--primary-gold)' }}>
-             <h4 style={{ color: 'var(--primary-gold)', fontSize: '0.95rem' }}>+ Yeni Personel Açığı Ekle (Yönetici Yetkisi)</h4>
-             <input type="text" name="roleName" placeholder="Aranan Yetenek (Örn: Işıkçı, Dekor)" style={{ padding: '0.8rem', borderRadius: '6px', background: 'rgba(0,0,0,0.5)', color: '#fff', border: 'none' }} required />
-             <textarea name="description" placeholder="Ne arıyoruz, ekip üyelerinden beklentimiz nedir?" rows={3} style={{ padding: '0.8rem', borderRadius: '6px', background: 'rgba(0,0,0,0.5)', color: '#fff', border: 'none' }} required></textarea>
-             <button type="submit" className="btn btn-outline" style={{ marginTop: '0.5rem', padding: '0.5rem', fontSize: '0.8.5rem', borderColor: 'var(--primary-gold)', color: 'var(--primary-gold)' }}>İlanı Panoya Çıkart</button>
-           </form>
+             <form action={addTeamNeed} className="mb-6 bg-white/5 p-6 rounded-xl flex flex-col gap-3 border border-dashed border-[var(--primary-gold)]">
+              <h4 className="text-[var(--primary-gold)] text-sm font-semibold">+ Yeni Personel Açığı Ekle (Yönetici)</h4>
+              <input type="text" name="roleName" placeholder="Aranan Yetenek" className="p-3 rounded-lg bg-black/50 text-white border-none focus:ring-1 focus:ring-[var(--primary-gold)]" required />
+              <textarea name="description" placeholder="Beklentilerimiz..." rows={3} className="p-3 rounded-lg bg-black/50 text-white border-none focus:ring-1 focus:ring-[var(--primary-gold)]" required></textarea>
+              <button type="submit" className="btn btn-outline border-[var(--primary-gold)] text-[var(--primary-gold)] hover:bg-[var(--primary-gold)] hover:text-black mt-2">
+                İlanı Yayınla
+              </button>
+            </form>
           )}
 
           {teamNeeds.length === 0 ? (
-            <p style={{ color: 'var(--text-muted)' }}>Şu an için açık bir ekip personel ilanı yok.</p>
+            <p className="text-[var(--text-muted)]">Şu an için açık bir ekip personel ilanı yok.</p>
           ) : (
-            <ul style={{ listStyle: 'none', padding: 0 }}>
+            <ul className="space-y-4">
               {teamNeeds.map((t: any) => (
-                <li key={t.id} style={{ marginBottom: '1rem', padding: '1.2rem', background: 'rgba(139,0,0,0.2)', border: '1px solid rgba(212,175,55,0.3)', borderRadius: '8px' }}>
-                  <h4 style={{ color: '#fff', marginBottom: '0.5rem', fontSize: '1.15rem' }}>🎯 {t.roleName} Aranıyor!</h4>
-                  <p style={{ fontSize: '0.95rem', color: 'var(--text-muted)', lineHeight: '1.5' }}>{t.description}</p>
-                  <button className="btn btn-outline" style={{ marginTop: '1rem', padding: '0.5rem 1.2rem', fontSize: '0.8rem', width: '100%' }}>Ekibe Katılmak İçin Başvur</button>
+                <li key={t.id} className="p-5 bg-[var(--accent-red-dim)] border border-[var(--primary-gold-dim)] rounded-xl hover:bg-[var(--accent-red)]/30 transition-all">
+                  <h4 className="text-white font-bold text-xl mb-2">🎯 {t.roleName} Aranıyor!</h4>
+                  <p className="text-sm text-[var(--text-muted)] leading-relaxed mb-4">{t.description}</p>
+                  <button className="btn btn-outline w-full text-xs py-2">Ekibe Katılmak İçin Başvur</button>
                 </li>
               ))}
+            </ul>
+          )}
+        </div>
+
+      </div>
+    </div>
+  );
+}
+}
             </ul>
           )}
         </div>

@@ -1,5 +1,23 @@
 import { adminDb } from '@/lib/firebase-admin';
+import { Metadata } from 'next';
 import { notFound } from 'next/navigation';
+
+export async function generateMetadata({ params }: { params: Promise<{ id: string }> }): Promise<Metadata> {
+  const resolvedParams = await params;
+  const docSnap = await adminDb.collection('plays').doc(resolvedParams.id).get();
+  if (!docSnap.exists) return { title: 'Oyun Bulunamadı' };
+  const play = docSnap.data() as any;
+  
+  return {
+    title: play.title,
+    description: play.description.substring(0, 160) + "...",
+    openGraph: {
+      title: play.title,
+      description: play.description.substring(0, 160) + "...",
+      images: [play.imageUrl],
+    }
+  };
+}
 
 export default async function PlayDetail({ params }: { params: Promise<{ id: string }> }) {
   const resolvedParams = await params;
