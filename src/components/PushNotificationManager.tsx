@@ -43,15 +43,24 @@ export default function PushNotificationManager({ session }: { session: any }) {
       setPermission(res);
       
       if (res === 'granted') {
-        console.log('[PUSH] İzin verildi, token alınıyor...');
-        const token = await getToken(messaging, {
-          vapidKey: 'BBic0Z64gSgIWMc36FjQmhoWCPcLR439g-PHq6eHTN8RLNj4M1mWM4QNrrCzb1heiQpPUD66SVjrbka-lIvIqw4'
-        });
-        if (token) {
-          console.log('[PUSH] Token başarıyla oluşturuldu.');
-          await saveFCMToken(token);
-        } else {
-          console.warn('[PUSH] Token boş döndü.');
+        console.log('[PUSH] İzin verildi, Service Worker bekleniyor...');
+        
+        // Service Worker'ın hazır olduğundan emin ol
+        if ('serviceWorker' in navigator) {
+          const registration = await navigator.serviceWorker.ready;
+          console.log('[PUSH] Service Worker hazır, token alınıyor...');
+          
+          const token = await getToken(messaging, {
+            serviceWorkerRegistration: registration,
+            vapidKey: 'BBic0Z64gSgIWMc36FjQmhoWCPcLR439g-PHq6eHTN8RLNj4M1mWM4QNrrCzb1heiQpPUD66SVjrbka-lIvIqw4'
+          });
+          
+          if (token) {
+            console.log('[PUSH] Token başarıyla oluşturuldu.');
+            await saveFCMToken(token);
+          } else {
+            console.warn('[PUSH] Token boş döndü.');
+          }
         }
       }
     } catch (error) {

@@ -342,6 +342,34 @@ async function sendPushToAll(title: string, body: string, url: string = '/') {
   }
 }
 
+// Kendi cihazını test etme
+export async function testPushToSelf() {
+  const session = await getServerSession(authOptions);
+  if (!session?.user?.email) return { error: "Oturum açmalısınız." };
+
+  const email = session.user.email.toLowerCase();
+  
+  try {
+    const tokensSnap = await adminDb.collection('fcmTokens').where('email', '==', email).get();
+    const tokens = tokensSnap.docs.map(doc => doc.id);
+
+    if (tokens.length === 0) return { error: "Cihazınız henüz kayıt edilmemiş. Lütfen bildirim butonuna basın." };
+
+    const message = {
+      notification: { 
+        title: "🎭 Test Bildirimi", 
+        body: "Tebrikler! Bildirim sisteminiz kusursuz çalışıyor." 
+      },
+      tokens: tokens
+    };
+
+    const response = await adminMessaging.sendEachForMulticast(message);
+    return { success: true, count: response.successCount };
+  } catch (error: any) {
+    return { error: error.message };
+  }
+}
+
 // Prova eklendiğinde bildirim gönder
 export async function addRehearsal(formData: FormData) {
   const title = formData.get('title') as string;
