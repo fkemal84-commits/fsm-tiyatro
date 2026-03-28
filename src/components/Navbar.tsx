@@ -9,6 +9,7 @@ import { signOut } from 'next-auth/react';
 export default function Navbar({ session }: { session?: any }) {
   const [scrolled, setScrolled] = useState(false);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [activeDropdown, setActiveDropdown] = useState<string | null>(null);
   const pathname = usePathname();
 
   useEffect(() => {
@@ -22,7 +23,14 @@ export default function Navbar({ session }: { session?: any }) {
   // Sayfa değiştiğinde menüyü otomatik kapat
   useEffect(() => {
     setIsMenuOpen(false);
+    setActiveDropdown(null);
   }, [pathname]);
+
+  const toggleDropdown = (name: string) => {
+    if (window.innerWidth <= 1024) {
+      setActiveDropdown(activeDropdown === name ? null : name);
+    }
+  };
 
   const role = session?.user?.role;
 
@@ -53,8 +61,8 @@ export default function Navbar({ session }: { session?: any }) {
             <li><Link href="/" className={pathname === '/' ? 'active' : ''}>Ana Sayfa</Link></li>
             
             {/* KULÜP DROPDOWN */}
-            <li className="nav-dropdown">
-              <span className="dropdown-trigger">
+            <li className={`nav-dropdown ${activeDropdown === 'klub' ? 'mobile-active' : ''}`}>
+              <span className="dropdown-trigger" onClick={() => toggleDropdown('klub')}>
                 Kulüp <ion-icon name="chevron-down-outline"></ion-icon>
               </span>
               <ul className="dropdown-menu">
@@ -68,8 +76,8 @@ export default function Navbar({ session }: { session?: any }) {
             
             {/* SAHNE ARKASI (DROPDOWN - AKTOR+) */}
             {(role === 'AKTOR' || role === 'SUPERADMIN' || role === 'ADMIN' || role === 'PLAYER' || role === 'DIRECTOR') && (
-              <li className="nav-dropdown">
-                <span className="dropdown-trigger" style={{ color: 'var(--primary-gold)' }}>
+              <li className={`nav-dropdown ${activeDropdown === 'stage' ? 'mobile-active' : ''}`}>
+                <span className="dropdown-trigger" style={{ color: 'var(--primary-gold)' }} onClick={() => toggleDropdown('stage')}>
                   Sahne Arkası <ion-icon name="star-outline"></ion-icon>
                 </span>
                 <ul className="dropdown-menu">
