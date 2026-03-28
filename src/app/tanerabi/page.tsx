@@ -24,7 +24,7 @@ export default function AdminSecretLogin() {
       setError('Kayıtlı e-posta veya şifre hatalı. Gizli alana giriş reddedildi.');
       setLoading(false);
     } else {
-      window.location.href = '/';
+      window.location.href = '/tanerabi/dashboard';
     }
   };
 

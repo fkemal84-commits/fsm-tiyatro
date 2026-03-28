@@ -13,7 +13,8 @@ export const authOptions: NextAuthOptions = {
       },
       async authorize(credentials) {
         if (!credentials?.email || !credentials?.password) return null;
-        const snapshot = await adminDb.collection('users').where('email', '==', credentials.email).limit(1).get();
+        const email = credentials.email.toLowerCase();
+        const snapshot = await adminDb.collection('users').where('email', '==', email).limit(1).get();
         if (snapshot.empty) return null;
         
         const userDoc = snapshot.docs[0];
