@@ -55,20 +55,20 @@ export default function AttendanceManager({
               <div 
                 key={u.id} 
                 onClick={() => handleToggle(u.id)}
-                className={`p-3 rounded-xl border cursor-pointer transition-all flex items-center justify-between ${
+                className={`p-3 rounded-xl frame-glow cursor-pointer transition-all flex items-center justify-between min-h-[60px] ${
                   attendance.includes(u.id) 
-                  ? 'bg-[var(--primary-gold)]/20 border-[var(--primary-gold)]' 
-                  : 'bg-white/5 border-white/5 hover:border-white/10'
+                  ? 'bg-[var(--primary-gold)]/20 border-t-[var(--primary-gold)]' 
+                  : 'bg-white/5 border-white/5'
                 }`}
               >
-                <div className="flex items-center gap-2">
-                  <div className={`w-8 h-8 rounded-full flex items-center justify-center text-[10px] font-bold ${attendance.includes(u.id) ? 'bg-[var(--primary-gold)] text-black' : 'bg-white/10 text-white'}`}>
+                <div className="flex items-center gap-3">
+                  <div className={`w-8 h-8 min-w-[2rem] rounded-full flex items-center justify-center text-[10px] font-bold ${attendance.includes(u.id) ? 'bg-[var(--primary-gold)] text-black' : 'bg-white/10 text-white'}`}>
                     {u.name[0]}{u.surname[0]}
                   </div>
                   <span className="text-xs text-white font-medium">{u.name} {u.surname}</span>
                 </div>
                 {attendance.includes(u.id) && (
-                  <ion-icon name="checkmark-circle" style={{ color: 'var(--primary-gold)' }}></ion-icon>
+                  <ion-icon name="checkmark-circle" style={{ color: 'var(--primary-gold)', fontSize: '1.2rem' }}></ion-icon>
                 )}
               </div>
             ))}

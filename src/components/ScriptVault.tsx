@@ -76,20 +76,20 @@ export default function ScriptVault({ initialScripts, canManage }: { initialScri
           </div>
         ) : (
           initialScripts.map((s) => (
-            <div key={s.id} className="group p-5 bg-white/5 rounded-xl border border-white/10 hover:border-[var(--primary-gold)] transition-all flex items-center justify-between">
+            <div key={s.id} className="group p-5 bg-white/5 rounded-xl frame-glow transition-all flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
               <div className="flex items-center gap-4">
-                <div className="w-12 h-12 rounded-lg bg-red-900/20 flex items-center justify-center text-red-500 text-2xl border border-red-500/20">
+                <div className="w-12 h-12 min-w-[3rem] rounded-lg bg-red-900/20 flex items-center justify-center text-red-500 text-2xl border border-red-500/20">
                   <ion-icon name="document-text"></ion-icon>
                 </div>
                 <div>
-                  <h3 className="text-white font-bold group-hover:text-[var(--primary-gold)] transition-colors">{s.title}</h3>
+                  <h3 className="text-white font-bold group-hover:text-[var(--primary-gold)] transition-colors leading-tight">{s.title}</h3>
                   <p className="text-[var(--text-muted)] text-[10px] uppercase tracking-tighter mt-1">
                     {s.author} • {new Date(s.createdAt).toLocaleDateString('tr-TR')}
                   </p>
                 </div>
               </div>
               
-              <div className="flex gap-3">
+              <div className="flex gap-3 w-full sm:w-auto justify-end border-t border-white/5 pt-4 sm:border-0 sm:pt-0">
                 <a 
                   href={s.fileUrl} 
                   target="_blank" 

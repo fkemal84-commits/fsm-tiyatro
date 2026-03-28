@@ -52,7 +52,7 @@ export default async function MembersDashboard() {
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-7xl mx-auto">
         
         {/* PROVALAR KARTI */}
-        <div className="glass-card">
+        <div className="glass-card frame-glow">
           <h2 className="text-white text-2xl mb-6 border-b border-white/10 pb-4 flex items-center gap-2">
             ✨ Yaklaşan Etkinlikler
           </h2>
@@ -102,7 +102,7 @@ export default async function MembersDashboard() {
         </div>
 
         {/* EKİP İHTİYAÇLARI */}
-        <div className="glass-card">
+        <div className="glass-card frame-glow">
           <h2 className="text-white text-2xl mb-6 border-b border-white/10 pb-4 flex items-center gap-2">
             🤝 Ekip İhtiyaç İlanları
           </h2>
