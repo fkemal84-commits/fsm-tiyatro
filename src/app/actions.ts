@@ -293,17 +293,20 @@ export async function updateProfile(formData: FormData) {
 
 export async function saveFCMToken(token: string) {
   const session = await getServerSession(authOptions);
-  if (!session?.user?.email) return;
+  if (!session?.user?.email) {
+    console.warn("[PUSH] Token kaydedilemedi: Oturum bulunamadı.");
+    return;
+  }
 
   const email = session.user.email.toLowerCase();
+  console.log(`[PUSH] Token kaydediliyor: ${email} - ${token.substring(0, 10)}...`);
   
-  // Token'ı kullanıcı dökümanına veya ayrı bir koleksiyona kaydet
-  // Burada kolaylık olması için fcmTokens koleksiyonuna kaydediyoruz
   await adminDb.collection('fcmTokens').doc(token).set({
     email,
     userId: (session.user as any).id || '',
     updatedAt: new Date().toISOString()
   });
+  console.log("[PUSH] Token başarıyla Firestore'a yazıldı.");
 }
 
 async function sendPushToAll(title: string, body: string, url: string = '/') {
@@ -311,7 +314,11 @@ async function sendPushToAll(title: string, body: string, url: string = '/') {
     const tokensSnap = await adminDb.collection('fcmTokens').get();
     const tokens = tokensSnap.docs.map(doc => doc.id);
 
-    if (tokens.length === 0) return;
+    console.log(`[PUSH] Gönderim başlatılıyor. Toplam hedef token: ${tokens.length}`);
+    if (tokens.length === 0) {
+      console.warn("[PUSH] Gönderim iptal edildi: Hiç kayıtlı token bulunamadı.");
+      return;
+    }
 
     const message = {
       notification: { title, body },
@@ -320,9 +327,18 @@ async function sendPushToAll(title: string, body: string, url: string = '/') {
     };
 
     const response = await adminMessaging.sendEachForMulticast(message);
-    console.log(`[PUSH] ${response.successCount} bildirim başarıyla gönderildi.`);
+    console.log(`[PUSH] Sonuç: ${response.successCount} başarılı, ${response.failureCount} başarısız.`);
+    
+    // Geçersiz token temizliği (opsiyonel ama iyi olur)
+    if (response.failureCount > 0) {
+      response.responses.forEach((resp, idx) => {
+        if (!resp.success) {
+          console.error(`[PUSH] Hata (Token: ${tokens[idx].substring(0, 10)}...):`, resp.error);
+        }
+      });
+    }
   } catch (error) {
-    console.error('[PUSH] Gönderim hatası:', error);
+    console.error('[PUSH] Kritik gönderim hatası:', error);
   }
 }
 

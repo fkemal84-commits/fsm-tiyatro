@@ -43,10 +43,16 @@ export default function PushNotificationManager({ session }: { session: any }) {
       setPermission(res);
       
       if (res === 'granted') {
+        console.log('[PUSH] İzin verildi, token alınıyor...');
         const token = await getToken(messaging, {
           vapidKey: 'BBic0Z64gSgIWMc36FjQmhoWCPcLR439g-PHq6eHTN8RLNj4M1mWM4QNrrCzb1heiQpPUD66SVjrbka-lIvIqw4'
         });
-        if (token) await saveFCMToken(token);
+        if (token) {
+          console.log('[PUSH] Token başarıyla oluşturuldu.');
+          await saveFCMToken(token);
+        } else {
+          console.warn('[PUSH] Token boş döndü.');
+        }
       }
     } catch (error) {
       console.error('[PUSH] İzin hatası:', error);
