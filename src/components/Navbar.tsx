@@ -51,35 +51,32 @@ export default function Navbar({ session }: { session?: any }) {
         <div className={`nav-content ${isMenuOpen ? 'open' : ''}`}>
           <ul className="nav-links">
             <li><Link href="/" className={pathname === '/' ? 'active' : ''}>Ana Sayfa</Link></li>
-            <li><Link href="/plays" className={pathname === '/plays' ? 'active' : ''}>Oyunlarımız</Link></li>
-            <li><Link href="/blog" className={pathname === '/blog' ? 'active' : ''}>Blog & Haberler</Link></li>
-            <li><Link href="/members" className={pathname === '/members' ? 'active' : ''}>Üye Panosu</Link></li>
             
+            {/* KULÜP DROPDOWN */}
+            <li className="nav-dropdown">
+              <span className="dropdown-trigger">
+                Kulüp <ion-icon name="chevron-down-outline"></ion-icon>
+              </span>
+              <ul className="dropdown-menu">
+                <li><Link href="/plays">Oyunlarımız 🎭</Link></li>
+                <li><Link href="/#about">Hakkımızda ℹ️</Link></li>
+                <li><Link href="/members">Üye Panosu 📋</Link></li>
+              </ul>
+            </li>
+
+            <li><Link href="/blog" className={pathname === '/blog' ? 'active' : ''}>Blog</Link></li>
+            
+            {/* SAHNE ARKASI (DROPDOWN - AKTOR+) */}
             {(role === 'AKTOR' || role === 'SUPERADMIN' || role === 'ADMIN' || role === 'PLAYER' || role === 'DIRECTOR') && (
               <li className="nav-dropdown">
-                <span className="dropdown-trigger">
-                  Sahne Arkası <ion-icon name="chevron-down-outline"></ion-icon>
+                <span className="dropdown-trigger" style={{ color: 'var(--primary-gold)' }}>
+                  Sahne Arkası <ion-icon name="star-outline"></ion-icon>
                 </span>
                 <ul className="dropdown-menu">
-                  <li>
-                    <Link href="/members/rehearsals" className={pathname === '/members/rehearsals' ? 'active' : ''}>
-                      Prova Takvimi 📅
-                    </Link>
-                  </li>
-                  <li>
-                    <Link href="/members/team" className={pathname === '/members/team' ? 'active' : ''}>
-                      Ekip Rehberi 👥
-                    </Link>
-                  </li>
+                  <li><Link href="/members/rehearsals">Prova Takvimi 📅</Link></li>
+                  <li><Link href="/members/team">Ekip Rehberi 👥</Link></li>
+                  <li><Link href="/members/scripts">Senaryo Kasası 📄</Link></li>
                 </ul>
-              </li>
-            )}
-
-            {(role === 'SUPERADMIN' || role === 'ADMIN' || role === 'EDITOR') && (
-              <li>
-                <Link href="/tanerabi/dashboard" className={pathname.startsWith('/tanerabi') ? 'active' : ''} style={{ color: 'var(--primary-gold)' }}>
-                  {role === 'EDITOR' ? 'İçerik Stüdyosu' : 'Taner Abi Paneli'}
-                </Link>
               </li>
             )}
           </ul>

@@ -117,7 +117,8 @@ h1, h2, h3, h4, .serif-font {
 
 .nav-links {
   display: flex;
-  gap: 2rem;
+  align-items: center;
+  gap: 2.5rem;
   list-style: none;
   margin: 0;
   padding: 0;
@@ -250,10 +251,16 @@ h1, h2, h3, h4, .serif-font {
 .dropdown-trigger {
   display: flex;
   align-items: center;
-  gap: 0.4rem;
-  color: var(--primary-gold) !important;
-  font-weight: 600 !important;
+  gap: 0.5rem;
+  color: #fff;
+  font-weight: 500;
   padding: 0.5rem 0;
+  transition: color 0.3s;
+  cursor: none !important;
+}
+
+.dropdown-trigger:hover {
+  color: var(--primary-gold);
 }
 
 .dropdown-menu {
