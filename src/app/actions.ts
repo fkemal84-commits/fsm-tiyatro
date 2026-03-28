@@ -454,3 +454,54 @@ export async function deletePlay(formData: FormData) {
   revalidatePath('/plays');
   revalidatePath('/tanerabi/dashboard');
 }
+
+export async function addEvent(formData: FormData) {
+  const title = formData.get('title') as string;
+  const date = formData.get('date') as string;
+  const location = formData.get('location') as string;
+  const description = formData.get('description') as string;
+
+  if (!title || !date || !location) return;
+
+  await requireAuth(['SUPERADMIN', 'ADMIN']);
+
+  await adminDb.collection('events').add({ 
+      title, 
+      date, 
+      location, 
+      description: description || '',
+      createdAt: new Date().toISOString()
+  });
+  revalidatePath('/members');
+}
+
+export async function joinEvent(formData: FormData) {
+  const eventId = formData.get('eventId') as string;
+  const eventTitle = formData.get('eventTitle') as string;
+
+  const session = await getServerSession(authOptions);
+  if (!session?.user?.email) return { error: "Giriş yapmalısınız." };
+
+  await adminDb.collection('eventRequests').add({
+    eventId,
+    eventTitle,
+    userId: (session.user as any).id || '',
+    userName: session.user.name || 'İsimsiz Üye',
+    userEmail: session.user.email,
+    status: 'PENDING',
+    createdAt: new Date().toISOString()
+  });
+
+  return { success: true };
+}
+
+export async function deleteEvent(formData: FormData) {
+  const eventId = formData.get('eventId') as string;
+  if (!eventId) return;
+
+  await requireAuth(['SUPERADMIN', 'ADMIN']);
+  await adminDb.collection('events').doc(eventId).delete();
+
+  revalidatePath('/members');
+  revalidatePath('/tanerabi/dashboard');
+}

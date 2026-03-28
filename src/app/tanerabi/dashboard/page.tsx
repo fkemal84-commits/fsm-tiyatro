@@ -1,4 +1,4 @@
-import { addPost, addPlay, changeUserRole, deletePost, deletePlay, approveUser } from '@/app/actions';
+import { addPost, addPlay, changeUserRole, deletePost, deletePlay, approveUser, addEvent, deleteEvent } from '@/app/actions';
 import DeleteButton from '@/components/DeleteButton';
 import { adminDb } from '@/lib/firebase-admin';
 import { getServerSession } from "next-auth";
@@ -34,9 +34,16 @@ export default async function Dashboard() {
       .map(doc => ({ id: doc.id, ...doc.data() as any }))
       .sort((a, b) => new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime());
 
-    // Onay bekleyen kullanıcıları filtrele
     const pendingUsers = users.filter((u: any) => u.role === 'PENDING');
     const approvedUsers = users.filter((u: any) => u.role !== 'PENDING');
+
+    const eventsSnapshot = await adminDb.collection('events').get();
+    const events = eventsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() as any }));
+
+    const requestsSnapshot = await adminDb.collection('eventRequests').get();
+    const eventRequests = requestsSnapshot.docs
+      .map(doc => ({ id: doc.id, ...doc.data() as any }))
+      .sort((a,b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
 
     return (
       <div style={{ padding: '8rem 5% 4rem', minHeight: '100vh', background: 'var(--bg-dark)' }}>
@@ -79,6 +86,42 @@ export default async function Dashboard() {
             </div>
           </div>
         )}
+
+        {/* ETKİNLİK KATILIM TALEPLERİ */}
+        {(role === 'SUPERADMIN' || role === 'ADMIN') && eventRequests.length > 0 && (
+          <div className="glass-card" style={{ maxWidth: '1000px', margin: '0 auto 2rem', padding: '2rem', borderLeft: '4px solid var(--primary-gold)' }}>
+            <h2 style={{ color: '#fff', marginBottom: '1.5rem', fontSize: '1.5rem', display: 'flex', alignItems: 'center', gap: '0.8rem' }}>
+              <ion-icon name="notifications-outline" style={{ color: 'var(--primary-gold)' }}></ion-icon> Etkinlik Katılım Talepleri
+            </h2>
+            <div style={{ overflowX: 'auto' }}>
+              <table style={{ width: '100%', textAlign: 'left', color: '#fff', borderCollapse: 'collapse', fontSize: '0.9rem' }}>
+                <thead>
+                  <tr style={{ borderBottom: '1px solid rgba(255,255,255,0.2)' }}>
+                    <th style={{ padding: '0.8rem 1rem' }}>Üye</th>
+                    <th style={{ padding: '0.8rem 1rem' }}>Etkinlik</th>
+                    <th style={{ padding: '0.8rem 1rem' }}>Tarih</th>
+                    <th style={{ padding: '0.8rem 1rem' }}>Durum</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {eventRequests.map((req: any) => (
+                    <tr key={req.id} style={{ borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
+                      <td style={{ padding: '1rem' }}>
+                        <div style={{ fontWeight: 'bold' }}>{req.userName}</div>
+                        <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>{req.userEmail}</div>
+                      </td>
+                      <td style={{ padding: '1rem', color: 'var(--primary-gold)' }}>{req.eventTitle}</td>
+                      <td style={{ padding: '1rem' }}>{new Date(req.createdAt).toLocaleDateString('tr-TR')}</td>
+                      <td style={{ padding: '1rem' }}>
+                        <span style={{ padding: '0.2rem 0.6rem', borderRadius: '4px', fontSize: '0.7rem', background: 'rgba(212,175,55,0.1)', color: 'var(--primary-gold)', border: '1px solid rgba(212,175,55,0.2)' }}>YENİ</span>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        )}
         
         {/* ÜYE LİSTESİ - SADECE ADMIN VE SUPERADMIN GÖREBİLİR */}
         {(role === 'SUPERADMIN' || role === 'ADMIN') && (
@@ -113,12 +156,13 @@ export default async function Dashboard() {
                                 {role === 'SUPERADMIN' && <option value="SUPERADMIN">SUPERADMIN</option>}
                                 {role === 'SUPERADMIN' && <option value="ADMIN">ADMIN</option>}
                                 <option value="EDITOR">İÇERİK EDİTÖRÜ</option>
+                                <option value="PLAYER">OYUNCU</option>
                                 <option value="MEMBER">ÜYE</option>
                               </select>
                               <button type="submit" className="btn btn-outline" style={{ padding: '0.3rem 0.6rem', fontSize: '0.75rem', borderColor: 'var(--text-muted)' }}>Mührü Ver</button>
                             </form>
                           ) : (
-                            <span style={{ color: u.role === 'SUPERADMIN' ? '#ff4d4d' : u.role === 'ADMIN' ? 'var(--primary-gold)' : 'var(--text-muted)', fontWeight: 'bold' }}>{u.role === 'EDITOR' ? 'İÇERİK EDİTÖRÜ' : u.role === 'MEMBER' ? 'ÜYE' : u.role}</span>
+                            <span style={{ color: u.role === 'SUPERADMIN' ? '#ff4d4d' : u.role === 'ADMIN' ? 'var(--primary-gold)' : 'var(--text-muted)', fontWeight: 'bold' }}>{u.role === 'EDITOR' ? 'İÇERİK EDİTÖRÜ' : u.role === 'PLAYER' ? 'OYUNCU 🎭' : u.role === 'MEMBER' ? 'ÜYE' : u.role}</span>
                           )}
                         </td>
                         <td style={{ padding: '1rem' }}>{u.email}</td>
@@ -215,6 +259,43 @@ export default async function Dashboard() {
               </form>
             </div>
           )}
+
+          {/* Etkinlik Ekleme Formu */}
+          {(role === 'SUPERADMIN' || role === 'ADMIN') && (
+            <div className="glass-card">
+              <h2 style={{ color: '#fff', marginBottom: '1.5rem', fontSize: '1.5rem' }}>📢 Yeni Kulüp Etkinliği Ekle</h2>
+              <form action={addEvent} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                <input 
+                  type="text" 
+                  name="title" 
+                  placeholder="Etkinlik Başlığı" 
+                  style={{ padding: '1rem', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.2)', background: 'rgba(0,0,0,0.3)', color: '#fff' }}
+                  required
+                />
+                <input 
+                  type="text" 
+                  name="date" 
+                  placeholder="Tarih & Saat" 
+                  style={{ padding: '1rem', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.2)', background: 'rgba(0,0,0,0.3)', color: '#fff' }}
+                  required
+                />
+                <input 
+                  type="text" 
+                  name="location" 
+                  placeholder="Mekan / Platform" 
+                  style={{ padding: '1rem', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.2)', background: 'rgba(0,0,0,0.3)', color: '#fff' }}
+                  required
+                />
+                <textarea 
+                  name="description"
+                  placeholder="Kısa açıklama..." 
+                  rows={2}
+                  style={{ padding: '1rem', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.2)', background: 'rgba(0,0,0,0.3)', color: '#fff' }}
+                ></textarea>
+                <button type="submit" className="btn btn-primary" style={{ marginTop: '0.5rem' }}>Etkinliği Herkese Duyur</button>
+              </form>
+            </div>
+          )}
           
         </div>
 
@@ -245,25 +326,21 @@ export default async function Dashboard() {
 
             {/* Oyun Yönetimi */}
             <div>
-              <h3 style={{ color: 'var(--primary-gold)', marginBottom: '1rem', fontSize: '1.1rem' }}>Sistemdeki Oyunlar</h3>
+              <h3 style={{ color: 'var(--primary-gold)', marginBottom: '1rem', fontSize: '1.1rem' }}>Etkinlikler</h3>
               <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-                {plays.map((p: any) => (
-                  <div key={p.id} style={{ padding: '0.8rem', background: 'rgba(255,255,255,0.05)', borderRadius: '8px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                    <span style={{ color: '#fff', fontSize: '0.9rem' }}>{p.title} ({p.year})</span>
-                    {(role === 'SUPERADMIN' || role === 'ADMIN') ? (
-                      <DeleteButton 
-                        action={deletePlay} 
-                        id={p.id} 
-                        name={p.title} 
-                        confirmMessage="Bu oyunu sahneden tamamen kaldırmak istediğine emin misin?" 
-                        idFieldName="playId"
-                      />
-                    ) : (
-                      <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>Yetkiniz Yok</span>
-                    )}
+                {events.map((e: any) => (
+                  <div key={e.id} style={{ padding: '0.8rem', background: 'rgba(255,255,255,0.05)', borderRadius: '8px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <span style={{ color: '#fff', fontSize: '0.9rem' }}>{e.title}</span>
+                    <DeleteButton 
+                      action={deleteEvent} 
+                      id={e.id} 
+                      name={e.title} 
+                      confirmMessage="Bu etkinliği iptal etmek istiyor musun?" 
+                      idFieldName="eventId"
+                    />
                   </div>
                 ))}
-                {plays.length === 0 && <p style={{ color: 'var(--text-muted)', fontSize: '0.8rem' }}>Henüz hiç oyun eklenmemiş.</p>}
+                {events.length === 0 && <p style={{ color: 'var(--text-muted)', fontSize: '0.8rem' }}>Henüz hiç etkinlik yok.</p>}
               </div>
             </div>
           </div>
