@@ -35,7 +35,8 @@ export default function Navbar({ session }: { session?: any }) {
   const role = session?.user?.role;
 
   return (
-    <nav className={`navbar ${scrolled ? 'scrolled' : ''} ${isMenuOpen ? 'menu-open' : ''}`}>
+  return (
+    <nav className={`navbar ${scrolled ? 'scrolled' : ''}`}>
       <div className="nav-container">
         <Link href="/" className="flex items-center gap-3 group">
           <div className="relative w-10 h-10 overflow-hidden rounded-lg border border-[var(--primary-gold)]/20 group-hover:border-[var(--primary-gold)] transition-all">
@@ -51,74 +52,113 @@ export default function Navbar({ session }: { session?: any }) {
           </span>
         </Link>
         
-        {/* MOBİL MENÜ BUTONU */}
-        <button className="mobile-toggle" onClick={() => setIsMenuOpen(!isMenuOpen)}>
-          <ion-icon name={isMenuOpen ? "close-outline" : "menu-outline"}></ion-icon>
-        </button>
-
-        <div className={`nav-content ${isMenuOpen ? 'open' : ''}`}>
-          <ul className={`nav-links ${activeDropdown ? 'level-secondary' : ''}`}>
-            {/* LEVEL 1: MAIN LINKS */}
-            <li className="nav-level">
-              <Link href="/" className={pathname === '/' ? 'active' : ''}>Ana Sayfa</Link>
-              
-              <div className="dropdown-trigger" onClick={() => toggleDropdown('klub')}>
-                <span>Kulüp</span>
-                <ion-icon name="chevron-forward-outline"></ion-icon>
-              </div>
-
-              <Link href="/blog" className={pathname === '/blog' ? 'active' : ''}>Blog</Link>
-              
-              {(role === 'AKTOR' || role === 'SUPERADMIN' || role === 'ADMIN' || role === 'PLAYER' || role === 'DIRECTOR') && (
-                <div className="dropdown-trigger" style={{ color: 'var(--primary-gold)' }} onClick={() => toggleDropdown('stage')}>
-                  <span>Sahne Arkası</span>
-                  <ion-icon name="chevron-forward-outline"></ion-icon>
-                </div>
-              )}
+        {/* DESKTOP LINKS (Visible only on Desktop) */}
+        <div className="desktop-nav">
+          <ul className="nav-links">
+            <li><Link href="/" className={pathname === '/' ? 'active' : ''}>Ana Sayfa</Link></li>
+            
+            <li className="nav-dropdown">
+              <span className="dropdown-trigger">
+                Kulüp <ion-icon name="chevron-down-outline"></ion-icon>
+              </span>
+              <ul className="dropdown-menu">
+                <li><Link href="/plays">Oyunlarımız</Link></li>
+                <li><Link href="/#about">Hakkımızda</Link></li>
+                <li><Link href="/members">Üye Panosu</Link></li>
+              </ul>
             </li>
 
-            {/* LEVEL 2: SUB-MENU (ACTIVE DROPDOWN) */}
-            <li className="nav-level secondary-level">
-              <div className="back-button" onClick={() => setActiveDropdown(null)}>
-                <ion-icon name="arrow-back-outline"></ion-icon> Geri
-              </div>
-
-              {activeDropdown === 'klub' && (
-                <ul className="dropdown-menu-mobile">
-                  <li><Link href="/plays">Oyunlarımız</Link></li>
-                  <li><Link href="/#about">Hakkımızda</Link></li>
-                  <li><Link href="/members">Üye Panosu</Link></li>
-                </ul>
-              )}
-
-              {activeDropdown === 'stage' && (
-                <ul className="dropdown-menu-mobile">
+            <li><Link href="/blog" className={pathname === '/blog' ? 'active' : ''}>Blog</Link></li>
+            
+            {(role === 'AKTOR' || role === 'SUPERADMIN' || role === 'ADMIN' || role === 'PLAYER' || role === 'DIRECTOR') && (
+              <li className="nav-dropdown">
+                <span className="dropdown-trigger" style={{ color: 'var(--primary-gold)' }}>
+                  Sahne Arkası <ion-icon name="chevron-down-outline"></ion-icon>
+                </span>
+                <ul className="dropdown-menu">
                   <li><Link href="/members/rehearsals">Prova Takvimi</Link></li>
                   <li><Link href="/members/team">Ekip Rehberi</Link></li>
                   <li><Link href="/members/scripts">Senaryo Kasası</Link></li>
                 </ul>
-              )}
-            </li>
-          </ul>
-
-          <div className="nav-actions">
-            {session ? (
-              <>
-                <Link href="/profile" className="profile-link">Profilim</Link>
-                <button 
-                  onClick={() => signOut({ callbackUrl: '/' })} 
-                  className="btn btn-logout"
-                >
-                  Çıkış Yap
-                </button>
-              </>
-            ) : (
-              <>
-                <Link href="/login" className="login-link">Üye Girişi</Link>
-                <Link href="/register" className="btn btn-primary nav-reg-btn">Yeni Kayıt Ol</Link>
-              </>
+              </li>
             )}
+          </ul>
+        </div>
+
+        {/* MOBILE TOGGLE (Visible only on Mobile) */}
+        <button className="mobile-toggle" onClick={() => setIsMenuOpen(!isMenuOpen)}>
+          <ion-icon name={isMenuOpen ? "close-outline" : "menu-outline"}></ion-icon>
+        </button>
+
+        {/* MOBILE DRAWER (Visible only on Mobile) */}
+        <div className={`mobile-drawer ${isMenuOpen ? 'open' : ''}`}>
+          <div className="mobile-drawer-content">
+            <ul className={`mobile-nav-links ${activeDropdown ? 'slide-left' : ''}`}>
+              {/* LEVEL 1 */}
+              <li className="mobile-nav-level">
+                <Link href="/" onClick={() => setIsMenuOpen(false)}>Ana Sayfa</Link>
+                <div className="mobile-dropdown-trigger" onClick={() => setActiveDropdown('klub')}>
+                  Kulüp <ion-icon name="chevron-forward-outline"></ion-icon>
+                </div>
+                <Link href="/blog" onClick={() => setIsMenuOpen(false)}>Blog</Link>
+                {(role === 'AKTOR' || role === 'SUPERADMIN' || role === 'ADMIN' || role === 'PLAYER' || role === 'DIRECTOR') && (
+                  <div className="mobile-dropdown-trigger" style={{ color: 'var(--primary-gold)' }} onClick={() => setActiveDropdown('stage')}>
+                    Sahne Arkası <ion-icon name="chevron-forward-outline"></ion-icon>
+                  </div>
+                )}
+              </li>
+
+              {/* LEVEL 2 */}
+              <li className="mobile-nav-level secondary">
+                <div className="mobile-back-btn" onClick={() => setActiveDropdown(null)}>
+                  <ion-icon name="arrow-back-outline"></ion-icon> Geri
+                </div>
+                {activeDropdown === 'klub' && (
+                  <div className="mobile-sub-menu">
+                    <Link href="/plays" onClick={() => setIsMenuOpen(false)}>Oyunlarımız</Link>
+                    <Link href="/#about" onClick={() => setIsMenuOpen(false)}>Hakkımızda</Link>
+                    <Link href="/members" onClick={() => setIsMenuOpen(false)}>Üye Panosu</Link>
+                  </div>
+                )}
+                {activeDropdown === 'stage' && (
+                  <div className="mobile-sub-menu">
+                    <Link href="/members/rehearsals" onClick={() => setIsMenuOpen(false)}>Prova Takvimi</Link>
+                    <Link href="/members/team" onClick={() => setIsMenuOpen(false)}>Ekip Rehberi</Link>
+                    <Link href="/members/scripts" onClick={() => setIsMenuOpen(false)}>Senaryo Kasası</Link>
+                  </div>
+                )}
+              </li>
+            </ul>
+
+            <div className="mobile-nav-footer">
+              {session ? (
+                <>
+                  <Link href="/profile" onClick={() => setIsMenuOpen(false)}>Profilim</Link>
+                  <button onClick={() => signOut({ callbackUrl: '/' })} className="btn-logout-mobile">Çıkış Yap</button>
+                </>
+              ) : (
+                <>
+                  <Link href="/login" onClick={() => setIsMenuOpen(false)}>Giriş</Link>
+                  <Link href="/register" className="btn-primary-mobile" onClick={() => setIsMenuOpen(false)}>Kayıt Ol</Link>
+                </>
+              )}
+            </div>
           </div>
+        </div>
+
+        {/* DESKTOP ACTIONS */}
+        <div className="desktop-actions">
+          {session ? (
+            <>
+              <Link href="/profile" className="profile-link">Profilim</Link>
+              <button onClick={() => signOut({ callbackUrl: '/' })} className="btn btn-logout">Çıkış Yap</button>
+            </>
+          ) : (
+            <>
+              <Link href="/login" className="login-link">Üye Girişi</Link>
+              <Link href="/register" className="btn btn-primary nav-reg-btn">Yeni Kayıt Ol</Link>
+            </>
+          )}
         </div>
       </div>
     </nav>
