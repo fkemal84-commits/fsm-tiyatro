@@ -1,6 +1,7 @@
 import ScrollReveal from "@/components/ScrollReveal";
 import DeleteButton from "@/components/DeleteButton";
 import { Metadata } from "next";
+import Image from "next/image";
 
 export const metadata: Metadata = {
   title: "Sahnede İz Bırakanlar",
@@ -34,7 +35,15 @@ export default async function Plays() {
              plays.map(play => (
                 <ScrollReveal key={play.id}>
                   <div style={{ background: 'var(--bg-card)', border: 'var(--glass-border)', borderRadius: '12px', overflow: 'hidden', transition: 'var(--transition)' }}>
-                    <img src={play.imageUrl || ''} alt={`${play.title} Afiş`} style={{ width: '100%', height: '480px', objectFit: 'cover', borderBottom: 'var(--glass-border)' }} />
+                    <div style={{ position: 'relative', width: '100%', height: '480px', borderBottom: 'var(--glass-border)' }}>
+                      <Image 
+                        src={play.imageUrl || '/default-cover.svg'} 
+                        alt={`${play.title} Afiş`} 
+                        fill 
+                        style={{ objectFit: 'cover' }}
+                        sizes="(max-width: 768px) 100vw, 320px"
+                      />
+                    </div>
                     <div style={{ padding: '2rem', textAlign: 'center' }}>
                       <span style={{ color: 'var(--primary-gold)', fontWeight: 600, fontSize: '0.9rem', letterSpacing: '2px', marginBottom: '0.5rem', display: 'block' }}>{play.year}</span>
                       <h3 className="serif-font" style={{ fontSize: '1.8rem', color: '#fff', marginBottom: '1rem' }}>{play.title}</h3>

@@ -1,6 +1,7 @@
 import { adminDb } from '@/lib/firebase-admin';
 import { Metadata } from 'next';
 import { notFound } from 'next/navigation';
+import Image from 'next/image';
 
 export async function generateMetadata({ params }: { params: Promise<{ id: string }> }): Promise<Metadata> {
   const resolvedParams = await params;
@@ -30,21 +31,18 @@ export default async function BlogDetail({ params }: { params: Promise<{ id: str
     <div style={{ minHeight: '100vh', background: 'var(--bg-dark)' }}>
       {/* PARALLAX HERO SECTION */}
       <div 
-        className="parallax-hero"
-        style={{ 
-          height: '50vh', 
-          width: '100%', 
-          backgroundImage: `linear-gradient(to top, var(--bg-dark), rgba(0,0,0,0.5)), url('${post.imageUrl}')`,
-          backgroundSize: 'cover',
-          backgroundPosition: 'center',
-          backgroundAttachment: 'fixed',
-          display: 'flex',
-          alignItems: 'flex-end',
-          justifyContent: 'center',
-          paddingBottom: '3rem'
-        }}
+        className="relative h-[50vh] w-full flex items-end justify-center padding-bottom-3"
       >
-        <h1 className="serif-font" style={{ fontSize: '3.5rem', color: '#fff', textShadow: '0 4px 20px rgba(0,0,0,0.8)', textAlign: 'center', padding: '0 1rem', maxWidth: '800px' }}>
+        <Image 
+          src={post.imageUrl} 
+          alt={post.title} 
+          fill
+          priority
+          className="object-cover"
+          sizes="100vw"
+        />
+        <div className="absolute inset-0 bg-gradient-to-t from-[var(--bg-dark)] to-transparent opacity-60"></div>
+        <h1 className="relative serif-font z-10 text-[3.5rem] color-white text-center px-4 max-w-[800px] mb-12" style={{ textShadow: '0 4px 20px rgba(0,0,0,0.8)' }}>
           {post.title}
         </h1>
       </div>

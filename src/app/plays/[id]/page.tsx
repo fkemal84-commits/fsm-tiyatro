@@ -1,6 +1,7 @@
 import { adminDb } from '@/lib/firebase-admin';
 import { Metadata } from 'next';
 import { notFound } from 'next/navigation';
+import Image from 'next/image';
 
 export async function generateMetadata({ params }: { params: Promise<{ id: string }> }): Promise<Metadata> {
   const resolvedParams = await params;
@@ -42,21 +43,18 @@ export default async function PlayDetail({ params }: { params: Promise<{ id: str
     <div style={{ minHeight: '100vh', background: 'var(--bg-dark)' }}>
       {/* PARALLAX HERO SECTION */}
       <div 
-        className="parallax-hero"
-        style={{ 
-          height: '60vh', 
-          width: '100%', 
-          backgroundImage: `linear-gradient(to top, var(--bg-dark), rgba(0,0,0,0.3)), url('${play.imageUrl}')`,
-          backgroundSize: 'cover',
-          backgroundPosition: 'center',
-          backgroundAttachment: 'fixed', // Kaydırmada asılı kalma (Parallax) efekti
-          display: 'flex',
-          alignItems: 'flex-end',
-          justifyContent: 'center',
-          paddingBottom: '3rem'
-        }}
+        className="relative h-[60vh] w-full flex items-end justify-center padding-bottom-3"
       >
-        <h1 className="serif-font" style={{ fontSize: '4rem', color: 'var(--primary-gold)', textShadow: '0 4px 20px rgba(0,0,0,0.8)', textAlign: 'center', padding: '0 1rem' }}>
+        <Image 
+          src={play.imageUrl} 
+          alt={play.title} 
+          fill
+          priority
+          className="object-cover"
+          sizes="100vw"
+        />
+        <div className="absolute inset-0 bg-gradient-to-t from-[var(--bg-dark)] to-transparent opacity-40"></div>
+        <h1 className="relative serif-font z-10 text-[4rem] color-[var(--primary-gold)] text-center px-4 mb-12 font-bold" style={{ textShadow: '0 4px 20px rgba(0,0,0,0.8)' }}>
           {play.title}
         </h1>
       </div>
@@ -91,9 +89,17 @@ export default async function PlayDetail({ params }: { params: Promise<{ id: str
           <div style={{ marginTop: '4rem' }}>
              <h3 style={{ fontSize: '1.5rem', color: '#fff', marginBottom: '1rem', borderBottom: '1px solid rgba(255,255,255,0.1)', paddingBottom: '0.5rem' }}>Sahne Arkası & Galeri</h3>
              <div style={{ display: 'flex', overflowX: 'auto', gap: '1rem', paddingBottom: '1rem', scrollSnapType: 'x mandatory' }} className="hide-scrollbar">
-                {gallery.map((url: string, i: number) => (
-                  <img key={i} src={url.trim()} alt={`${play.title} Galerisi - ${i}`} style={{ height: '350px', width: 'auto', borderRadius: '8px', objectFit: 'cover', flexShrink: 0, scrollSnapAlign: 'start', border: '1px solid rgba(255,255,255,0.1)' }} />
-                ))}
+                 {gallery.map((url: string, i: number) => (
+                   <div key={i} style={{ position: 'relative', height: '350px', width: '500px', flexShrink: 0, scrollSnapAlign: 'start', borderRadius: '8px', overflow: 'hidden', border: '1px solid rgba(255,255,255,0.1)' }}>
+                     <Image 
+                        src={url.trim()} 
+                        alt={`${play.title} Galerisi - ${i}`} 
+                        fill
+                        className="object-cover"
+                        sizes="500px"
+                     />
+                   </div>
+                 ))}
              </div>
              <p style={{ color: 'var(--text-muted)', fontSize: '0.8rem', textAlign: 'center', marginTop: '0.5rem' }}>Fotoğrafları kaydırmak için sağa sürükleyin</p>
           </div>

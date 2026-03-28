@@ -5,6 +5,7 @@ import { authOptions } from "@/lib/auth";
 import { addPost, deletePost } from "@/app/actions";
 import DeleteButton from "@/components/DeleteButton";
 import { Metadata } from "next";
+import Image from "next/image";
 
 export const metadata: Metadata = {
   title: "Blog",
@@ -115,11 +116,13 @@ export default async function Blog() {
                     <ScrollReveal key={post.id}>
                       <article className="flex flex-col md:flex-row bg-[rgba(20,20,24,0.6)] backdrop-blur-md border border-white/10 rounded-2xl overflow-hidden transition-all duration-300 hover:-translate-y-2 hover:border-[#D4AF3744] h-full">
                           {post.imageUrl && (
-                            <div className="w-full md:w-[420px] md:min-w-[420px] max-h-[50vh] md:max-h-none overflow-hidden">
-                              <img 
+                            <div className="relative w-full md:w-[420px] md:min-w-[420px] h-[300px] md:h-auto overflow-hidden">
+                              <Image 
                                 src={post.imageUrl} 
                                 alt={post.title} 
-                                className="w-full h-full object-cover"
+                                fill
+                                className="object-cover"
+                                sizes="(max-width: 768px) 100vw, 420px"
                               />
                             </div>
                           )}
