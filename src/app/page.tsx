@@ -32,9 +32,20 @@ export default function Home() {
           </ScrollReveal>
           
           <ScrollReveal className="glass-card">
-            <div style={{ fontSize: '2.5rem', color: 'var(--primary-gold)', marginBottom: '1rem', display: 'flex', gap: '0.5rem' }}>
-              <ion-icon name="happy-outline"></ion-icon>
-              <ion-icon name="sad-outline" style={{ transform: 'translateX(-5px)' }}></ion-icon>
+            <div style={{ marginBottom: '1rem', color: 'var(--primary-gold)' }}>
+              <svg width="45" height="45" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                {/* Komedi Maskesi */}
+                <path d="M8 14c1.5 0 3-1 3-3s-1.5-3-3-3-3 1-3 3 1.5 3 3 3z" />
+                <path d="M6 11h.01M10 11h.01" />
+                <path d="M7 13c1 1 2 1 2 0" />
+                {/* Trajedi Maskesi */}
+                <path d="M16 14c1.5 0 3 1 3 3s-1.5 3-3 3-3-1-3-3 1.5-3 3-3z" />
+                <path d="M14 17h.01M18 17h.01" />
+                <path d="M15 19c1-1 2-1 2 0" />
+                {/* Bağlantı Çizgileri */}
+                <path d="M11 11c0-3 2-5 5-5s5 2 5 5" />
+                <path d="M3 11c0-3 2-5 5-5s5 2 5 5" />
+              </svg>
             </div>
             <h3 style={{ fontSize: '1.5rem', color: '#fff', marginBottom: '1rem' }}>Tiyatro Ruhu</h3>
             <p style={{ color: 'var(--text-muted)' }}>Klasik eserlerden modern tiyatroya uzanan geniş bir yelpazede, profesyonel prodüksiyonlar çıkarıyoruz.</p>
