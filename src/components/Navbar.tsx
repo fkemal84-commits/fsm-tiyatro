@@ -35,7 +35,6 @@ export default function Navbar({ session }: { session?: any }) {
   const role = session?.user?.role;
 
   return (
-  return (
     <nav className={`navbar ${scrolled ? 'scrolled' : ''}`}>
       <div className="nav-container">
         <Link href="/" className="flex items-center gap-3 group">
