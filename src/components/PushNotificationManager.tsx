@@ -6,21 +6,41 @@ import { messaging } from '@/lib/firebase';
 import { saveFCMToken } from '@/app/actions';
 
 export default function PushNotificationManager({ session }: { session: any }) {
-  const [permission, setPermission] = useState<NotificationPermission>('default');
+  const [permission, setPermission] = useState<string>('default');
   const [isIOS, setIsIOS] = useState(false);
   const [isStandalone, setIsStandalone] = useState(false);
+  const [isSupported, setIsSupported] = useState(true);
 
   useEffect(() => {
     if (typeof window !== 'undefined') {
+      // Notification desteği kontrolü
+      if (!('Notification' in window)) {
+        setIsSupported(false);
+        return;
+      }
+      
       setPermission(Notification.permission);
       setIsIOS(/iPad|iPhone|iPod/.test(navigator.userAgent) && !(window as any).MSStream);
       setIsStandalone(window.matchMedia('(display-mode: standalone)').matches);
+      
+      // Mesaj dinleyiciyi kur
+      if (messaging) {
+        onMessage(messaging, (payload) => {
+          if (payload.notification) {
+            new Notification(payload.notification.title || 'FSM Tiyatro', {
+              body: payload.notification.body,
+              icon: '/logo.jpg'
+            });
+          }
+        });
+      }
     }
   }, []);
 
   const handleRequestPermission = async () => {
     try {
-      if (!messaging) return;
+      if (!messaging || typeof window === 'undefined' || !('Notification' in window)) return;
+      
       const res = await Notification.requestPermission();
       setPermission(res);
       
@@ -35,17 +55,12 @@ export default function PushNotificationManager({ session }: { session: any }) {
     }
   };
 
-  useEffect(() => {
-    if (permission === 'granted' && session?.user?.email && messaging) {
-      handleRequestPermission(); // Sessizce token yenile/kaydet
-    }
-  }, [permission, session]);
-
-  if (!session || permission === 'granted') return null;
+  // Sadece session varsa ve destekleniyorsa göster
+  if (!isSupported || !session || permission === 'granted') return null;
 
   return (
     <div className="fixed bottom-24 left-[5%] right-[5%] z-[1001] sm:left-auto sm:right-10 sm:w-[400px]">
-      <div className="glass-card p-6 border-[var(--primary-gold)]/30 border-2 bg-[rgba(5,5,5,0.95)] shadow-[0_0_20px_rgba(212,175,55,0.2)] animate-slide-up">
+      <div className="glass-card p-6 border-[var(--primary-gold)]/30 border-2 bg-[rgba(5,5,5,0.95)] shadow-[0_0_20px_rgba(212,175,55,0.2)]">
         <div className="flex gap-4 items-start">
           <div className="text-3xl">🎭</div>
           <div className="flex-1">
@@ -71,7 +86,7 @@ export default function PushNotificationManager({ session }: { session: any }) {
             )}
             
             <button 
-              onClick={() => setPermission('denied')} // Geçici kapatma simülasyonu
+              onClick={() => setPermission('denied')}
               className="mt-2 w-full text-center text-xs text-white/30 hover:text-white/60"
             >
               Daha sonra
