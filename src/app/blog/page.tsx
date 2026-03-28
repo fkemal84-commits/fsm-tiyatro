@@ -4,6 +4,12 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { addPost, deletePost } from "@/app/actions";
 import DeleteButton from "@/components/DeleteButton";
+import { Metadata } from "next";
+
+export const metadata: Metadata = {
+  title: "Blog",
+  description: "FSM Tiyatro kulisinden haberler, makaleler ve en güncel duyurular.",
+};
 
 export const dynamic = 'force-dynamic';
 
