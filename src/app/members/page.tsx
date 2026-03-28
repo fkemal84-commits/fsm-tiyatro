@@ -112,12 +112,3 @@ export default async function MembersDashboard() {
     </div>
   );
 }
-}
-            </ul>
-          )}
-        </div>
-
-      </div>
-    </div>
-  );
-}
