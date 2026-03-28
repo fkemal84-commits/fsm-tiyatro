@@ -64,8 +64,8 @@ async function uploadToStorage(file: File, folder: string) {
     throw new Error("Dosya boyutu çok büyük! Maksimum 2 MB yükleyebilirsiniz.");
   }
 
-  // 2. Dosya Formatı Kontrolü (JPG, PNG, WEBP)
-  const allowedTypes = ['image/jpeg', 'image/png', 'image/webp'];
+  // 2. Dosya Formatı Kontrolü (JPG, PNG, WEBP, GIF)
+  const allowedTypes = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'];
   if (!allowedTypes.includes(file.type)) {
     console.error(`[STORAGE] Hata: Geçersiz format! (${file.type})`);
     throw new Error("Geçersiz dosya formatı! Sadece JPG, PNG ve WEBP yükleyebilirsiniz.");
@@ -90,16 +90,16 @@ async function uploadToStorage(file: File, folder: string) {
         cacheControl: 'public, max-age=31536000'
       }
     });
+    console.log(`[STORAGE] Dosya kaydedildi, public hale getiriliyor...`);
     
-    // 3. Dosyayı public hale getirmeyi dene (Hata alırsa bucket seviyesinde yetki beklenir)
+    // 3. Dosyayı public hale getirmeyi dene
     try {
       await fileRef.makePublic();
     } catch (e: any) {
-      console.warn(`[STORAGE] makePublic() uyarısı (Uniform Access açık olabilir): ${e.message}`);
+      console.warn(`[STORAGE] makePublic() uyarısı: ${e.message}`);
     }
     
-    // 4. URL Oluşturma: Hem Cloud Storage hem Firebase formatını desteklemek için
-    // Eğer bucket ismi varsa manuel oluşturmak bazen daha güvenlidir
+    // 4. URL Oluşturma
     let publicUrl = "";
     if (bucketName) {
       publicUrl = `https://storage.googleapis.com/${bucketName}/${filename}`;
@@ -107,7 +107,7 @@ async function uploadToStorage(file: File, folder: string) {
       publicUrl = fileRef.publicUrl();
     }
     
-    console.log(`[STORAGE] Yükleme başarılı! URL: ${publicUrl}`);
+    console.log(`[STORAGE] Yükleme tamamlandı. URL: ${publicUrl}`);
     return publicUrl;
   } catch (error: any) {
     console.error("[STORAGE] Firebase kayıt hatası:", error.message);
@@ -361,21 +361,30 @@ export async function uploadAvatar(formData: FormData) {
   if (!file) return { error: "Yüklenecek dijital veri tespiti başarısız." };
 
   const session = await getServerSession(authOptions);
-  if (!session?.user?.email) return { error: "Yetki ihlali." };
+  if (!session?.user?.email) return { error: "Yetki ihlali. Oturumunuz kapanmış olabilir." };
 
   try {
-    const folder = `avatars/${session.user.email.replace(/[@.]/g, '_')}`;
+    const email = session.user.email.toLowerCase();
+    const folder = `avatars/${email.replace(/[@.]/g, '_')}`;
+    console.log(`[AVATAR] ${email} için avatar yüklemesi başlatıldı...`);
+    
     const publicUrl = await uploadToStorage(file, folder);
 
-    const querySnapshot = await adminDb.collection('users').where('email', '==', session.user.email).limit(1).get();
-    if (!querySnapshot.empty) {
-        await querySnapshot.docs[0].ref.update({ photoUrl: publicUrl });
+    const querySnapshot = await adminDb.collection('users').where('email', '==', email).limit(1).get();
+    
+    if (querySnapshot.empty) {
+      console.error(`[AVATAR] Hata: ${email} için kullanıcı kaydı bulunamadı!`);
+      return { error: "Profil kaydınız bulunamadı. Lütfen yöneticiye danışın." };
     }
 
+    await querySnapshot.docs[0].ref.update({ photoUrl: publicUrl });
+    console.log(`[AVATAR] Kullanıcı dökümanı güncellendi: ${publicUrl}`);
+
     revalidatePath('/profile');
+    revalidatePath('/tanerabi/dashboard');
     return { success: true, photoUrl: publicUrl };
   } catch (error: any) {
-    console.error("Avatar yükleme hatası:", error);
+    console.error("[AVATAR] Kritik hata:", error);
     return { error: error.message || "Bulut sunucusu (Firebase) resmi reddetti." };
   }
 }
