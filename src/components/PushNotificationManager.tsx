@@ -13,7 +13,6 @@ export default function PushNotificationManager({ session }: { session: any }) {
 
   useEffect(() => {
     if (typeof window !== 'undefined') {
-      // Notification desteği kontrolü
       if (!('Notification' in window)) {
         setIsSupported(false);
         return;
@@ -23,7 +22,6 @@ export default function PushNotificationManager({ session }: { session: any }) {
       setIsIOS(/iPad|iPhone|iPod/.test(navigator.userAgent) && !(window as any).MSStream);
       setIsStandalone(window.matchMedia('(display-mode: standalone)').matches);
       
-      // Mesaj dinleyiciyi kur
       if (messaging) {
         onMessage(messaging, (payload) => {
           if (payload.notification) {
@@ -55,43 +53,56 @@ export default function PushNotificationManager({ session }: { session: any }) {
     }
   };
 
-  // Sadece session varsa ve destekleniyorsa göster
   if (!isSupported || !session || permission === 'granted') return null;
 
   return (
-    <div className="fixed bottom-24 left-[5%] right-[5%] z-[1001] sm:left-auto sm:right-10 sm:w-[400px]">
-      <div className="glass-card p-6 border-[var(--primary-gold)]/30 border-2 bg-[rgba(5,5,5,0.95)] shadow-[0_0_20px_rgba(212,175,55,0.2)]">
-        <div className="flex gap-4 items-start">
-          <div className="text-3xl">🎭</div>
-          <div className="flex-1">
-            <h4 className="serif-font text-white text-lg mb-1">Sahne Seni Bekliyor!</h4>
-            <p className="text-[var(--text-muted)] text-sm mb-4">
-              Provada geç kalmamak ve önemli duyuruları kaçırmamak için bildirimleri açmalısın abi.
-            </p>
-            
-            {isIOS && !isStandalone ? (
-              <div className="p-3 bg-white/5 rounded-lg border border-white/10 mb-4">
-                <p className="text-xs text-[var(--primary-gold)] leading-relaxed">
-                  📢 <strong>iPhone/iPad Notu:</strong> <br/>
-                  Bildirim alabilmek için önce alttaki <strong>Paylaş</strong> simgesine basıp <strong>"Ana Ekrana Ekle"</strong> yapman gerek!
-                </p>
-              </div>
-            ) : (
+    <div className="fixed bottom-24 left-[5%] right-[5%] z-[1001] sm:left-auto sm:right-10 sm:w-[420px]">
+      <div className="glass-card p-8 border-[var(--primary-gold)]/30 border bg-[rgba(5,5,5,0.98)] shadow-[0_15px_35px_rgba(0,0,0,0.8)] backdrop-blur-xl rounded-2xl overflow-hidden relative group">
+        {/* Dekoratif Işıklandırma */}
+        <div className="absolute -top-10 -right-10 w-32 h-32 bg-[var(--primary-gold)]/10 rounded-full blur-3xl group-hover:bg-[var(--primary-gold)]/20 transition-all duration-700"></div>
+        
+        <div className="relative flex flex-col gap-6">
+          <div className="flex items-center gap-4">
+            <div className="w-14 h-14 rounded-xl bg-gradient-to-br from-[var(--primary-gold)] to-[#b8860b] flex items-center justify-center text-2xl shadow-lg shadow-[var(--primary-gold)]/20">
+              <ion-icon name="notifications-outline" className="text-black"></ion-icon>
+            </div>
+            <div>
+              <h4 className="serif-font text-white text-xl tracking-tight">Dijital Sahneye Bağlanın</h4>
+              <div className="w-12 h-1 bg-[var(--primary-gold)] rounded-full mt-1"></div>
+            </div>
+          </div>
+
+          <p className="text-white/70 text-sm leading-relaxed">
+            Prova saatleri, kritik duyurular ve ekip güncellemelerini anlık olarak almak için bildirim izinlerini etkinleştirin.
+          </p>
+          
+          {isIOS && !isStandalone ? (
+            <div className="p-4 bg-[rgba(212,175,55,0.05)] border border-[var(--primary-gold)]/20 rounded-xl space-y-3">
+              <p className="text-[11px] text-[var(--primary-gold)] uppercase font-bold tracking-widest flex items-center gap-2">
+                <ion-icon name="information-circle-outline"></ion-icon> iPhone / iPad Kullanıcıları İçin
+              </p>
+              <p className="text-[13px] text-white/90 leading-normal">
+                iOS cihazlarda bildirimleri aktif edebilmek için önce tarayıcıdaki <strong>Paylaş</strong> <ion-icon name="share-outline" className="inline-block translate-y-[2px]"></ion-icon> simgesine basıp <strong>"Ana Ekrana Ekle"</strong> seçeneğini kullanmalısınız. Ardından uygulamayı ana ekrandan açarak bildirimleri etkinleştirebilirsiniz.
+              </p>
+            </div>
+          ) : (
+            <div className="space-y-3">
               <button 
                 onClick={handleRequestPermission}
-                className="btn-primary w-full py-2 hover:scale-105 transition-transform"
+                className="w-full bg-[var(--primary-gold)] hover:bg-[#b8860b] text-black font-bold py-3.5 rounded-xl transition-all shadow-lg hover:shadow-[var(--primary-gold)]/30 flex items-center justify-center gap-2 text-sm uppercase tracking-wider"
               >
-                Bildirimleri Etkinleştir 🔔
+                Bildirimleri Etkinleştir
               </button>
-            )}
-            
-            <button 
-              onClick={() => setPermission('denied')}
-              className="mt-2 w-full text-center text-xs text-white/30 hover:text-white/60"
-            >
-              Daha sonra
-            </button>
-          </div>
+              <p className="text-center text-[10px] text-white/40 uppercase tracking-[2px]">FSM Tiyatro Portalı • Resmi Duyuru Sistemi</p>
+            </div>
+          )}
+          
+          <button 
+            onClick={() => setPermission('denied')}
+            className="text-white/30 hover:text-white/60 text-[11px] uppercase tracking-widest transition-colors font-medium text-center"
+          >
+            Daha Sonra Hatırlat
+          </button>
         </div>
       </div>
     </div>
