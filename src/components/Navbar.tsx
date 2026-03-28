@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 import { usePathname } from 'next/navigation';
 import { signOut } from 'next-auth/react';
 
@@ -28,7 +29,19 @@ export default function Navbar({ session }: { session?: any }) {
   return (
     <nav className={`navbar ${scrolled ? 'scrolled' : ''} ${isMenuOpen ? 'menu-open' : ''}`}>
       <div className="nav-container">
-        <Link href="/" className="nav-logo">FSM<span>Tiyatro</span></Link>
+        <Link href="/" className="flex items-center gap-3 group">
+          <div className="relative w-10 h-10 overflow-hidden rounded-lg border border-[var(--primary-gold)]/20 group-hover:border-[var(--primary-gold)] transition-all">
+            <Image 
+              src="/logo.jpg" 
+              alt="FSM Tiyatro Logo" 
+              fill 
+              className="object-cover"
+            />
+          </div>
+          <span className="serif-font text-2xl tracking-widest text-white group-hover:text-[var(--primary-gold)] transition-all">
+            FSM <span className="text-[var(--primary-gold)]">TİYATRO</span>
+          </span>
+        </Link>
         
         {/* MOBİL MENÜ BUTONU */}
         <button className="mobile-toggle" onClick={() => setIsMenuOpen(!isMenuOpen)}>
