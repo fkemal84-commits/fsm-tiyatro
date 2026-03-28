@@ -2,7 +2,7 @@
 @import "tailwindcss";
 
 :root {
-  --bg-dark: #0a0a0c;
+  --bg-dark: #050505;
   --bg-card: rgba(20, 20, 24, 0.6);
   --primary-gold: #D4AF37;
   --primary-gold-dim: rgba(212, 175, 55, 0.2);
@@ -42,6 +42,7 @@ body {
 
 h1, h2, h3, h4, .serif-font {
   font-family: 'Playfair Display', serif;
+  letter-spacing: -1px;
 }
 
 /* Nav */
@@ -312,7 +313,7 @@ h1, h2, h3, h4, .serif-font {
   content: '';
   position: absolute;
   top: 0; left: 0; right: 0; bottom: 0;
-  background-image: radial-gradient(circle at 50% 50%, rgba(139, 0, 0, 0.3) 0%, var(--bg-dark) 80%);
+  background-image: radial-gradient(circle at 50% 30%, rgba(139, 0, 0, 0.2) 0%, #050505 70%);
   z-index: -1;
 }
 
@@ -358,10 +359,10 @@ h1, h2, h3, h4, .serif-font {
 }
 
 .glass-card:hover {
-  transform: translateY(-10px);
+  transform: translateY(-8px);
   border-color: rgba(212, 175, 55, 0.4);
   background: rgba(30, 30, 36, 0.8);
-  box-shadow: 0 15px 40px rgba(0, 0, 0, 0.5), 0 0 25px var(--primary-gold-dim);
+  box-shadow: 0 15px 40px rgba(0, 0, 0, 0.5), 0 0 25px rgba(212, 175, 55, 0.15);
 }
 
 @media (max-width: 768px) {

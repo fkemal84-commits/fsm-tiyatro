@@ -60,7 +60,39 @@ export default function Register() {
                 <input type="text" name="surname" placeholder="Soyadınız" style={{ flex: 1, padding: '0.8rem', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.2)', background: 'rgba(0,0,0,0.3)', color: '#fff' }} required />
               </div>
               <input type="email" name="email" placeholder="Okul (fsm.edu.tr) veya Kişisel E-posta" style={{ padding: '0.8rem', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.2)', background: 'rgba(0,0,0,0.3)', color: '#fff' }} required />
-              <input type="tel" name="phone" placeholder="Telefon Numarası (05XX)" style={{ padding: '0.8rem', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.2)', background: 'rgba(0,0,0,0.3)', color: '#fff' }} required />
+              <div style={{ display: 'flex', gap: '0.5rem' }}>
+                <select 
+                  name="countryCode" 
+                  style={{ 
+                    padding: '0.8rem', 
+                    borderRadius: '8px', 
+                    border: '1px solid rgba(255,255,255,0.2)', 
+                    background: 'rgba(0,0,0,0.3)', 
+                    color: '#fff',
+                    width: '90px'
+                  }} 
+                  defaultValue="+90"
+                >
+                  <option value="+90">TR +90</option>
+                  <option value="+1">US +1</option>
+                  <option value="+44">UK +44</option>
+                  <option value="+49">DE +49</option>
+                  <option value="+33">FR +3 French</option>
+                  <option value="+31">NL +31</option>
+                  <option value="+971">UAE +971</option>
+                  <option value="+966">SA +966</option>
+                  <option value="+90">Diğer</option>
+                </select>
+                <input 
+                  type="tel" 
+                  name="phone" 
+                  placeholder="5XX XXX XX XX" 
+                  style={{ flex: 1, padding: '0.8rem', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.2)', background: 'rgba(0,0,0,0.3)', color: '#fff' }} 
+                  required 
+                  pattern="[0-9]{10}"
+                  title="Lütfen 10 haneli telefon numaranızı başında 0 olmadan giriniz (Örn: 5321234567)"
+                />
+              </div>
               <input type="password" name="password" placeholder="Sisteme Giriş Şifrenizi Belirleyin" style={{ padding: '0.8rem', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.2)', background: 'rgba(0,0,0,0.3)', color: '#fff' }} required minLength={6} />
               
               <label style={{ display: 'flex', gap: '0.8rem', alignItems: 'flex-start', margin: '0.5rem 0', cursor: 'pointer', fontSize: '0.85rem', color: 'var(--text-muted)' }}>

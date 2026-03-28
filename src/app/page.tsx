@@ -6,7 +6,7 @@ export default function Home() {
       {/* Hero Section */}
       <section className="hero" id="home">
         <div className="hero-content">
-          <h1 className="serif-font">Sahnenin Büyüsüne<br/>Hoş Geldiniz</h1>
+          <h1 className="serif-font">Perde Hiç Kapanmasın:<br/>Sanatın ve Gerçeğin Kesişme Noktası</h1>
           <p>Fatih Sultan Mehmet Vakıf Üniversitesi Sinema ve Tiyatro Kulübü olarak sanatı, duyguyu ve hikayeyi sahneye taşıyor, her sezon iz bırakan eserlere imza atıyoruz.</p>
           <div className="hero-btns">
             <a href="/plays" className="btn btn-primary">Geçmiş Oyunlarımız</a>
@@ -90,13 +90,16 @@ export default function Home() {
               Sanatın üniversite ortamında yaşaması, öğrencilerimizin yeteneklerini sahnede sergileyebilmesi ve daha büyük prodüksiyonlara imza atmamız için yanımızda olun. Siz de markanızla geleceğin sanatçılarına "Mümkün" deyin.
             </p>
             <div style={{ display: 'flex', gap: '1.5rem', justifyContent: 'center', flexWrap: 'wrap' }}>
-              <a href="mailto:sponsorluk@fsmtiyatro.com" className="btn btn-primary" style={{ padding: '1rem 2.5rem' }}>Sponsorluk Dosyasını İndir</a>
-              <a href="https://wa.me/905XXXXXXX" className="btn btn-outline" style={{ padding: '1rem 2.5rem' }}>
-                <ion-icon name="logo-whatsapp" style={{ marginRight: '0.8rem', fontSize: '1.2rem' }}></ion-icon> Anında İletişim
+              <a href="#" className="btn btn-primary" style={{ padding: '1rem 2.5rem', pointerEvents: 'none', opacity: 0.8 }}>Sponsorluk Dosyasını İndir</a>
+              <a href="#" className="btn btn-outline" style={{ padding: '1rem 2.5rem', pointerEvents: 'none', opacity: 0.8 }}>
+                <ion-icon name="logo-whatsapp" style={{ marginRight: '0.8rem', fontSize: '1.2rem' }}></ion-icon> +90 5XX XXX XX XX
               </a>
             </div>
           </div>
         </ScrollReveal>
+        <div style={{ textAlign: 'center', marginTop: '4rem', color: 'var(--text-muted)', fontSize: '0.8rem', opacity: 0.6 }}>
+          FSM Tiyatro bir öğrenci topluluğudur
+        </div>
       </section>
     </main>
   );

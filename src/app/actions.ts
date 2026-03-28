@@ -191,12 +191,21 @@ export async function registerUser(formData: FormData) {
   const name = formData.get('name') as string;
   const surname = formData.get('surname') as string;
   const email = formData.get('email') as string;
-  const phone = formData.get('phone') as string;
+  const countryCode = formData.get('countryCode') as string;
+  const rawPhone = formData.get('phone') as string;
   const password = formData.get('password') as string;
   const consent = formData.get('consent') ? true : false;
 
-  if (!email || !password) return { error: "Email ve şifre zorunludur." };
+  if (!email || !password || !rawPhone) return { error: "Tüm alanlar zorunludur." };
   
+  // Telefon doğrulama (Sadece rakam ve 10 hane)
+  const phoneRegex = /^[0-9]{10}$/;
+  if (!phoneRegex.test(rawPhone)) {
+    return { error: "Lütfen geçerli bir telefon numarası giriniz (10 hane, başında 0 olmadan)." };
+  }
+
+  const phone = `${countryCode}${rawPhone}`;
+
   const existingUsers = await adminDb.collection('users').where('email', '==', email).limit(1).get();
   if (!existingUsers.empty) return { error: "Bu e-posta adresiyle zaten kayıt olunmuş." };
 
