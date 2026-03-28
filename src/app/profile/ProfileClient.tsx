@@ -111,8 +111,17 @@ export default function ProfileClient({ user }: { user: any }) {
             <div>
               <h1 className="serif-font" style={{ fontSize: '2.2rem', color: 'var(--primary-gold)', marginBottom: '0.2rem', lineHeight: '1' }}>{user?.name} {user?.surname}</h1>
               <p style={{ color: 'var(--text-muted)', marginBottom: '0.8rem' }}>{user?.email} • {user?.phone || 'Telefon Kayıtsız'}</p>
-              <div style={{ display: 'inline-block', padding: '0.3rem 1rem', background: 'rgba(212,175,55,0.15)', color: 'var(--primary-gold)', borderRadius: '20px', fontSize: '0.85rem', fontWeight: '800', letterSpacing: '1px' }}>
-                {user?.role === 'EDITOR' ? 'İÇERİK EDİTÖRÜ' : user?.role}
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
+                <div style={{ fontSize: '0.6rem', color: 'var(--primary-gold)', fontWeight: 'bold', letterSpacing: '2px', textTransform: 'uppercase' }}>
+                  YETKİ SEVİYESİ
+                </div>
+                <div style={{ display: 'inline-block', padding: '0.3rem 1rem', background: 'rgba(212,175,55,0.15)', color: 'var(--primary-gold)', borderRadius: '20px', fontSize: '0.85rem', fontWeight: '800', letterSpacing: '1px', width: 'fit-content' }}>
+                  {user?.role === 'EDITOR' ? 'İÇERİK EDİTÖRÜ' : 
+                   user?.role === 'AKTOR' ? 'AKTÖR 🎭' : 
+                   user?.role === 'PLAYER' ? 'OYUNCU (AKTÖR) 🎭' : 
+                   user?.role === 'MEMBER' ? 'ÜYE' : 
+                   user?.role}
+                </div>
               </div>
             </div>
           </div>

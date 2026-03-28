@@ -55,7 +55,7 @@ export default function Navbar({ session }: { session?: any }) {
             <li><Link href="/blog" className={pathname === '/blog' ? 'active' : ''}>Blog & Haberler</Link></li>
             <li><Link href="/members" className={pathname === '/members' ? 'active' : ''}>Üye Panosu</Link></li>
             
-            {(role === 'SUPERADMIN' || role === 'ADMIN' || role === 'AKTOR') && (
+            {(role === 'SUPERADMIN' || role === 'ADMIN' || role === 'AKTOR' || role === 'PLAYER') && (
               <li>
                 <Link href="/members/rehearsals" className={pathname === '/members/rehearsals' ? 'active' : ''} style={{ color: 'var(--primary-gold)' }}>
                   Prova Takvimi
