@@ -343,6 +343,16 @@ h1, h2, h3, h4, .serif-font {
   display: inline-block;
 }
 
+.dropdown-trigger {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: #fff;
+  font-weight: 500;
+  padding: 0.5rem 0;
+  transition: color 0.3s;
+}
+
 .dropdown-trigger:hover {
   color: var(--primary-gold);
 }
