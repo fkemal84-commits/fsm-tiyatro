@@ -58,22 +58,28 @@ export default function Home() {
         </ScrollReveal>
         
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '2rem', maxWidth: '1200px', margin: '4rem auto' }}>
-          <ScrollReveal className="glass-card" style={{ textAlign: 'center' }}>
-            <h3 style={{ color: '#CD7F32', fontSize: '1.5rem', marginBottom: '1rem' }}>🥉 Bronz Destek</h3>
-            <p style={{ color: 'var(--text-muted)', marginBottom: '1.5rem' }}>Oyun broşürlerimizde ve sosyal medya paylaşımlarımızda logonuz yer alsın.</p>
-            <div style={{ color: 'var(--primary-gold)', fontSize: '1.2rem', fontWeight: 600 }}>Logolu Tanıtım</div>
+          <ScrollReveal className="glass-card">
+            <div style={{ textAlign: 'center' }}>
+              <h3 style={{ color: '#CD7F32', fontSize: '1.5rem', marginBottom: '1rem' }}>🥉 Bronz Destek</h3>
+              <p style={{ color: 'var(--text-muted)', marginBottom: '1.5rem' }}>Oyun broşürlerimizde ve sosyal medya paylaşımlarımızda logonuz yer alsın.</p>
+              <div style={{ color: 'var(--primary-gold)', fontSize: '1.2rem', fontWeight: 600 }}>Logolu Tanıtım</div>
+            </div>
           </ScrollReveal>
           
-          <ScrollReveal className="glass-card" style={{ textAlign: 'center', border: '1px solid var(--primary-gold)' }}>
-            <h3 style={{ color: '#C0C0C0', fontSize: '1.5rem', marginBottom: '1rem' }}>🥈 Gümüş Destek</h3>
-            <p style={{ color: 'var(--text-muted)', marginBottom: '1.5rem' }}>Öne çıkan marka entegrasyonu, temsil öncesi anons ve özel davetiye imkanı.</p>
-            <div style={{ color: 'var(--primary-gold)', fontSize: '1.2rem', fontWeight: 600 }}>Marka Entegrasyonu</div>
+          <ScrollReveal className="glass-card">
+            <div style={{ textAlign: 'center', border: '1px solid var(--primary-gold)', padding: '1.5rem', borderRadius: '12px' }}>
+              <h3 style={{ color: '#C0C0C0', fontSize: '1.5rem', marginBottom: '1rem' }}>🥈 Gümüş Destek</h3>
+              <p style={{ color: 'var(--text-muted)', marginBottom: '1.5rem' }}>Öne çıkan marka entegrasyonu, temsil öncesi anons ve özel davetiye imkanı.</p>
+              <div style={{ color: 'var(--primary-gold)', fontSize: '1.2rem', fontWeight: 600 }}>Marka Entegrasyonu</div>
+            </div>
           </ScrollReveal>
           
-          <ScrollReveal className="glass-card" style={{ textAlign: 'center', boxShadow: '0 0 30px rgba(212, 175, 55, 0.2)' }}>
-            <h3 style={{ color: '#FFD700', fontSize: '1.5rem', marginBottom: '1rem' }}>🥇 Altın Sponsor</h3>
-            <p style={{ color: 'var(--text-muted)', marginBottom: '1.5rem' }}>"Sahne Senin" dediğimiz ana prodüksiyon partnerimiz olun, tüm görünürlüklerde en üst sırada yer alın.</p>
-            <div style={{ color: 'var(--primary-gold)', fontSize: '1.2rem', fontWeight: 600 }}>Stratejik Partnerlik</div>
+          <ScrollReveal className="glass-card">
+            <div style={{ textAlign: 'center', boxShadow: '0 0 30px rgba(212, 175, 55, 0.2)', padding: '1.5rem', borderRadius: '12px' }}>
+              <h3 style={{ color: '#FFD700', fontSize: '1.5rem', marginBottom: '1rem' }}>🥇 Altın Sponsor</h3>
+              <p style={{ color: 'var(--text-muted)', marginBottom: '1.5rem' }}>"Sahne Senin" dediğimiz ana prodüksiyon partnerimiz olun, tüm görünürlüklerde en üst sırada yer alın.</p>
+              <div style={{ color: 'var(--primary-gold)', fontSize: '1.2rem', fontWeight: 600 }}>Stratejik Partnerlik</div>
+            </div>
           </ScrollReveal>
         </div>
 
