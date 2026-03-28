@@ -11,6 +11,40 @@ export default function PushNotificationManager({ session }: { session: any }) {
   const [isStandalone, setIsStandalone] = useState(false);
   const [isSupported, setIsSupported] = useState(true);
 
+  const [regStatus, setRegStatus] = useState<string>('');
+
+  const registerToken = async (currentPermission: string) => {
+    if (currentPermission !== 'granted' || !messaging || !session) return;
+    
+    try {
+      setRegStatus('wait_sw');
+      const registration = await navigator.serviceWorker.ready;
+      
+      setRegStatus('get_token');
+      const token = await getToken(messaging, {
+        serviceWorkerRegistration: registration,
+        vapidKey: 'BBic0Z64gSgIWMc36FjQmhoWCPcLR439g-PHq6eHTN8RLNj4M1mWM4QNrrCzb1heiQpPUD66SVjrbka-lIvIqw4'
+      });
+      
+      if (token) {
+        setRegStatus('saving');
+        await saveFCMToken(token);
+        setRegStatus('done');
+      } else {
+        setRegStatus('no_token');
+      }
+    } catch (error: any) {
+      console.error('[PUSH] Kayıt hatası:', error);
+      setRegStatus('error: ' + (error.message || 'Bilinmeyen hata'));
+    }
+  };
+
+  useEffect(() => {
+    if (permission === 'granted') {
+      registerToken(permission);
+    }
+  }, [permission, session]);
+
   useEffect(() => {
     if (typeof window !== 'undefined') {
       if (!('Notification' in window)) {
@@ -38,42 +72,23 @@ export default function PushNotificationManager({ session }: { session: any }) {
   const handleRequestPermission = async () => {
     try {
       if (!messaging || typeof window === 'undefined' || !('Notification' in window)) return;
-      
       const res = await Notification.requestPermission();
       setPermission(res);
-      
-      if (res === 'granted') {
-        console.log('[PUSH] İzin verildi, Service Worker bekleniyor...');
-        
-        // Service Worker'ın hazır olduğundan emin ol
-        if ('serviceWorker' in navigator) {
-          const registration = await navigator.serviceWorker.ready;
-          console.log('[PUSH] Service Worker hazır, token alınıyor...');
-          
-          const token = await getToken(messaging, {
-            serviceWorkerRegistration: registration,
-            vapidKey: 'BBic0Z64gSgIWMc36FjQmhoWCPcLR439g-PHq6eHTN8RLNj4M1mWM4QNrrCzb1heiQpPUD66SVjrbka-lIvIqw4'
-          });
-          
-          if (token) {
-            console.log('[PUSH] Token başarıyla oluşturuldu.');
-            await saveFCMToken(token);
-          } else {
-            console.warn('[PUSH] Token boş döndü.');
-          }
-        }
-      }
     } catch (error) {
-      console.error('[PUSH] İzin hatası:', error);
+      console.error('[PUSH] İzin isteme hatası:', error);
     }
   };
 
-  if (!isSupported || !session || permission === 'granted') return null;
+  // Eğer her şey tamamsa ve kayıt yapıldıysa (veya reddedildiyse) bileşeni gizle
+  // Ama hata varsa veya register bekliyorsak uyaralım
+  if (!isSupported || !session) return null;
+  
+  if (permission === 'granted' && regStatus === 'done') return null;
+  if (permission === 'denied' && regStatus !== 'error') return null;
 
   return (
     <div className="fixed bottom-24 left-[5%] right-[5%] z-[1001] sm:left-auto sm:right-10 sm:w-[420px]">
       <div className="glass-card p-8 border-[var(--primary-gold)]/30 border bg-[rgba(5,5,5,0.98)] shadow-[0_15px_35px_rgba(0,0,0,0.8)] backdrop-blur-xl rounded-2xl overflow-hidden relative group">
-        {/* Dekoratif Işıklandırma */}
         <div className="absolute -top-10 -right-10 w-32 h-32 bg-[var(--primary-gold)]/10 rounded-full blur-3xl group-hover:bg-[var(--primary-gold)]/20 transition-all duration-700"></div>
         
         <div className="relative flex flex-col gap-6">
@@ -87,28 +102,55 @@ export default function PushNotificationManager({ session }: { session: any }) {
             </div>
           </div>
 
-          <p className="text-white/70 text-sm leading-relaxed">
-            Prova saatleri, kritik duyurular ve ekip güncellemelerini anlık olarak almak için bildirim izinlerini etkinleştirin.
-          </p>
+          <div className="space-y-4">
+            <p className="text-white/70 text-sm leading-relaxed">
+              {regStatus.startsWith('error') 
+                ? 'Bildirim kaydı yapılırken bir sorun oluştu. Lütfen sayfayı yenileyip tekrar deneyin.'
+                : 'Prova saatleri ve kritik duyuruları anlık olarak almak için bildirimleri etkinleştirin.'}
+            </p>
+
+            {regStatus && (
+              <div className="text-[10px] text-[var(--primary-gold)] uppercase tracking-[1px] bg-white/5 p-2 rounded border border-white/10">
+                SİSTEM DURUMU: {
+                  regStatus === 'wait_sw' ? 'Hizmet İşçisi Bekleniyor...' :
+                  regStatus === 'get_token' ? 'Cihaz Kimliği Alınıyor...' :
+                  regStatus === 'saving' ? 'Veritabanına Kaydediliyor...' :
+                  regStatus === 'done' ? 'Bağlantı Kuruldu ✅' :
+                  regStatus === 'no_token' ? 'Kimlik Alınamadı ❌' :
+                  regStatus
+                }
+              </div>
+            )}
+          </div>
           
           {isIOS && !isStandalone ? (
             <div className="p-4 bg-[rgba(212,175,55,0.05)] border border-[var(--primary-gold)]/20 rounded-xl space-y-3">
               <p className="text-[11px] text-[var(--primary-gold)] uppercase font-bold tracking-widest flex items-center gap-2">
-                <ion-icon name="information-circle-outline"></ion-icon> iPhone / iPad Kullanıcıları İçin
+                <ion-icon name="information-circle-outline"></ion-icon> iPhone Kullanıcıları İçin
               </p>
               <p className="text-[13px] text-white/90 leading-normal">
-                iOS cihazlarda bildirimleri aktif edebilmek için önce tarayıcıdaki <strong>Paylaş</strong> <ion-icon name="share-outline" className="inline-block translate-y-[2px]"></ion-icon> simgesine basıp <strong>"Ana Ekrana Ekle"</strong> seçeneğini kullanmalısınız. Ardından uygulamayı ana ekrandan açarak bildirimleri etkinleştirebilirsiniz.
+                Bildirimler için önce tarayıcıdaki <strong>Paylaş</strong> simgesine basıp <strong>"Ana Ekrana Ekle"</strong> yapmalısınız. Ardından uygulamayı ana ekrandan açın.
               </p>
             </div>
           ) : (
             <div className="space-y-3">
-              <button 
-                onClick={handleRequestPermission}
-                className="w-full bg-[var(--primary-gold)] hover:bg-[#b8860b] text-black font-bold py-3.5 rounded-xl transition-all shadow-lg hover:shadow-[var(--primary-gold)]/30 flex items-center justify-center gap-2 text-sm uppercase tracking-wider"
-              >
-                Bildirimleri Etkinleştir
-              </button>
-              <p className="text-center text-[10px] text-white/40 uppercase tracking-[2px]">FSM Tiyatro Portalı • Resmi Duyuru Sistemi</p>
+              {permission !== 'granted' && (
+                <button 
+                  onClick={handleRequestPermission}
+                  className="w-full bg-[var(--primary-gold)] hover:bg-[#b8860b] text-black font-bold py-3.5 rounded-xl transition-all shadow-lg flex items-center justify-center gap-2 text-sm uppercase tracking-wider"
+                >
+                  Bildirimleri Etkinleştir
+                </button>
+              )}
+              
+              {permission === 'granted' && regStatus !== 'done' && (
+                <button 
+                  onClick={() => registerToken('granted')}
+                  className="w-full bg-white/10 hover:bg-white/20 text-white font-bold py-3 rounded-xl transition-all flex items-center justify-center gap-2 text-[12px] uppercase"
+                >
+                  Yeniden Bağlanmayı Dene
+                </button>
+              )}
             </div>
           )}
           
@@ -116,10 +158,12 @@ export default function PushNotificationManager({ session }: { session: any }) {
             onClick={() => setPermission('denied')}
             className="text-white/30 hover:text-white/60 text-[11px] uppercase tracking-widest transition-colors font-medium text-center"
           >
-            Daha Sonra Hatırlat
+            Daha Sonra
           </button>
         </div>
       </div>
     </div>
+  );
+}
   );
 }
