@@ -10,7 +10,7 @@ export default function NudgeButton() {
     if (!confirm("Tüm oyunculara ve teknik ekibe bildirim gönderilecek. Emin misin?")) return;
     
     setLoading(true);
-    const res = await nudgePlayers();
+    const res = await nudgePlayers() as any;
     
     if (res.error) {
       alert("Hata: " + res.error);
