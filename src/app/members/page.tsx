@@ -139,7 +139,9 @@ export default async function MembersDashboard() {
 
         {/* SENARYO KÜTÜPHANESİ - Sadece yetkililere/oyunculara özel */}
         <div className="md:col-span-2">
-          <ScriptVault initialScripts={scripts} canManage={canManageScripts} />
+          {(role === 'AKTOR' || role === 'DIRECTOR' || role === 'SUPERADMIN' || role === 'ADMIN') && (
+            <ScriptVault initialScripts={scripts} canManage={canManageScripts} />
+          )}
         </div>
 
       </div>

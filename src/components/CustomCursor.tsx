@@ -1,22 +1,30 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 
 export default function CustomCursor() {
-  const [position, setPosition] = useState({ x: -100, y: -100 });
+  const cursorDotRef = useRef<HTMLDivElement>(null);
+  const cursorGlowRef = useRef<HTMLDivElement>(null);
   const [isPointer, setIsPointer] = useState(false);
   const [hidden, setHidden] = useState(true);
 
   useEffect(() => {
     const handleMouseMove = (e: MouseEvent) => {
-      setPosition({ x: e.clientX, y: e.clientY });
       setHidden(false);
+      const { clientX: x, clientY: y } = e;
+
+      if (cursorDotRef.current) {
+        cursorDotRef.current.style.transform = `translate3d(${x}px, ${y}px, 0)`;
+      }
+      if (cursorGlowRef.current) {
+        // Işık hafif gecikmeyle (akıcı) takip edebilir ama dot anlık olmalı
+        cursorGlowRef.current.style.transform = `translate3d(${x}px, ${y}px, 0)`;
+      }
 
       const target = e.target as HTMLElement;
       setIsPointer(
         window.getComputedStyle(target).cursor === 'pointer' || 
-        target.tagName === 'A' || 
-        target.tagName === 'BUTTON'
+        ['A', 'BUTTON', 'INPUT', 'LABEL', 'SELECT'].includes(target.tagName)
       );
     };
 
@@ -37,29 +45,18 @@ export default function CustomCursor() {
   if (typeof window !== 'undefined' && 'ontouchstart' in window) return null;
 
   return (
-    <>
+    <div className={`fixed inset-0 pointer-events-none z-[99999] overflow-hidden ${hidden ? 'opacity-0' : 'opacity-100'} transition-opacity duration-300`}>
+      {/* ANA NOKTA (ZERO LAG) */}
       <div 
-        className="fixed pointer-events-none z-[9999] transition-transform duration-100 ease-out"
-        style={{ 
-          left: position.x, 
-          top: position.y, 
-          transform: `translate(-50%, -50%) scale(${isPointer ? 2.5 : 1})`,
-          opacity: hidden ? 0 : 1
-        }}
-      >
-        <div className="w-6 h-6 rounded-full border border-[var(--primary-gold)] opacity-30"></div>
-      </div>
+        ref={cursorDotRef}
+        className="absolute top-0 left-0 w-2 h-2 -ml-1 -mt-1 rounded-full bg-[var(--primary-gold)] shadow-[0_0_10px_var(--primary-gold)] will-change-transform"
+      ></div>
+      
+      {/* IŞIK HALESİ (BAŞROL GİBİ TAKİP EDER) */}
       <div 
-        className="fixed pointer-events-none z-[9999] transition-transform duration-200 ease-out"
-        style={{ 
-          left: position.x, 
-          top: position.y, 
-          transform: `translate(-50%, -50%)`,
-          opacity: hidden ? 0 : 1
-        }}
-      >
-        <div className="w-1 h-1 rounded-full bg-[var(--primary-gold)] shadow-[0_0_10px_var(--primary-gold)]"></div>
-      </div>
-    </>
+        ref={cursorGlowRef}
+        className={`absolute top-0 left-0 w-10 h-10 -ml-5 -mt-5 rounded-full border border-[var(--primary-gold)] opacity-20 will-change-transform transition-transform duration-300 ease-out ${isPointer ? 'scale-[2.5]' : 'scale-100'}`}
+      ></div>
+    </div>
   );
 }

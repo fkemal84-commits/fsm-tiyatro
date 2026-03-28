@@ -23,7 +23,7 @@
 }
 
 a, button, input[type="submit"], input[type="checkbox"], label {
-  cursor: pointer !important;
+  cursor: none !important;
 }
 
 button:disabled, input:disabled {
@@ -40,6 +40,7 @@ body {
   margin: 0;
   -webkit-font-smoothing: antialiased;
   position: relative;
+  cursor: none !important;
 }
 
 body::before {
@@ -238,6 +239,66 @@ h1, h2, h3, h4, .serif-font {
   .nav-reg-btn {
     width: 100%;
   }
+}
+
+/* Dropdown */
+.nav-dropdown {
+  position: relative;
+  display: inline-block;
+}
+
+.dropdown-trigger {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  color: var(--primary-gold) !important;
+  font-weight: 600 !important;
+  padding: 0.5rem 0;
+}
+
+.dropdown-menu {
+  position: absolute;
+  top: 100%;
+  left: 50%;
+  transform: translateX(-50%) translateY(10px);
+  background: rgba(10, 10, 12, 0.95);
+  backdrop-filter: blur(20px);
+  border: var(--glass-border);
+  border-radius: 12px;
+  padding: 1rem;
+  min-width: 200px;
+  opacity: 0;
+  visibility: hidden;
+  transition: all 0.3s cubic-bezier(0.19, 1, 0.22, 1);
+  box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+  z-index: 1002;
+}
+
+.nav-dropdown:hover .dropdown-menu {
+  opacity: 1;
+  visibility: visible;
+  transform: translateX(-50%) translateY(0px);
+}
+
+.dropdown-menu li {
+  list-style: none;
+  width: 100%;
+}
+
+.dropdown-menu li a {
+  display: block;
+  padding: 0.8rem 1rem;
+  color: var(--text-main);
+  text-decoration: none;
+  font-size: 0.9rem;
+  border-radius: 8px;
+  transition: all 0.2s;
+  white-space: nowrap;
+}
+
+.dropdown-menu li a:hover {
+  background: var(--primary-gold-dim);
+  color: var(--primary-gold);
 }
 
 /* Animations */

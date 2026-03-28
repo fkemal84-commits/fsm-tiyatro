@@ -55,25 +55,30 @@ export default function Navbar({ session }: { session?: any }) {
             <li><Link href="/blog" className={pathname === '/blog' ? 'active' : ''}>Blog & Haberler</Link></li>
             <li><Link href="/members" className={pathname === '/members' ? 'active' : ''}>Üye Panosu</Link></li>
             
-            {(role === 'AKTOR' || role === 'SUPERADMIN' || role === 'ADMIN' || role === 'PLAYER') && (
-              <>
-                <li>
-                  <Link href="/members/rehearsals" className={pathname === '/members/rehearsals' ? 'active' : ''} style={{ color: 'var(--primary-gold)' }}>
-                    Prova Takvimi
-                  </Link>
-                </li>
-                <li>
-                  <Link href="/members/team" className={pathname === '/members/team' ? 'active' : ''}>
-                    Ekip Rehberi
-                  </Link>
-                </li>
-              </>
+            {(role === 'AKTOR' || role === 'SUPERADMIN' || role === 'ADMIN' || role === 'PLAYER' || role === 'DIRECTOR') && (
+              <li className="nav-dropdown">
+                <span className="dropdown-trigger">
+                  Sahne Arkası <ion-icon name="chevron-down-outline"></ion-icon>
+                </span>
+                <ul className="dropdown-menu">
+                  <li>
+                    <Link href="/members/rehearsals" className={pathname === '/members/rehearsals' ? 'active' : ''}>
+                      Prova Takvimi 📅
+                    </Link>
+                  </li>
+                  <li>
+                    <Link href="/members/team" className={pathname === '/members/team' ? 'active' : ''}>
+                      Ekip Rehberi 👥
+                    </Link>
+                  </li>
+                </ul>
+              </li>
             )}
 
             {(role === 'SUPERADMIN' || role === 'ADMIN' || role === 'EDITOR') && (
               <li>
                 <Link href="/tanerabi/dashboard" className={pathname.startsWith('/tanerabi') ? 'active' : ''} style={{ color: 'var(--primary-gold)' }}>
-                  {role === 'EDITOR' ? 'İçerik Stüdyosu' : 'Yönetim Paneli'}
+                  {role === 'EDITOR' ? 'İçerik Stüdyosu' : 'Taner Abi Paneli'}
                 </Link>
               </li>
             )}
