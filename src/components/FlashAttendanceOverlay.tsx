@@ -34,26 +34,32 @@ export default function FlashAttendanceOverlay() {
       setDebugLog(prev => `${prev} | Sinyal: ${snapshot.empty ? 'Yok' : 'VAR'}`);
       
       if (!snapshot.empty) {
-        if (userRole !== 'AKTOR' && userRole !== 'MEMBER') {
-          setActiveRehearsal(null);
-          return;
+        // En güncel ve geçerli seansı bul (birden fazla olabilir)
+        let foundValid = false;
+
+        for (const doc of snapshot.docs) {
+          const docData = doc.data();
+          const id = doc.id;
+          const expiresAt = docData.pulseExpiresAt;
+          const responses = docData.pulseResponses || [];
+          
+          const hasResponded = responses.includes(userId);
+          const now = Date.now();
+          // 5 saniye de buffer (saat farkı için)
+          const remaining = Math.max(0, Math.floor((expiresAt - now) / 1000));
+
+          if (remaining > 0 && !hasResponded) {
+            if (userRole === 'AKTOR' || userRole === 'MEMBER' || (session.user as any).isAdminMode) {
+              setActiveRehearsal({ id, ...docData });
+              setTimeLeft(remaining);
+              setResponded(false);
+              foundValid = true;
+              break; // İlk geçerli olanı al ve çık
+            }
+          }
         }
 
-        const docData = snapshot.docs[0].data();
-        const id = snapshot.docs[0].id;
-        const expiresAt = docData.pulseExpiresAt;
-        const responses = docData.pulseResponses || [];
-        
-        const hasResponded = responses.includes(userId);
-        const remaining = Math.max(0, Math.floor((expiresAt - Date.now()) / 1000));
-
-        if (remaining > 0 && !hasResponded) {
-          setActiveRehearsal({ id, ...docData });
-          setTimeLeft(remaining);
-          setResponded(false);
-        } else {
-          setActiveRehearsal(null);
-        }
+        if (!foundValid) setActiveRehearsal(null);
       } else {
         setActiveRehearsal(null);
       }
