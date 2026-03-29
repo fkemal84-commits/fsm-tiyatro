@@ -81,7 +81,7 @@ export default function Navbar({ session: initialSession }: { session?: any }) {
 
             <li><Link href="/blog" className={pathname === '/blog' ? 'active' : ''}>Blog</Link></li>
             
-            {(role === 'AKTOR' || role === 'SUPERADMIN' || role === 'ADMIN' || role === 'PLAYER' || role === 'DIRECTOR') && (
+            {(role === 'AKTOR' || role === 'SUPERADMIN' || role === 'ADMIN' || role === 'PLAYER' || role === 'DIRECTOR' || role === 'MEMBER') && (
               <li className="nav-dropdown">
                 <span className="dropdown-trigger" style={{ color: 'var(--primary-gold)' }}>
                   Sahne Arkası <ion-icon name="chevron-down-outline"></ion-icon>
@@ -112,7 +112,7 @@ export default function Navbar({ session: initialSession }: { session?: any }) {
                   Kulüp <ion-icon name="chevron-forward-outline"></ion-icon>
                 </div>
                 <Link href="/blog" onClick={() => setIsMenuOpen(false)}>Blog</Link>
-                {(role === 'AKTOR' || role === 'SUPERADMIN' || role === 'ADMIN' || role === 'PLAYER' || role === 'DIRECTOR') && (
+                {(role === 'AKTOR' || role === 'SUPERADMIN' || role === 'ADMIN' || role === 'PLAYER' || role === 'DIRECTOR' || role === 'MEMBER') && (
                   <div className="mobile-dropdown-trigger" style={{ color: 'var(--primary-gold)' }} onClick={() => setActiveDropdown('stage')}>
                     Sahne Arkası <ion-icon name="chevron-forward-outline"></ion-icon>
                   </div>
