@@ -32,10 +32,23 @@ export default function Navbar({ session: initialSession }: { session?: any }) {
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
+  // Sayfa kilitlenmesi: Menü açıkken arka plan kaymasın
+  useEffect(() => {
+    if (isMenuOpen) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = 'unset';
+    }
+    return () => {
+      document.body.style.overflow = 'unset';
+    };
+  }, [isMenuOpen]);
+
   // Sayfa değiştiğinde menüyü otomatik kapat
   useEffect(() => {
     setIsMenuOpen(false);
     setActiveDropdown(null);
+    document.body.style.overflow = 'unset';
   }, [pathname]);
 
   const toggleDropdown = (name: string) => {
