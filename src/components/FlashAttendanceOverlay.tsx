@@ -13,17 +13,11 @@ export default function FlashAttendanceOverlay() {
   const [responded, setResponded] = useState(false);
   const [loading, setLoading] = useState(false);
 
-  const [debugLog, setDebugLog] = useState<string>('Bağlanıyor...');
-
   useEffect(() => {
-    if (!session?.user) {
-      setDebugLog('Oturum Kapalı');
-      return;
-    }
+    if (!session?.user) return;
 
     const userRole = (session.user as any).role;
     const userId = (session.user as any).id;
-    setDebugLog(`Bağlı. Rol: ${userRole} | ID: ${userId.slice(0,5)}`);
 
     const q = query(
       collection(db, "rehearsals"),
@@ -31,10 +25,7 @@ export default function FlashAttendanceOverlay() {
     );
 
     const unsubscribe = onSnapshot(q, (snapshot) => {
-      setDebugLog(prev => `${prev} | Sinyal: ${snapshot.empty ? 'Yok' : 'VAR'}`);
-      
       if (!snapshot.empty) {
-        // En güncel ve geçerli seansı bul (birden fazla olabilir)
         let foundValid = false;
 
         for (const doc of snapshot.docs) {
@@ -45,14 +36,11 @@ export default function FlashAttendanceOverlay() {
           
           const hasResponded = responses.includes(userId);
           const now = Date.now();
-          // 5 saniye de buffer (saat farkı için)
           const remaining = Math.max(0, Math.floor((expiresAt - now) / 1000));
 
           if (remaining > 0 && !hasResponded) {
-            // Başlatan kişi kendi ekranında görmesin
+            // BAŞLATAN KİŞİ VE REJİ (Admin/Director) GÖRMESİN
             const isStarter = userId === docData.pulseStartedBy;
-            // SADECE SAHNE KADROSU (AKTOR, PLAYER) görsün
-            // Genel üyeler (MEMBER) ve Yöneticiler görmesin
             const isActor = ['AKTOR', 'PLAYER'].includes(userRole);
             const isManager = ['ADMIN', 'SUPERADMIN', 'DIRECTOR', 'ASST_DIRECTOR'].includes(userRole);
 
@@ -61,7 +49,7 @@ export default function FlashAttendanceOverlay() {
               setTimeLeft(remaining);
               setResponded(false);
               foundValid = true;
-              break; // İlk geçerli olanı al ve çık
+              break; 
             }
           }
         }
@@ -71,8 +59,7 @@ export default function FlashAttendanceOverlay() {
         setActiveRehearsal(null);
       }
     }, (error) => {
-      console.error("[FLASH] Error:", error);
-      setDebugLog(`HATA: ${error.message}`);
+      console.error("[FLASH] Connection error:", error);
     });
 
     return () => unsubscribe();
@@ -105,7 +92,7 @@ export default function FlashAttendanceOverlay() {
       setResponded(true);
       setTimeout(() => setActiveRehearsal(null), 1500);
     } catch (err: any) {
-      setDebugLog(`Yanıtlama Hatası: ${err.message}`);
+      console.error(err);
     } finally {
       setLoading(false);
     }
@@ -113,14 +100,8 @@ export default function FlashAttendanceOverlay() {
 
   return (
     <>
-      {/* GİZLİ DEBUG PANELİ (Ekran sol alt köşede küçük bir nokta veya yazı) */}
-      <div className="fixed bottom-0 left-0 z-[10000] p-1 bg-black/80 text-[8px] text-white/40 pointer-events-none font-mono">
-        {debugLog}
-      </div>
-
       {activeRehearsal && (
         <div className="fixed inset-0 z-[9999] flex items-center justify-center p-6 bg-black/90 backdrop-blur-xl animate-fadeIn">
-          {/* ... mevcut overlay içeriği ... */}
           <div className="max-w-md w-full text-center space-y-8">
             <div className="relative mx-auto w-32 h-32">
               <div className="absolute inset-0 rounded-full border-4 border-[var(--primary-gold)]/20 animate-ping"></div>
