@@ -38,16 +38,18 @@ export default async function RehearsalsPage() {
   const today = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
 
   const parseRehearsalDate = (dateStr: string) => {
+    if (!dateStr) return 0;
+    if (dateStr.includes('(Anlık)')) return today + 1; // Anlık olanları bugün ve sonrası say
     try {
-      // "2024-03-29" formatını parse etmeye çalış
       return new Date(dateStr).getTime();
     } catch {
       return 0;
     }
   };
 
-  const upcomingRehearsals = allRehearsals.filter(r => parseRehearsalDate(r.date) >= today);
-  const pastRehearsals = allRehearsals.filter(r => parseRehearsalDate(r.date) < today);
+  const activeRehearsals = allRehearsals.filter(r => r.pulseActive === true);
+  const upcomingRehearsals = allRehearsals.filter(r => !r.pulseActive && parseRehearsalDate(r.date) >= today);
+  const pastRehearsals = allRehearsals.filter(r => !r.pulseActive && parseRehearsalDate(r.date) < today);
 
   // Yoklama için kullanıcıları çek
   const usersSnap = await adminDb.collection('users').get();
@@ -169,6 +171,22 @@ export default async function RehearsalsPage() {
       </header>
 
       <div className="max-w-4xl mx-auto space-y-16">
+        {/* CANLI YOKLAMA BÖLÜMÜ (Halıhazırda Aktifse) */}
+        {activeRehearsals.length > 0 && (
+          <section className="animate-pulse-slow">
+            <div className="flex items-center gap-4 mb-8">
+              <h2 className="text-red-500 text-2xl font-bold serif-font flex items-center gap-3">
+                <span className="w-3 h-3 bg-red-500 rounded-full animate-ping"></span>
+                Canlı Yoklama / Nabız Açık!
+              </h2>
+              <div className="h-[1px] flex-1 bg-gradient-to-r from-red-500/20 to-transparent"></div>
+            </div>
+            <div className="space-y-8">
+              {activeRehearsals.map(renderRehearsalCard)}
+            </div>
+          </section>
+        )}
+
         {/* YENİ PROVA EKLEME FORMU */}
         {canManage && (
           <section className="glass-card border-dashed border-[var(--primary-gold)]/30">
@@ -194,16 +212,16 @@ export default async function RehearsalsPage() {
           </section>
         )}
 
-        {/* GELECEK PROVALAR */}
+        {/* GELECEK PROVALAR & GÜNCEL LOGLAR */}
         <section>
           <div className="flex items-center gap-4 mb-8">
-            <h2 className="text-white text-2xl font-bold serif-font">Gelecek Provalar</h2>
+            <h2 className="text-white text-2xl font-bold serif-font">Güncel Provalar & Loglar</h2>
             <div className="h-[1px] flex-1 bg-gradient-to-r from-white/20 to-transparent"></div>
           </div>
           
           {upcomingRehearsals.length === 0 ? (
             <div className="p-10 text-center glass-card border-white/5">
-                <p className="text-[var(--text-muted)] italic">Şu an için planlanmış bir prova bulunmuyor.</p>
+                <p className="text-[var(--text-muted)] italic text-sm">Şu an için aktif bir kayıt bulunmuyor.</p>
             </div>
           ) : (
             <div className="space-y-8">
@@ -215,7 +233,7 @@ export default async function RehearsalsPage() {
         {/* GEÇMİŞ PROVALAR & ARŞİV */}
         <section>
           <div className="flex items-center gap-4 mb-8">
-            <h2 className="text-white/60 text-2xl font-bold serif-font">Geçmiş Provalar & Arşiv</h2>
+            <h2 className="text-white/60 text-2xl font-bold serif-font">Geçmiş Arşiv</h2>
             <div className="h-[1px] flex-1 bg-gradient-to-r from-white/10 to-transparent"></div>
           </div>
           
