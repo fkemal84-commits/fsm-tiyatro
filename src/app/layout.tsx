@@ -50,6 +50,7 @@ export const viewport = {
 import Providers from "@/components/Providers";
 import SessionWatcher from "@/components/SessionWatcher";
 import FlashAttendanceOverlay from "@/components/FlashAttendanceOverlay";
+import PullToRefresh from "@/components/PullToRefresh";
 
 export default async function RootLayout({
   children,
@@ -76,6 +77,7 @@ export default async function RootLayout({
       <body className="antialiased">
         <Providers>
           <SessionWatcher />
+          <PullToRefresh />
           <PushNotificationManager session={session} />
           <FlashAttendanceOverlay />
           <Navbar session={session} />
