@@ -54,10 +54,18 @@ export default function AttendanceManager({
 
     allUsers.forEach(u => {
       const status = attendance[u.id] || 'GELMEDİ';
-      const pulseInfo = pulseResponses.find((r: any) => (typeof r === 'string' ? r === u.id : r.userId === u.id));
+      // pulseResponses içindeki her öğenin tipi farklı olabilir (string veya object)
+      const pulseInfo = pulseResponses.find((r: any) => {
+        if (!r) return false;
+        if (typeof r === 'string') return r === u.id;
+        return r.userId === u.id;
+      });
 
       if (status === 'GELDİ' || pulseInfo) {
-        participants.push({ ...u, time: typeof pulseInfo === 'object' ? pulseInfo.timeString : null });
+        participants.push({ 
+          ...u, 
+          time: (pulseInfo && typeof pulseInfo === 'object') ? pulseInfo.timeString : null 
+        });
       } else if (status === 'MAZERETLİ') {
         excused.push(u);
       } else {
@@ -74,13 +82,16 @@ export default function AttendanceManager({
     const unsubscribe = onSnapshot(doc(db, "rehearsals", rehearsalId), (doc) => {
       const data = doc.data();
       if (data) {
+        // Gelen veriyi güvenli bir şekilde state'e aktar
         setPulseResponses(data.pulseResponses || []);
+        
         if (data.pulseActive) {
           setPulseActive(true);
           const remaining = Math.max(0, Math.floor((data.pulseExpiresAt - Date.now()) / 1000));
           setPulseTimeLeft(remaining);
         } else {
           setPulseActive(false);
+          setPulseTimeLeft(0);
         }
       }
     });
