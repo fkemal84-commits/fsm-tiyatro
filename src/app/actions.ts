@@ -900,8 +900,8 @@ export async function requestPasswordReset(formData: FormData) {
   } catch (error: any) {
     console.error("[PWD_RESET_REQ] Detaylı Hata:", error);
     // Hatanın sebebini kullanıcıya (ve bize) daha açık göstermek için:
-    const errorMessage = error.message?.includes("SMTP") 
-      ? "E-posta servisi (Zoho) bağlantı hatası verdi. Lütfen SMTP bilgilerini kontrol edin."
+    const errorMessage = error.message?.includes("Resend") 
+      ? "E-posta servisi (Resend) bağlantı hatası verdi. Lütfen API anahtarını kontrol edin."
       : error.message || "Bilinmeyen bir hata oluştu.";
     
     return { error: `İşlem başarısız: ${errorMessage}` };
