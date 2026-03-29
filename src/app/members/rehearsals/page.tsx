@@ -19,12 +19,14 @@ export default async function RehearsalsPage() {
   const role = (session?.user as any)?.role;
 
   // Sadece Admin, Aktör ve Yönetmenler girebilir
-  const allowedRoles = ['SUPERADMIN', 'ADMIN', 'DIRECTOR', 'ASST_DIRECTOR', 'AKTOR'];
+  // AKTOR veya MEMBER (normal üye girişi yapan oyuncular) erişebilir
+  const allowedRoles = ['SUPERADMIN', 'ADMIN', 'DIRECTOR', 'ASST_DIRECTOR', 'AKTOR', 'MEMBER'];
   if (!allowedRoles.includes(role)) {
     redirect('/members');
   }
 
-  const canManage = ['SUPERADMIN', 'ADMIN', 'DIRECTOR', 'ASST_DIRECTOR'].includes(role);
+  // Yönetim yetkisi sadece Admin Mode açıksa ve rölü uygunsa geçerli olsun
+  const canManage = ['SUPERADMIN', 'ADMIN', 'DIRECTOR', 'ASST_DIRECTOR'].includes(role) && (session?.user as any)?.isAdminMode;
 
   const rehearsalsSnapshot = await adminDb.collection('rehearsals').get();
   const allRehearsals = rehearsalsSnapshot.docs

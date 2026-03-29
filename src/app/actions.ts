@@ -536,37 +536,7 @@ export async function nudgePlayers() {
 }
 
 // Anlık Yoklama Başlat (Hızlı Kayıt)
-export async function startInstantAttendance(formData?: FormData) {
-  try {
-    await requireAuth(['SUPERADMIN', 'ADMIN', 'DIRECTOR', 'ASST_DIRECTOR']);
-
-    const now = new Date();
-    const dateStr = now.toLocaleDateString('tr-TR', { day: 'numeric', month: 'long', year: 'numeric' });
-    const timeStr = now.toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' });
-    const title = `Anlık Yoklama - ${dateStr}`;
-
-    const expiresAt = Date.now() + 30000;
-    const docRef = await adminDb.collection('rehearsals').add({
-        title,
-        date: `${dateStr} - Saat: ${timeStr} (Anlık)`,
-        location: 'Sahne / Salon',
-        notes: 'Bu kayıt yönetim panelinden anlık olarak başlatılmıştır.',
-        attendance: {},
-        pulseCheck: {
-            active: true,
-            expiresAt,
-            responses: []
-        },
-        createdAt: now.toISOString()
-    });
-
-    revalidatePath('/members/rehearsals');
-    return { success: true, id: docRef.id };
-  } catch (error: any) {
-    console.error("[INSTANT_ATTENDANCE] Hata:", error);
-    return { error: error.message };
-  }
-}
+// Mükerrer startInstantAttendance kaldırıldı (Aşağıda güncel hali var)
 
 export async function addTeamNeed(formData: FormData) {
   const roleName = formData.get('roleName') as string;
@@ -896,11 +866,9 @@ export async function startPulseCheck(rehearsalId: string) {
     const expiresAt = Date.now() + 30000; // 30 saniye
     
     await adminDb.collection('rehearsals').doc(rehearsalId).update({
-      pulseCheck: {
-        active: true,
-        expiresAt,
-        responses: []
-      }
+      pulseActive: true,
+      pulseExpiresAt: expiresAt,
+      pulseResponses: []
     });
 
     return { success: true };
@@ -918,15 +886,15 @@ export async function respondToPulse(rehearsalId: string) {
     const doc = await adminDb.collection('rehearsals').doc(rehearsalId).get();
     const data = doc.data();
     
-    if (!data?.pulseCheck?.active || Date.now() > data.pulseCheck.expiresAt) {
+    if (!data?.pulseActive || Date.now() > data.pulseExpiresAt) {
       throw new Error("Yoklama süresi dolmuş veya hiç başlatılmamış.");
     }
 
     // Kullanıcıyı yanıtlara ekle (Unique)
-    const currentResponses = data.pulseCheck.responses || [];
+    const currentResponses = data.pulseResponses || [];
     if (!currentResponses.includes(userId)) {
       await adminDb.collection('rehearsals').doc(rehearsalId).update({
-        "pulseCheck.responses": [...currentResponses, userId]
+        pulseResponses: [...currentResponses, userId]
       });
     }
 
@@ -944,12 +912,43 @@ export async function finalizeAttendance(rehearsalId: string, attendanceData: an
       attendance: attendanceData,
       attendanceNotes,
       attendanceUpdatedAt: new Date().toISOString(),
-      pulseCheck: { active: false } // Seansı kapat
+      pulseActive: false // Seansı kapat
     });
 
     revalidatePath('/members/rehearsals');
     return { success: true };
   } catch (error: any) {
+    return { error: error.message };
+  }
+}
+
+// Anlık Yoklama Başlat (Hızlı Kayıt)
+export async function startInstantAttendance(formData?: FormData) {
+  try {
+    await requireAuth(['SUPERADMIN', 'ADMIN', 'DIRECTOR', 'ASST_DIRECTOR']);
+
+    const now = new Date();
+    const dateStr = now.toLocaleDateString('tr-TR', { day: 'numeric', month: 'long', year: 'numeric' });
+    const timeStr = now.toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' });
+    const title = `Anlık Yoklama - ${dateStr}`;
+
+    const expiresAt = Date.now() + 30000;
+    const docRef = await adminDb.collection('rehearsals').add({
+        title,
+        date: `${dateStr} - Saat: ${timeStr} (Anlık)`,
+        location: 'Sahne / Salon',
+        notes: 'Bu kayıt yönetim panelinden anlık olarak başlatılmıştır.',
+        attendance: {},
+        pulseActive: true,
+        pulseExpiresAt: expiresAt,
+        pulseResponses: [],
+        createdAt: now.toISOString()
+    });
+
+    revalidatePath('/members/rehearsals');
+    return { success: true, id: docRef.id };
+  } catch (error: any) {
+    console.error("[INSTANT_ATTENDANCE] Hata:", error);
     return { error: error.message };
   }
 }

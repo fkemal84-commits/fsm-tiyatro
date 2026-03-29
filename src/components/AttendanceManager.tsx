@@ -38,13 +38,13 @@ export default function AttendanceManager({
     
     const unsubscribe = onSnapshot(doc(db, "rehearsals", rehearsalId), (doc) => {
       const data = doc.data();
-      if (data?.pulseCheck?.active) {
+      if (data?.pulseActive) {
         setPulseActive(true);
-        const remaining = Math.max(0, Math.floor((data.pulseCheck.expiresAt - Date.now()) / 1000));
+        const remaining = Math.max(0, Math.floor((data.pulseExpiresAt - Date.now()) / 1000));
         setPulseTimeLeft(remaining);
 
         // Otomatik olarak "Buradayım" diyenleri GELDİ olarak işaretle
-        const responses = data.pulseCheck.responses || [];
+        const responses = data.pulseResponses || [];
         setAttendance(prev => {
           const next = { ...prev };
           responses.forEach((uid: string) => {

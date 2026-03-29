@@ -19,15 +19,22 @@ export default function FlashAttendanceOverlay() {
     // Aktif pulse check olan provaları dinle
     const q = query(
       collection(db, "rehearsals"),
-      where("pulseCheck.active", "==", true)
+      where("pulseActive", "==", true)
     );
 
     const unsubscribe = onSnapshot(q, (snapshot) => {
       if (!snapshot.empty) {
+        const userRole = (session.user as any).role;
+        // SADECE AKTOR veya MEMBER (oyuncu) olanlara göster
+        if (userRole !== 'AKTOR' && userRole !== 'MEMBER') {
+          setActiveRehearsal(null);
+          return;
+        }
+
         const docData = snapshot.docs[0].data();
         const id = snapshot.docs[0].id;
-        const expiresAt = docData.pulseCheck.expiresAt;
-        const responses = docData.pulseCheck.responses || [];
+        const expiresAt = docData.pulseExpiresAt;
+        const responses = docData.pulseResponses || [];
         
         // Eğer kullanıcı zaten yanıt verdiyse veya süre dolduysa gösterme
         const hasResponded = responses.includes((session.user as any).id);
