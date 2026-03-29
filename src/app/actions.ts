@@ -898,8 +898,13 @@ export async function requestPasswordReset(formData: FormData) {
 
     return { success: true, message: "Şifre sıfırlama linki e-postanıza gönderildi." };
   } catch (error: any) {
-    console.error("[PWD_RESET_REQ] Hata:", error);
-    return { error: "Bir hata oluştu. Lütfen tekrar deneyin." };
+    console.error("[PWD_RESET_REQ] Detaylı Hata:", error);
+    // Hatanın sebebini kullanıcıya (ve bize) daha açık göstermek için:
+    const errorMessage = error.message?.includes("SMTP") 
+      ? "E-posta servisi (Zoho) bağlantı hatası verdi. Lütfen SMTP bilgilerini kontrol edin."
+      : error.message || "Bilinmeyen bir hata oluştu.";
+    
+    return { error: `İşlem başarısız: ${errorMessage}` };
   }
 }
 

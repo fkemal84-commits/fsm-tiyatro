@@ -51,10 +51,12 @@ export async function sendPasswordResetEmail(to: string, resetLink: string) {
   }
 
   try {
-    await transporter.sendMail(mailOptions);
+    const result = await transporter.sendMail(mailOptions);
+    console.log("[SMTP SUCCESS] E-posta başarıyla gönderildi:", result.messageId);
     return { success: true };
   } catch (error: any) {
-    console.error("[SMTP ERROR] E-posta gönderilemedi:", error);
-    throw new Error("E-posta servisinde bir hata oluştu: " + error.message);
+    console.error("[SMTP ERROR] E-posta gönderilemedi! Hata Detayı:", error);
+    // Hatanın ham halini de dönelim ki server action yakalayabilsin
+    throw new Error(`SMTP Bağlantı Hatası: ${error.code || 'Bilinmeyen Kod'} - ${error.message}`);
   }
 }
