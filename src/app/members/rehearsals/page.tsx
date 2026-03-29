@@ -231,10 +231,12 @@ export default async function RehearsalsPage() {
           )}
         </section>
 
-        {/* GEÇMİŞ PROVALAR & ARŞİV */}
-        <ArchiveWrapper count={pastRehearsals.length}>
-          {pastRehearsals.map(renderRehearsalCard)}
-        </ArchiveWrapper>
+        {/* GEÇMİŞ ARŞİV - Sadece Yönetici Modu'ndaki yetkililer görebilir */}
+        {canManage && (
+          <ArchiveWrapper count={pastRehearsals.length}>
+            {pastRehearsals.map(renderRehearsalCard)}
+          </ArchiveWrapper>
+        )}
       </div>
     </div>
   );
