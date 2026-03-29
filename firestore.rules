@@ -1,27 +1,26 @@
 rules_version = '2';
+
 service cloud.firestore {
   match /databases/{database}/documents {
-    // 1. Genel Okuma: Bloglar, Oyunlar ve Etkinlikler herkese açık
+    // 1. GENEL OKUMA İZİNLERİ
     match /posts/{doc} { allow read: if true; }
     match /plays/{doc} { allow read: if true; }
     match /events/{doc} { allow read: if true; }
-    match /rehearsals/{doc} { allow read: if request.auth != null; }
+    match /teamNeeds/{doc} { allow read: if true; }
     
-    // 2. Kullanıcı Profil Verileri: Sadece kişi kendininkini veya Admin görebilir
+    // YOKLAMA SİSTEMİ
+    match /rehearsals/{doc} { allow read: if true; }
+    
+    // 2. KULLANICI VERİLERİ
     match /users/{userId} {
-      allow read: if request.auth != null && (request.auth.token.email == resource.data.email || get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role in ['ADMIN', 'SUPERADMIN']);
-    }
-    
-    // 3. Bildirim Tokenları ve Talepler: Sadece Adminler veya Sahibi
-    match /fcmTokens/{token} {
-      allow read, write: if false; // Sadece Server-Side (Admin SDK) müdahale edebilir
+      allow read: if request.auth != null; 
     }
     
     match /eventRequests/{reqId} {
-      allow read: if request.auth != null && (request.auth.token.email == resource.data.userEmail || get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role in ['ADMIN', 'SUPERADMIN']);
+      allow read: if request.auth != null;
     }
 
-    // Varsayılan: Tüm istemci tarafı yazma erişimleri tamamen kapalı
+    // 3. GÜVENLİK BARİYERİ
     match /{document=**} {
       allow write: if false; 
     }
