@@ -8,6 +8,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { sendPasswordResetEmail } from "@/lib/email";
 import crypto from 'crypto';
+import { headers } from 'next/headers';
 
 // --- YARDIMCI FONKSİYONLAR & GÜVENLİK ---
 
@@ -893,7 +894,12 @@ export async function requestPasswordReset(formData: FormData) {
       createdAt: new Date().toISOString()
     });
 
-    const resetLink = `${process.env.NEXTAUTH_URL || 'http://localhost:3000'}/reset-password?token=${token}&email=${email}`;
+    const headerList = await headers();
+    const host = headerList.get('host');
+    const protocol = host?.includes('localhost') ? 'http' : 'https';
+    const baseUrl = process.env.NEXTAUTH_URL || `${protocol}://${host}`;
+
+    const resetLink = `${baseUrl}/reset-password?token=${token}&email=${email}`;
     await sendPasswordResetEmail(email, resetLink);
 
     return { success: true, message: "Şifre sıfırlama linki e-postanıza gönderildi." };
