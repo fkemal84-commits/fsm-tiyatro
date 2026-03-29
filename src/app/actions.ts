@@ -894,14 +894,56 @@ export async function respondToPulse(rehearsalId: string) {
       throw new Error("Yoklama süresi dolmuş veya hiç başlatılmamış.");
     }
 
-    // Kullanıcıyı yanıtlara ekle (Unique)
+    // Kullanıcıyı yanıtlara ekle (Object Structure: { userId, joinedAt })
     const currentResponses = data.pulseResponses || [];
-    if (!currentResponses.includes(userId)) {
+    
+    // Daha önce yanıt vermiş mi kontrol et (Object array içinde)
+    const hasResponded = currentResponses.some((r: any) => (typeof r === 'string' ? r === userId : r.userId === userId));
+    
+    if (!hasResponded) {
+      const now = new Date();
+      const timeString = now.toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+      
+      const newResponse = {
+        userId,
+        joinedAt: Date.now(),
+        timeString
+      };
+
       await adminDb.collection('rehearsals').doc(rehearsalId).update({
-        pulseResponses: [...currentResponses, userId]
+        pulseResponses: [...currentResponses, newResponse]
       });
     }
 
+    return { success: true };
+  } catch (error: any) {
+    return { error: error.message };
+  }
+}
+
+// Manuel Yoklama/Mazeret Ekleme
+export async function addManualAttendance(rehearsalId: string, userId: string, status: string, note: string) {
+  try {
+    await requireAuth(['SUPERADMIN', 'ADMIN', 'DIRECTOR', 'ASST_DIRECTOR']);
+    
+    const docRef = adminDb.collection('rehearsals').doc(rehearsalId);
+    const doc = await docRef.get();
+    if (!doc.exists) throw new Error("Prova bulunamadı.");
+
+    const data = doc.data() || {};
+    const currentAttendance = data.attendance || {};
+    const currentNotes = data.attendanceNotes || "";
+
+    // Mazereti işle
+    await docRef.update({
+      attendance: {
+        ...currentAttendance,
+        [userId]: status
+      },
+      attendanceNotes: currentNotes + (currentNotes ? "\n" : "") + `[MAZERET] ${note}`
+    });
+
+    revalidatePath('/members/rehearsals');
     return { success: true };
   } catch (error: any) {
     return { error: error.message };

@@ -8,6 +8,7 @@ import DeleteButton from "@/components/DeleteButton";
 import AttendanceManager from "@/components/AttendanceManager";
 import { redirect } from "next/navigation";
 import { Metadata } from "next";
+import ArchiveWrapper from "@/components/ArchiveWrapper";
 
 export const metadata: Metadata = {
   title: "Özel Prova Takvimi",
@@ -231,20 +232,9 @@ export default async function RehearsalsPage() {
         </section>
 
         {/* GEÇMİŞ PROVALAR & ARŞİV */}
-        <section>
-          <div className="flex items-center gap-4 mb-8">
-            <h2 className="text-white/60 text-2xl font-bold serif-font">Geçmiş Arşiv</h2>
-            <div className="h-[1px] flex-1 bg-gradient-to-r from-white/10 to-transparent"></div>
-          </div>
-          
-          {pastRehearsals.length === 0 ? (
-            <p className="text-white/20 text-center italic text-sm">Henüz bir arşiv kaydı bulunmuyor.</p>
-          ) : (
-            <div className="space-y-8 opacity-70 hover:opacity-100 transition-opacity">
-              {pastRehearsals.map(renderRehearsalCard)}
-            </div>
-          )}
-        </section>
+        <ArchiveWrapper count={pastRehearsals.length}>
+          {pastRehearsals.map(renderRehearsalCard)}
+        </ArchiveWrapper>
       </div>
     </div>
   );
