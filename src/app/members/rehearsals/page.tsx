@@ -56,69 +56,95 @@ export default async function RehearsalsPage() {
     .filter(u => u.name && u.role !== 'USER')
     .sort((a, b) => a.name.localeCompare(b.name));
 
-  const renderRehearsalCard = (r: any) => (
-    <div key={r.id} className="p-6 bg-white/5 rounded-3xl border border-white/10 hover:border-[var(--primary-gold)]/50 transition-all group">
-      <div className="flex justify-between items-start mb-4">
-        <div>
-          <h3 className="text-[var(--primary-gold)] text-xl font-bold group-hover:text-white transition-colors">{r.title}</h3>
-          <p className="text-white/40 text-[10px] mt-1 uppercase tracking-widest">
-            Kayıt: {new Date(r.createdAt).toLocaleDateString('tr-TR')}
-          </p>
-        </div>
-        <div className="flex gap-2 items-center">
-          {canManage && (
-            <>
-              <a 
-                href={getWhatsAppRehearsalLink(r)} 
-                target="_blank" 
-                rel="noopener noreferrer"
-                className="bg-[#25D366]/20 text-[#25D366] p-2 rounded-xl flex items-center justify-center hover:bg-[#25D366] hover:text-white transition-all"
-                title="WhatsApp Duyurusu"
-              >
-                <ion-icon name="logo-whatsapp" style={{ fontSize: '1.2rem' }}></ion-icon>
-              </a>
-              <DeleteButton 
-                action={deleteRehearsal as any} 
-                id={r.id} 
-                name={r.title} 
-                confirmMessage="Bu provayı arşivden tamamen silmek istediğine emin misin?" 
-                idFieldName="rehearsalId"
-              />
-            </>
-          )}
-        </div>
-      </div>
-      
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
-        <div className="flex items-center gap-3 text-white/90 bg-white/5 p-3 rounded-2xl border border-white/5">
-          <ion-icon name="calendar-outline" style={{ color: 'var(--primary-gold)' }}></ion-icon>
-          <span className="text-xs font-medium">{r.date || 'Tarih Belirtilmedi'}</span>
-        </div>
-        <div className="flex items-center gap-3 text-white/90 bg-white/5 p-3 rounded-2xl border border-white/5">
-          <ion-icon name="location-outline" style={{ color: 'var(--primary-gold)' }}></ion-icon>
-          <span className="text-xs font-medium">{r.location || 'Konum Belirtilmedi'}</span>
-        </div>
-      </div>
+  const renderRehearsalCard = (r: any) => {
+    const isInstant = r.date?.includes('(Anlık)');
+    
+    return (
+      <div key={r.id} className="p-6 bg-white/5 rounded-3xl border border-white/10 hover:border-[var(--primary-gold)]/50 transition-all group relative overflow-hidden">
+        {isInstant && (
+          <div className="absolute top-0 right-10 bg-[var(--primary-gold)] text-black text-[8px] font-bold px-3 py-1 rounded-bl-xl uppercase tracking-tighter">
+            ANLIK YOKLAMA LOGU
+          </div>
+        )}
 
-      {r.notes && (
-        <div className="mb-6 p-4 bg-black/40 rounded-2xl border border-white/5 border-l-2 border-l-[var(--primary-gold)]">
-          <h4 className="text-[10px] font-bold text-[var(--primary-gold)] uppercase mb-2 tracking-widest">Yönetmen Notu (Planlanan):</h4>
-          <p className="text-white/60 text-xs italic leading-relaxed">{r.notes}</p>
+        <div className="flex justify-between items-start mb-6">
+          <div className="space-y-1">
+            <div className="flex items-center gap-2">
+               <ion-icon name={isInstant ? "flash" : "calendar"} style={{ color: 'var(--primary-gold)', fontSize: '1rem' }}></ion-icon>
+               <h3 className="text-white text-xl font-bold tracking-tight">{r.title}</h3>
+            </div>
+            <div className="flex items-center gap-3">
+               <span className="text-[var(--primary-gold)] text-[10px] font-mono bg-[var(--primary-gold)]/10 px-2 py-0.5 rounded border border-[var(--primary-gold)]/20">
+                 {new Date(r.createdAt).toLocaleDateString('tr-TR')} | {new Date(r.createdAt).toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' })}
+               </span>
+               <span className="text-white/30 text-[10px] uppercase tracking-widest">ID: {r.id.slice(-4)}</span>
+            </div>
+          </div>
+          
+          <div className="flex gap-2">
+            {canManage && (
+              <>
+                {!isInstant && (
+                  <a 
+                    href={getWhatsAppRehearsalLink(r)} 
+                    target="_blank" 
+                    rel="noopener noreferrer"
+                    className="w-10 h-10 bg-[#25D366]/10 text-[#25D366] rounded-xl flex items-center justify-center hover:bg-[#25D366] hover:text-white transition-all border border-[#25D366]/20"
+                    title="WhatsApp Duyurusu"
+                  >
+                    <ion-icon name="logo-whatsapp" style={{ fontSize: '1.2rem' }}></ion-icon>
+                  </a>
+                )}
+                <DeleteButton 
+                  action={deleteRehearsal as any} 
+                  id={r.id} 
+                  name={r.title} 
+                  confirmMessage="Bu yoklama kaydını sonsuza dek silmek istediğine emin misin?" 
+                  idFieldName="rehearsalId"
+                />
+              </>
+            )}
+          </div>
         </div>
-      )}
-
-      {canManage && (
-        <div className="pt-4 border-t border-white/10">
-          <AttendanceManager 
-            rehearsalId={r.id} 
-            allUsers={allTeam} 
-            initialAttendance={r.attendance || {}} 
-            initialNotes={r.attendanceNotes}
-          />
+        
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+          <div className="flex items-center gap-3 text-white/80 bg-white/5 p-3 rounded-2xl border border-white/5 group-hover:bg-white/10 transition-colors">
+            <ion-icon name="navigate-outline" style={{ color: 'var(--primary-gold)' }}></ion-icon>
+            <div className="flex flex-col">
+              <span className="text-[10px] text-white/30 uppercase font-bold tracking-tighter">PLANLANAN ZAMAN/TARİH</span>
+              <span className="text-xs font-semibold">{r.date || 'Belirtilmedi'}</span>
+            </div>
+          </div>
+          <div className="flex items-center gap-3 text-white/80 bg-white/5 p-3 rounded-2xl border border-white/5 group-hover:bg-white/10 transition-colors">
+            <ion-icon name="location-outline" style={{ color: 'var(--primary-gold)' }}></ion-icon>
+            <div className="flex flex-col">
+              <span className="text-[10px] text-white/30 uppercase font-bold tracking-tighter">MEKAN / SAHNE</span>
+              <span className="text-xs font-semibold">{r.location || 'Sahne'}</span>
+            </div>
+          </div>
         </div>
-      )}
-    </div>
-  );
+  
+        {r.notes && (
+          <div className="mb-6 p-4 bg-black/40 rounded-2xl border border-white/5 border-l-2 border-l-[var(--primary-gold)]/50">
+            <h4 className="text-[10px] font-bold text-[var(--primary-gold)] uppercase mb-2 tracking-widest opacity-70">Plan Notları:</h4>
+            <p className="text-white/60 text-xs italic leading-relaxed">{r.notes}</p>
+          </div>
+        )}
+  
+        {canManage && (
+          <div className="pt-4 border-t border-white/10">
+            <AttendanceManager 
+              rehearsalId={r.id} 
+              allUsers={allTeam} 
+              initialAttendance={r.attendance || {}} 
+              initialNotes={r.attendanceNotes}
+              pulseResponses={r.pulseResponses || []}
+            />
+          </div>
+        )}
+      </div>
+    );
+  };
 
   return (
     <div className="pt-32 pb-16 px-[5%] min-h-screen bg-[var(--bg-dark)]">

@@ -18,14 +18,31 @@ export default function AttendanceManager({
   rehearsalId, 
   allUsers, 
   initialAttendance,
-  initialNotes
+  initialNotes,
+  pulseResponses: initialPulseResponses = []
 }: { 
   rehearsalId: string, 
   allUsers: User[], 
   initialAttendance: Record<string, AttendanceStatus>,
-  initialNotes?: string
+  initialNotes?: string,
+  pulseResponses?: string[]
 }) {
+  const [pulseResponses, setPulseResponses] = useState<string[]>(initialPulseResponses);
   const [attendance, setAttendance] = useState<Record<string, AttendanceStatus>>(initialAttendance || {});
+  
+  // Eğer pulseResponses varsa ve attendance boşsa, otomatik olarak GELDİ işaretle
+  useEffect(() => {
+    if (pulseResponses.length > 0) {
+      setAttendance(prev => {
+        const next = { ...prev };
+        pulseResponses.forEach(uid => {
+          if (!next[uid]) next[uid] = 'GELDİ';
+        });
+        return next;
+      });
+    }
+  }, [pulseResponses]);
+
   const [notes, setNotes] = useState(initialNotes || '');
   const [loading, setLoading] = useState(false);
   const [open, setOpen] = useState(false);
@@ -38,23 +55,27 @@ export default function AttendanceManager({
     
     const unsubscribe = onSnapshot(doc(db, "rehearsals", rehearsalId), (doc) => {
       const data = doc.data();
-      if (data?.pulseActive) {
-        setPulseActive(true);
-        const remaining = Math.max(0, Math.floor((data.pulseExpiresAt - Date.now()) / 1000));
-        setPulseTimeLeft(remaining);
-
-        // Otomatik olarak "Buradayım" diyenleri GELDİ olarak işaretle
+      if (data) {
         const responses = data.pulseResponses || [];
-        setAttendance(prev => {
-          const next = { ...prev };
-          responses.forEach((uid: string) => {
-            if (!next[uid]) next[uid] = 'GELDİ';
+        setPulseResponses(responses); // Canlı listeyi güncelle
+        
+        if (data.pulseActive) {
+          setPulseActive(true);
+          const remaining = Math.max(0, Math.floor((data.pulseExpiresAt - Date.now()) / 1000));
+          setPulseTimeLeft(remaining);
+
+          // Otomatik "Buradayım" diyenleri GELDİ olarak işaretle
+          setAttendance(prev => {
+            const next = { ...prev };
+            responses.forEach((uid: string) => {
+              if (!next[uid]) next[uid] = 'GELDİ';
+            });
+            return next;
           });
-          return next;
-        });
-      } else {
-        setPulseActive(false);
-        setPulseTimeLeft(0);
+        } else {
+          setPulseActive(false);
+          setPulseTimeLeft(0);
+        }
       }
     });
 
@@ -144,7 +165,15 @@ export default function AttendanceManager({
                         {u.name[0]}{u.surname[0]}
                       </div>
                       <div>
-                        <p className="text-xs text-white font-bold">{u.name} {u.surname}</p>
+                        <div className="flex items-center gap-2">
+                          <p className="text-xs text-white font-bold">{u.name} {u.surname}</p>
+                          {pulseResponses.includes(u.id) && (
+                            <span className="flex items-center gap-1 text-[8px] font-bold text-[var(--primary-gold)] bg-[var(--primary-gold)]/10 px-1.5 py-0.5 rounded border border-[var(--primary-gold)]/20 animate-fadeIn">
+                              <ion-icon name="shield-checkmark-outline"></ion-icon>
+                              NABIZ ONAYLI
+                            </span>
+                          )}
+                        </div>
                         <p className="text-[10px] text-white/40 uppercase tracking-widest">{u.role}</p>
                       </div>
                     </div>
