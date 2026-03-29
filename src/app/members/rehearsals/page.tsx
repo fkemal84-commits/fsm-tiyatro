@@ -63,7 +63,7 @@ export default async function RehearsalsPage() {
             <h2 className="text-[var(--primary-gold)] text-xl mb-6 flex items-center gap-2 font-bold">
               <ion-icon name="add-circle-outline"></ion-icon> Yeni Prova Takvimi Ekle
             </h2>
-            <form action={addRehearsal} className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <form action={async (fd) => { await addRehearsal(fd); }} className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <input type="text" name="title" placeholder="Prova Konusu / Sahne No" className="p-3 rounded-lg bg-black/50 text-white border-white/10 focus:ring-1 focus:ring-[var(--primary-gold)]" required />
               <div className="flex flex-col md:flex-row gap-4 md:col-span-2">
                 <div className="flex-1 relative">
@@ -128,7 +128,7 @@ export default async function RehearsalsPage() {
                             <ion-icon name="logo-whatsapp" style={{ fontSize: '1.2rem' }}></ion-icon>
                           </a>
                           <DeleteButton 
-                            action={deleteRehearsal} 
+                            action={async (fd) => { await deleteRehearsal(fd); }} 
                             id={r.id} 
                             name={r.title} 
                             confirmMessage="Bu provayı takvimden silmek istediğine emin misin?" 
