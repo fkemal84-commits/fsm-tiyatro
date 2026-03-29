@@ -17,7 +17,7 @@ export default function DeleteButton({ action, id, name, confirmMessage, idField
     return (
       <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
         <span style={{ fontSize: '0.75rem', color: '#ff4d4d', fontWeight: 'bold' }}>Emin misin?</span>
-        <form action={async (fd) => { await action(fd); }}>
+        <form action={action as any}>
           <input type="hidden" name={idFieldName} value={id} />
           <button 
             type="submit" 

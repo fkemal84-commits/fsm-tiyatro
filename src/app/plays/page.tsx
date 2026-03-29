@@ -44,7 +44,7 @@ export default async function Plays() {
                  <h2 className="serif-font" style={{ color: 'var(--primary-gold)', marginBottom: '1.5rem', fontSize: '1.8rem', display: 'flex', alignItems: 'center', gap: '0.8rem' }}>
                     <ion-icon name="add-circle-outline"></ion-icon> Yeni Oyun Portfolyosu Ekle
                  </h2>
-                 <form action={async (fd) => { await addPlay(fd); }} encType="multipart/form-data" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '1.5rem' }}>
+                 <form action={addPlay as any} encType="multipart/form-data" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '1.5rem' }}>
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
                       <input 
                         type="text" 

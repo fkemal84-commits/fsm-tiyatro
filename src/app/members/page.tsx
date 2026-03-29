@@ -58,7 +58,7 @@ export default async function MembersDashboard() {
           </h2>
           
           {canAdd && (
-            <form action={async (fd) => { await addEvent(fd); }} className="mb-6 bg-white/5 p-6 rounded-xl flex flex-col gap-3 border border-dashed border-[var(--primary-gold)]">
+            <form action={addEvent as any} className="mb-6 bg-white/5 p-6 rounded-xl flex flex-col gap-3 border border-dashed border-[var(--primary-gold)]">
               <h4 className="text-[var(--primary-gold)] text-sm font-semibold">+ Yeni Etkinlik Ekle (Yönetici)</h4>
               <input type="text" name="title" placeholder="Etkinlik Adı" className="p-3 rounded-lg bg-black/50 text-white border-none focus:ring-1 focus:ring-[var(--primary-gold)]" required />
               <div className="flex flex-col md:flex-row gap-3">
@@ -131,7 +131,7 @@ export default async function MembersDashboard() {
           </h2>
 
           {canAdd && (
-             <form action={async (fd) => { await addTeamNeed(fd); }} className="mb-6 bg-white/5 p-6 rounded-xl flex flex-col gap-3 border border-dashed border-[var(--primary-gold)]">
+             <form action={addTeamNeed as any} className="mb-6 bg-white/5 p-6 rounded-xl flex flex-col gap-3 border border-dashed border-[var(--primary-gold)]">
               <h4 className="text-[var(--primary-gold)] text-sm font-semibold">+ Yeni Personel Açığı Ekle (Yönetici)</h4>
               <input type="text" name="roleName" placeholder="Aranan Yetenek" className="p-3 rounded-lg bg-black/50 text-white border-none focus:ring-1 focus:ring-[var(--primary-gold)]" required />
               <textarea name="description" placeholder="Beklentilerimiz..." rows={3} className="p-3 rounded-lg bg-black/50 text-white border-none focus:ring-1 focus:ring-[var(--primary-gold)]" required></textarea>

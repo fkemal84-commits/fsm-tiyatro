@@ -76,7 +76,7 @@ export default async function AdminUserProfile({ params }: { params: Promise<{ i
             <div style={{ marginTop: '3rem', paddingTop: '2rem', borderTop: '1px dashed rgba(255,0,0,0.3)', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
               <h4 style={{ color: '#ff4d4d', fontSize: '1.1rem', marginBottom: '0.5rem' }}>⚠️ KVKK Yıkım Paneli (Right to be Forgotten)</h4>
               <p style={{ color: 'var(--text-muted)', fontSize: '0.9rem', marginBottom: '1.5rem', textAlign: 'center', maxWidth: '500px' }}>Bu işlem geri alınamaz. Kullanıcının SQL kaydını ve fiziksel diskteki fotoğrafını (fs.unlink) kalıcı olarak sıfırlayıp silecektir.</p>
-              <form action={async (fd) => { await deleteUserRecord(fd); }}>
+              <form action={deleteUserRecord as any}>
                 <input type="hidden" name="userId" value={userRecord.id} />
                 <button 
                   type="submit" 

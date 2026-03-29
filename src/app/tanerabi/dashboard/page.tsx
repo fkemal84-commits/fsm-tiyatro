@@ -74,7 +74,7 @@ export default async function Dashboard() {
                       <td style={{ padding: '1rem' }}>{u.email}</td>
                       <td style={{ padding: '1rem' }}>{new Date(u.createdAt).toLocaleDateString('tr-TR')}</td>
                       <td style={{ padding: '1rem', textAlign: 'center' }}>
-                         <form action={async (fd) => { await approveUser(fd); }} style={{ display: 'inline' }}>
+                         <form action={approveUser as any} style={{ display: 'inline' }}>
                             <input type="hidden" name="userId" value={u.id} />
                             <button type="submit" className="btn btn-primary" style={{ padding: '0.4rem 1.2rem', fontSize: '0.8rem' }}>Onayla ve Üye Yap</button>
                          </form>
@@ -150,7 +150,7 @@ export default async function Dashboard() {
                         <td style={{ padding: '1rem' }}>{u.name} {u.surname}</td>
                         <td style={{ padding: '1rem' }}>
                           {canEdit ? (
-                            <form action={async (fd) => { await changeUserRole(fd); }} style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
+                            <form action={changeUserRole as any} style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
                               <input type="hidden" name="userId" value={u.id} />
                               <select name="newRole" defaultValue={u.role} style={{ padding: '0.4rem', borderRadius: '6px', background: 'rgba(0,0,0,0.5)', color: u.role === 'SUPERADMIN' ? '#ff4d4d' : u.role === 'ADMIN' ? 'var(--primary-gold)' : '#fff', border: '1px solid rgba(255,255,255,0.2)', fontSize: '0.85rem' }}>
                                 {role === 'SUPERADMIN' && <option value="SUPERADMIN">SUPERADMIN</option>}
@@ -188,7 +188,7 @@ export default async function Dashboard() {
           {/* Blog Ekleme Formu - EDİTÖR, ADMIN VE SUPERADMIN GÖREBİLİR */}
           <div className="glass-card">
             <h2 style={{ color: '#fff', marginBottom: '1.5rem', fontSize: '1.5rem' }}>Yeni Blog Yazısı Ekle</h2>
-            <form action={async (fd) => { await addPost(fd); }} encType="multipart/form-data" style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+            <form action={addPost as any} encType="multipart/form-data" style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
               <input 
                 type="text" 
                 name="title"
@@ -220,7 +220,7 @@ export default async function Dashboard() {
           {(role === 'SUPERADMIN' || role === 'ADMIN') && (
             <div className="glass-card">
               <h2 style={{ color: '#fff', marginBottom: '1.5rem', fontSize: '1.5rem' }}>Sahnede İz Bırakanlar'a Oyun Ekle</h2>
-              <form action={async (fd) => { await addPlay(fd); }} encType="multipart/form-data" style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+              <form action={addPlay as any} encType="multipart/form-data" style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
                 <input 
                   type="text" 
                   name="title" 
@@ -266,7 +266,7 @@ export default async function Dashboard() {
           {(role === 'SUPERADMIN' || role === 'ADMIN') && (
             <div className="glass-card">
               <h2 style={{ color: '#fff', marginBottom: '1.5rem', fontSize: '1.5rem' }}>📢 Yeni Kulüp Etkinliği Ekle</h2>
-              <form action={async (fd) => { await addEvent(fd); }} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+              <form action={addEvent as any} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
                 <input 
                   type="text" 
                   name="title" 
@@ -314,7 +314,7 @@ export default async function Dashboard() {
                   <div key={p.id} style={{ padding: '0.8rem', background: 'rgba(255,255,255,0.05)', borderRadius: '8px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                     <span style={{ color: '#fff', fontSize: '0.9rem' }}>{p.title}</span>
                     <DeleteButton 
-                      action={async (fd) => { await deletePost(fd); }} 
+                      action={deletePost as any} 
                       id={p.id} 
                       name={p.title} 
                       confirmMessage="Bu yazıyı sonsuza dek silmek istediğine emin misin?" 
@@ -334,7 +334,7 @@ export default async function Dashboard() {
                   <div key={e.id} style={{ padding: '0.8rem', background: 'rgba(255,255,255,0.05)', borderRadius: '8px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                     <span style={{ color: '#fff', fontSize: '0.9rem' }}>{e.title}</span>
                     <DeleteButton 
-                      action={async (fd) => { await deleteEvent(fd); }} 
+                      action={deleteEvent as any} 
                       id={e.id} 
                       name={e.title} 
                       confirmMessage="Bu etkinliği iptal etmek istiyor musun?" 
