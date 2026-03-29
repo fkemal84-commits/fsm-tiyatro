@@ -51,10 +51,15 @@ export const authOptions: NextAuthOptions = {
     })
   ],
   callbacks: {
-    async jwt({ token, user }) {
+    async jwt({ token, user, trigger, session }) {
       if (user) {
         token.role = (user as any).role;
         token.isAdminMode = (user as any).isAdminMode;
+      }
+      // UPDATE TETİKLEYİCİSİ: session.update() çağrıldığında JWT'yi güncelle
+      if (trigger === "update" && session) {
+        if (session.role) token.role = session.role;
+        if (session.isAdminMode !== undefined) token.isAdminMode = session.isAdminMode;
       }
       return token;
     },

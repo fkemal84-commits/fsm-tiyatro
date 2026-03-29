@@ -47,6 +47,9 @@ export const viewport = {
   userScalable: false,
 };
 
+import Providers from "@/components/Providers";
+import SessionWatcher from "@/components/SessionWatcher";
+
 export default async function RootLayout({
   children,
 }: Readonly<{
@@ -70,10 +73,13 @@ export default async function RootLayout({
         }} />
       </head>
       <body className="antialiased">
-        <PushNotificationManager session={session} />
-        <Navbar session={session} />
-        {children}
-        <Footer />
+        <Providers>
+          <SessionWatcher />
+          <PushNotificationManager session={session} />
+          <Navbar session={session} />
+          {children}
+          <Footer />
+        </Providers>
       </body>
     </html>
   );

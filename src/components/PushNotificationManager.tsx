@@ -5,7 +5,12 @@ import { getToken, onMessage } from 'firebase/messaging';
 import { messaging } from '@/lib/firebase';
 import { saveFCMToken } from '@/app/actions';
 
-export default function PushNotificationManager({ session }: { session: any }) {
+import { useSession } from 'next-auth/react';
+
+export default function PushNotificationManager({ session: initialSession }: { session: any }) {
+  const { data: session } = useSession();
+  const currentSession = session || initialSession;
+
   const [permission, setPermission] = useState<string>('default');
   const [isIOS, setIsIOS] = useState(false);
   const [isStandalone, setIsStandalone] = useState(false);
@@ -14,7 +19,7 @@ export default function PushNotificationManager({ session }: { session: any }) {
   const [regStatus, setRegStatus] = useState<string>('');
 
   const registerToken = async (currentPermission: string) => {
-    if (currentPermission !== 'granted' || !messaging || !session) return;
+    if (currentPermission !== 'granted' || !messaging || !currentSession) return;
     
     try {
       setRegStatus('wait_sw');
@@ -43,7 +48,7 @@ export default function PushNotificationManager({ session }: { session: any }) {
     if (permission === 'granted') {
       registerToken(permission);
     }
-  }, [permission, session]);
+  }, [permission, currentSession]);
 
   useEffect(() => {
     if (typeof window !== 'undefined') {
@@ -81,7 +86,7 @@ export default function PushNotificationManager({ session }: { session: any }) {
 
   // Eğer her şey tamamsa ve kayıt yapıldıysa (veya reddedildiyse) bileşeni gizle
   // Ama hata varsa veya register bekliyorsak uyaralım
-  if (!isSupported || !session) return null;
+  if (!isSupported || !currentSession) return null;
   
   if (permission === 'granted' && regStatus === 'done') return null;
   if (permission === 'denied' && regStatus !== 'error') return null;

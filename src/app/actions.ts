@@ -6,6 +6,8 @@ import { redirect } from 'next/navigation';
 import bcrypt from 'bcryptjs';
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
+import { sendPasswordResetEmail } from "@/lib/email";
+import crypto from 'crypto';
 
 // --- YARDIMCI FONKSİYONLAR & GÜVENLİK ---
 
@@ -864,6 +866,81 @@ export async function markAttendance(rehearsalId: string, userIds: string[]) {
     return { success: true };
   } catch (error: any) {
     return { error: error.message };
+  }
+}
+
+/**
+ * Şifre sıfırlama talebi oluşturur.
+ */
+export async function requestPasswordReset(formData: FormData) {
+  try {
+    const email = (formData.get('email') as string)?.toLowerCase();
+    if (!email) return { error: "E-posta adresi gereklidir." };
+
+    // Kullanıcı kontrolü
+    const userSnapshot = await adminDb.collection('users').where('email', '==', email).limit(1).get();
+    if (userSnapshot.empty) {
+      return { error: "Bu e-posta adresiyle kayıtlı bir kullanıcı bulunamadı." };
+    }
+
+    const token = crypto.randomUUID();
+    const expiresAt = new Date(Date.now() + 3600000); // 1 saat sonra
+
+    await adminDb.collection('passwordResets').add({
+      email,
+      token,
+      expiresAt: expiresAt.toISOString(),
+      createdAt: new Date().toISOString()
+    });
+
+    const resetLink = `${process.env.NEXTAUTH_URL || 'http://localhost:3000'}/reset-password?token=${token}&email=${email}`;
+    await sendPasswordResetEmail(email, resetLink);
+
+    return { success: true, message: "Şifre sıfırlama linki e-postanıza gönderildi." };
+  } catch (error: any) {
+    console.error("[PWD_RESET_REQ] Hata:", error);
+    return { error: "Bir hata oluştu. Lütfen tekrar deneyin." };
+  }
+}
+
+/**
+ * Şifreyi yeni şifreyle günceller.
+ */
+export async function completePasswordReset(formData: FormData) {
+  try {
+    const token = formData.get('token') as string;
+    const email = (formData.get('email') as string)?.toLowerCase();
+    const newPassword = formData.get('newPassword') as string;
+
+    if (!token || !email || !newPassword) return { error: "Geçersiz istek." };
+
+    const resetSnap = await adminDb.collection('passwordResets')
+      .where('token', '==', token)
+      .where('email', '==', email)
+      .limit(1)
+      .get();
+
+    if (resetSnap.empty) return { error: "Geçersiz veya süresi dolmuş anahtar." };
+
+    const resetDoc = resetSnap.docs[0];
+    const resetData = resetDoc.data();
+    
+    if (new Date(resetData.expiresAt) < new Date()) {
+      await resetDoc.ref.delete();
+      return { error: "Link süresi dolmuş." };
+    }
+
+    const userSnap = await adminDb.collection('users').where('email', '==', email).limit(1).get();
+    if (userSnap.empty) return { error: "Kullanıcı bulunamadı." };
+
+    const hashedPassword = await bcrypt.hash(newPassword, 10);
+    await userSnap.docs[0].ref.update({ password: hashedPassword });
+    await resetDoc.ref.delete();
+
+    return { success: true, message: "Şifreniz güncellendi." };
+  } catch (error: any) {
+    console.error("[PWD_RESET_COMPLETE] Hata:", error);
+    return { error: "Hata oluştu." };
   }
 }
 

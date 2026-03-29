@@ -4,9 +4,12 @@ import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { usePathname } from 'next/navigation';
-import { signOut } from 'next-auth/react';
+import { useSession, signOut } from 'next-auth/react';
 
-export default function Navbar({ session }: { session?: any }) {
+export default function Navbar({ session: initialSession }: { session?: any }) {
+  const { data: session } = useSession();
+  const currentSession = session || initialSession;
+
   const [scrolled, setScrolled] = useState(false);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [activeDropdown, setActiveDropdown] = useState<string | null>(null);
@@ -41,7 +44,7 @@ export default function Navbar({ session }: { session?: any }) {
     }
   };
 
-  const role = session?.user?.role;
+  const role = currentSession?.user?.role;
 
   return (
     <nav className={`navbar ${scrolled ? 'scrolled' : ''}`}>
@@ -139,7 +142,7 @@ export default function Navbar({ session }: { session?: any }) {
             </ul>
 
             <div className="mobile-nav-footer">
-              {session ? (
+              {currentSession ? (
                 <div className="flex flex-col gap-3 w-full">
                   <Link href="/profile" className="mobile-footer-link" onClick={() => setIsMenuOpen(false)}>
                     <ion-icon name="person-circle-outline"></ion-icon> Profilim
@@ -158,9 +161,9 @@ export default function Navbar({ session }: { session?: any }) {
 
         {/* DESKTOP ACTIONS */}
         <div className="desktop-actions">
-          {session ? (
+          {currentSession ? (
             <>
-              {session.user.isAdminMode && (
+              {currentSession.user.isAdminMode && (
                 <span className="admin-badge">
                   <ion-icon name="shield-checkmark-outline"></ion-icon> Yönetici Modu
                 </span>
