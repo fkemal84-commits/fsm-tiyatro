@@ -13,19 +13,27 @@ export default function FlashAttendanceOverlay() {
   const [responded, setResponded] = useState(false);
   const [loading, setLoading] = useState(false);
 
-  useEffect(() => {
-    if (!session?.user) return;
+  const [debugLog, setDebugLog] = useState<string>('Bağlanıyor...');
 
-    // Aktif pulse check olan provaları dinle
+  useEffect(() => {
+    if (!session?.user) {
+      setDebugLog('Oturum Kapalı');
+      return;
+    }
+
+    const userRole = (session.user as any).role;
+    const userId = (session.user as any).id;
+    setDebugLog(`Bağlı. Rol: ${userRole} | ID: ${userId.slice(0,5)}`);
+
     const q = query(
       collection(db, "rehearsals"),
       where("pulseActive", "==", true)
     );
 
     const unsubscribe = onSnapshot(q, (snapshot) => {
+      setDebugLog(prev => `${prev} | Sinyal: ${snapshot.empty ? 'Yok' : 'VAR'}`);
+      
       if (!snapshot.empty) {
-        const userRole = (session.user as any).role;
-        // SADECE AKTOR veya MEMBER (oyuncu) olanlara göster
         if (userRole !== 'AKTOR' && userRole !== 'MEMBER') {
           setActiveRehearsal(null);
           return;
@@ -36,18 +44,13 @@ export default function FlashAttendanceOverlay() {
         const expiresAt = docData.pulseExpiresAt;
         const responses = docData.pulseResponses || [];
         
-        // Eğer kullanıcı zaten yanıt verdiyse gösterme
-        const hasResponded = responses.includes((session.user as any).id);
-        
-        // Saat farkı toleransı: Eğer server'dan gelen süre çok yakınsa 5 saniye ekleyerek şans tanı
-        const now = Date.now();
-        const remaining = Math.max(0, Math.floor((expiresAt - now) / 1000));
+        const hasResponded = responses.includes(userId);
+        const remaining = Math.max(0, Math.floor((expiresAt - Date.now()) / 1000));
 
         if (remaining > 0 && !hasResponded) {
           setActiveRehearsal({ id, ...docData });
           setTimeLeft(remaining);
           setResponded(false);
-          console.log("[FLASH] Aktif seans bulundu:", id, "Kalan:", remaining);
         } else {
           setActiveRehearsal(null);
         }
@@ -55,8 +58,8 @@ export default function FlashAttendanceOverlay() {
         setActiveRehearsal(null);
       }
     }, (error) => {
-      console.error("[FLASH] Firestore Dinleme Hatası:", error);
-      // Eğer yetki hatası (Permission Denied) varsa kullanıcıya çaktırmadan logla
+      console.error("[FLASH] Error:", error);
+      setDebugLog(`HATA: ${error.message}`);
     });
 
     return () => unsubscribe();
@@ -87,54 +90,61 @@ export default function FlashAttendanceOverlay() {
       }
       await respondToPulse(activeRehearsal.id);
       setResponded(true);
-      // Kısa bir süre sonra kapat
       setTimeout(() => setActiveRehearsal(null), 1500);
-    } catch (err) {
-      console.error(err);
+    } catch (err: any) {
+      setDebugLog(`Yanıtlama Hatası: ${err.message}`);
     } finally {
       setLoading(false);
     }
   };
 
-  if (!activeRehearsal) return null;
-
   return (
-    <div className="fixed inset-0 z-[9999] flex items-center justify-center p-6 bg-black/90 backdrop-blur-xl animate-fadeIn">
-      <div className="max-w-md w-full text-center space-y-8">
-        <div className="relative mx-auto w-32 h-32">
-          <div className="absolute inset-0 rounded-full border-4 border-[var(--primary-gold)]/20 animate-ping"></div>
-          <div className="absolute inset-0 rounded-full border-4 border-[var(--primary-gold)] flex items-center justify-center text-4xl font-bold text-[var(--primary-gold)] bg-black/50">
-            {timeLeft}
-          </div>
-        </div>
-
-        <div className="space-y-2">
-          <h2 className="serif-font text-3xl text-white">Nabız <span className="text-[var(--primary-gold)]">Yoklaması</span></h2>
-          <p className="text-white/60 text-sm">Provada mısın? Hemen butona basarak varlığını kanıtla!</p>
-        </div>
-
-        {responded ? (
-          <div className="bg-green-600/20 border border-green-500/30 p-6 rounded-3xl animate-bounce">
-            <ion-icon name="checkmark-done-outline" style={{ fontSize: '3rem', color: '#22c55e' }}></ion-icon>
-            <p className="text-green-400 font-bold mt-2 uppercase tracking-widest text-sm">VARLIĞINIZ MÜHÜRLENDİ</p>
-          </div>
-        ) : (
-          <button
-            onClick={handleImHere}
-            disabled={loading}
-            className="w-full aspect-square max-w-[280px] mx-auto rounded-full bg-gradient-to-tr from-[var(--primary-gold)] to-[#FFD700] p-1 shadow-[0_0_50px_rgba(212,175,55,0.3)] active:scale-95 transition-all group"
-          >
-            <div className="w-full h-full rounded-full bg-black flex flex-col items-center justify-center space-y-2 group-hover:bg-transparent transition-colors">
-              <ion-icon name="finger-print-outline" style={{ fontSize: '4rem', color: loading ? '#666' : 'var(--primary-gold)' }} className="group-hover:text-black"></ion-icon>
-              <span className="text-white group-hover:text-black font-bold tracking-widest uppercase text-xl">
-                {loading ? 'YÜKLENİYOR...' : 'BURADAYIM!'}
-              </span>
-            </div>
-          </button>
-        )}
-
-        <p className="text-white/20 text-xs uppercase tracking-[0.2em]">Kalan Süre: {timeLeft} Saniye</p>
+    <>
+      {/* GİZLİ DEBUG PANELİ (Ekran sol alt köşede küçük bir nokta veya yazı) */}
+      <div className="fixed bottom-0 left-0 z-[10000] p-1 bg-black/80 text-[8px] text-white/40 pointer-events-none font-mono">
+        {debugLog}
       </div>
-    </div>
+
+      {activeRehearsal && (
+        <div className="fixed inset-0 z-[9999] flex items-center justify-center p-6 bg-black/90 backdrop-blur-xl animate-fadeIn">
+          {/* ... mevcut overlay içeriği ... */}
+          <div className="max-w-md w-full text-center space-y-8">
+            <div className="relative mx-auto w-32 h-32">
+              <div className="absolute inset-0 rounded-full border-4 border-[var(--primary-gold)]/20 animate-ping"></div>
+              <div className="absolute inset-0 rounded-full border-4 border-[var(--primary-gold)] flex items-center justify-center text-4xl font-bold text-[var(--primary-gold)] bg-black/50">
+                {timeLeft}
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <h2 className="serif-font text-3xl text-white">Nabız <span className="text-[var(--primary-gold)]">Yoklaması</span></h2>
+              <p className="text-white/60 text-sm">Provada mısın? Hemen butona basarak varlığını kanıtla!</p>
+            </div>
+
+            {responded ? (
+              <div className="bg-green-600/20 border border-green-500/30 p-6 rounded-3xl animate-bounce">
+                <ion-icon name="checkmark-done-outline" style={{ fontSize: '3rem', color: '#22c55e' }}></ion-icon>
+                <p className="text-green-400 font-bold mt-2 uppercase tracking-widest text-sm">VARLIĞINIZ MÜHÜRLENDİ</p>
+              </div>
+            ) : (
+              <button
+                onClick={handleImHere}
+                disabled={loading}
+                className="w-full aspect-square max-w-[280px] mx-auto rounded-full bg-gradient-to-tr from-[var(--primary-gold)] to-[#FFD700] p-1 shadow-[0_0_50px_rgba(212,175,55,0.3)] active:scale-95 transition-all group"
+              >
+                <div className="w-full h-full rounded-full bg-black flex flex-col items-center justify-center space-y-2 group-hover:bg-transparent transition-colors">
+                  <ion-icon name="finger-print-outline" style={{ fontSize: '4rem', color: loading ? '#666' : 'var(--primary-gold)' }} className="group-hover:text-black"></ion-icon>
+                  <span className="text-white group-hover:text-black font-bold tracking-widest uppercase text-xl">
+                    {loading ? 'YÜKLENİYOR...' : 'BURADAYIM!'}
+                  </span>
+                </div>
+              </button>
+            )}
+
+            <p className="text-white/20 text-xs uppercase tracking-[0.2em]">Kalan Süre: {timeLeft} Saniye</p>
+          </div>
+        </div>
+      )}
+    </>
   );
 }
