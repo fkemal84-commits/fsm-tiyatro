@@ -863,12 +863,16 @@ export async function startPulseCheck(rehearsalId: string) {
   try {
     await requireAuth(['SUPERADMIN', 'ADMIN', 'DIRECTOR', 'ASST_DIRECTOR']);
     
-    const expiresAt = Date.now() + 30000; // 30 saniye
+    const session = await getServerSession(authOptions);
+    const userId = (session?.user as any)?.id;
+    
+    const expiresAt = Date.now() + 60000; 
     
     await adminDb.collection('rehearsals').doc(rehearsalId).update({
       pulseActive: true,
       pulseExpiresAt: expiresAt,
-      pulseResponses: []
+      pulseResponses: [],
+      pulseStartedBy: userId // Başlatanı kaydet
     });
 
     return { success: true };
@@ -932,6 +936,9 @@ export async function startInstantAttendance(formData?: FormData) {
     const timeStr = now.toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' });
     const title = `Anlık Yoklama - ${dateStr}`;
 
+    const session = await getServerSession(authOptions);
+    const userId = (session?.user as any)?.id;
+
     const expiresAt = Date.now() + 60000;
     const docRef = await adminDb.collection('rehearsals').add({
         title,
@@ -942,6 +949,7 @@ export async function startInstantAttendance(formData?: FormData) {
         pulseActive: true,
         pulseExpiresAt: expiresAt,
         pulseResponses: [],
+        pulseStartedBy: userId,
         createdAt: now.toISOString()
     });
 
