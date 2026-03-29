@@ -17,6 +17,15 @@ export default function PushNotificationManager({ session: initialSession }: { s
   const [isSupported, setIsSupported] = useState(true);
 
   const [regStatus, setRegStatus] = useState<string>('');
+  const [showDelayed, setShowDelayed] = useState(false);
+
+  // 5 saniye sonra uyarının görünmesine izin ver
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setShowDelayed(true);
+    }, 5000);
+    return () => clearTimeout(timer);
+  }, []);
 
   const registerToken = async (currentPermission: string) => {
     if (currentPermission !== 'granted' || !messaging || !currentSession) return;
@@ -86,7 +95,7 @@ export default function PushNotificationManager({ session: initialSession }: { s
 
   // Eğer her şey tamamsa ve kayıt yapıldıysa (veya reddedildiyse) bileşeni gizle
   // Ama hata varsa veya register bekliyorsak uyaralım
-  if (!isSupported || !currentSession) return null;
+  if (!isSupported || !currentSession || !showDelayed) return null;
   
   if (permission === 'granted' && regStatus === 'done') return null;
   if (permission === 'denied' && regStatus !== 'error') return null;
