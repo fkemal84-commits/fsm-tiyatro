@@ -49,7 +49,10 @@ export default function FlashAttendanceOverlay() {
           const remaining = Math.max(0, Math.floor((expiresAt - now) / 1000));
 
           if (remaining > 0 && !hasResponded) {
-            if (userRole === 'AKTOR' || userRole === 'MEMBER' || (session.user as any).isAdminMode) {
+            const isManager = ['ADMIN', 'SUPERADMIN', 'DIRECTOR', 'ASST_DIRECTOR'].includes(userRole);
+            const isActor = ['AKTOR', 'MEMBER', 'PLAYER'].includes(userRole);
+
+            if (isActor || isManager || (session.user as any).isAdminMode) {
               setActiveRehearsal({ id, ...docData });
               setTimeLeft(remaining);
               setResponded(false);
