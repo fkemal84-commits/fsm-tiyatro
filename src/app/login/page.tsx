@@ -59,6 +59,12 @@ export default function Login() {
             {loading ? 'Giriş Yapılıyor...' : 'Sisteme Gir'}
           </button>
         </form>
+
+        <div style={{ marginTop: '1.5rem', fontSize: '0.85rem' }}>
+          <a href="/forgot-password" style={{ color: 'var(--text-muted)', textDecoration: 'none' }} className="hover:text-[var(--primary-gold)] transition-all">
+            Şifremi Unuttum?
+          </a>
+        </div>
         
         <p style={{ marginTop: '2rem', fontSize: '0.9rem', color: 'var(--text-muted)' }}>
           Henüz kulübe üye değil misiniz? <a href="/register" style={{ color: 'var(--primary-gold)', textDecoration: 'underline' }}>Hemen Kayıt Olun</a>

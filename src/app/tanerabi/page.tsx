@@ -57,6 +57,12 @@ export default function AdminSecretLogin() {
             {loading ? 'Yetki Doğrulanıyor...' : 'Ağa Katıl'}
           </button>
         </form>
+
+        <div style={{ marginTop: '1.5rem', fontSize: '0.85rem' }}>
+          <a href="/forgot-password" style={{ color: 'var(--text-muted)', textDecoration: 'none' }} className="hover:text-[var(--primary-gold)] transition-all">
+            Şifremi Unuttum?
+          </a>
+        </div>
       </div>
     </div>
   );
