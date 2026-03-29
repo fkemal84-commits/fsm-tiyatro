@@ -881,13 +881,64 @@ export async function addComment(formData: FormData) {
   }
 }
 
-export async function markAttendance(rehearsalId: string, userIds: string[]) {
+// --- YOKLAMA & NABIZ SİSTEMİ ---
+
+export async function startPulseCheck(rehearsalId: string) {
+  try {
+    await requireAuth(['SUPERADMIN', 'ADMIN', 'DIRECTOR', 'ASST_DIRECTOR']);
+    
+    const expiresAt = Date.now() + 30000; // 30 saniye
+    
+    await adminDb.collection('rehearsals').doc(rehearsalId).update({
+      pulseCheck: {
+        active: true,
+        expiresAt,
+        responses: []
+      }
+    });
+
+    return { success: true };
+  } catch (error: any) {
+    return { error: error.message };
+  }
+}
+
+export async function respondToPulse(rehearsalId: string) {
+  try {
+    const session = await getServerSession(authOptions);
+    if (!session?.user) throw new Error("Oturum yok.");
+    const userId = (session.user as any).id;
+
+    const doc = await adminDb.collection('rehearsals').doc(rehearsalId).get();
+    const data = doc.data();
+    
+    if (!data?.pulseCheck?.active || Date.now() > data.pulseCheck.expiresAt) {
+      throw new Error("Yoklama süresi dolmuş veya hiç başlatılmamış.");
+    }
+
+    // Kullanıcıyı yanıtlara ekle (Unique)
+    const currentResponses = data.pulseCheck.responses || [];
+    if (!currentResponses.includes(userId)) {
+      await adminDb.collection('rehearsals').doc(rehearsalId).update({
+        "pulseCheck.responses": [...currentResponses, userId]
+      });
+    }
+
+    return { success: true };
+  } catch (error: any) {
+    return { error: error.message };
+  }
+}
+
+export async function finalizeAttendance(rehearsalId: string, attendanceData: any, attendanceNotes: string) {
   try {
     await requireAuth(['SUPERADMIN', 'ADMIN', 'DIRECTOR', 'ASST_DIRECTOR']);
     
     await adminDb.collection('rehearsals').doc(rehearsalId).update({
-      attendance: userIds,
-      attendanceUpdatedAt: new Date().toISOString()
+      attendance: attendanceData,
+      attendanceNotes,
+      attendanceUpdatedAt: new Date().toISOString(),
+      pulseCheck: { active: false } // Seansı kapat
     });
 
     revalidatePath('/members/rehearsals');

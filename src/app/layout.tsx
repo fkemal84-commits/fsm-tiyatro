@@ -49,6 +49,7 @@ export const viewport = {
 
 import Providers from "@/components/Providers";
 import SessionWatcher from "@/components/SessionWatcher";
+import FlashAttendanceOverlay from "@/components/FlashAttendanceOverlay";
 
 export default async function RootLayout({
   children,
@@ -76,6 +77,7 @@ export default async function RootLayout({
         <Providers>
           <SessionWatcher />
           <PushNotificationManager session={session} />
+          <FlashAttendanceOverlay />
           <Navbar session={session} />
           {children}
           <Footer />
