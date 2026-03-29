@@ -31,11 +31,14 @@ export const authOptions: NextAuthOptions = {
         const realRole = user.role;
         
         // GİZLİ YOL MANTIĞI: Eğer /tanerabi üzerinden girilmediyse, 
-        // admin olsa bile oturumu MEMBER olarak başlat.
-        let sessionRole = 'MEMBER';
+        // Admin/Yönetmen unvanlarını MEMBER olarak sessize al.
+        // Ancak AKTOR unvanı her zaman açık kalsın.
+        let sessionRole = (realRole === 'AKTOR' || realRole === 'PLAYER') ? realRole : 'MEMBER';
         let isAdminMode = false;
+        
+        const isManagementRole = ['ADMIN', 'SUPERADMIN', 'DIRECTOR', 'ASST_DIRECTOR'].includes(realRole as string);
 
-        if (isAdminEntry && (realRole === 'ADMIN' || realRole === 'SUPERADMIN' || realRole === 'DIRECTOR')) {
+        if (isAdminEntry && isManagementRole) {
           sessionRole = realRole;
           isAdminMode = true;
         }
