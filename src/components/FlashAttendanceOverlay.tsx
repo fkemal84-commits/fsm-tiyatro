@@ -36,20 +36,27 @@ export default function FlashAttendanceOverlay() {
         const expiresAt = docData.pulseExpiresAt;
         const responses = docData.pulseResponses || [];
         
-        // Eğer kullanıcı zaten yanıt verdiyse veya süre dolduysa gösterme
+        // Eğer kullanıcı zaten yanıt verdiyse gösterme
         const hasResponded = responses.includes((session.user as any).id);
-        const remaining = Math.max(0, Math.floor((expiresAt - Date.now()) / 1000));
+        
+        // Saat farkı toleransı: Eğer server'dan gelen süre çok yakınsa 5 saniye ekleyerek şans tanı
+        const now = Date.now();
+        const remaining = Math.max(0, Math.floor((expiresAt - now) / 1000));
 
         if (remaining > 0 && !hasResponded) {
           setActiveRehearsal({ id, ...docData });
           setTimeLeft(remaining);
           setResponded(false);
+          console.log("[FLASH] Aktif seans bulundu:", id, "Kalan:", remaining);
         } else {
           setActiveRehearsal(null);
         }
       } else {
         setActiveRehearsal(null);
       }
+    }, (error) => {
+      console.error("[FLASH] Firestore Dinleme Hatası:", error);
+      // Eğer yetki hatası (Permission Denied) varsa kullanıcıya çaktırmadan logla
     });
 
     return () => unsubscribe();

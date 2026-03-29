@@ -5,6 +5,7 @@ service cloud.firestore {
     match /posts/{doc} { allow read: if true; }
     match /plays/{doc} { allow read: if true; }
     match /events/{doc} { allow read: if true; }
+    match /rehearsals/{doc} { allow read: if request.auth != null; }
     
     // 2. Kullanıcı Profil Verileri: Sadece kişi kendininkini veya Admin görebilir
     match /users/{userId} {
