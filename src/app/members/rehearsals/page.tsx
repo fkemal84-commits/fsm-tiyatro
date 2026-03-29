@@ -1,7 +1,7 @@
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { adminDb } from "@/lib/firebase-admin";
-import { addRehearsal, deleteRehearsal } from "@/app/actions";
+import { addRehearsal, deleteRehearsal, startInstantAttendance } from "@/app/actions";
 import NudgeButton from "@/components/NudgeButton";
 import { getWhatsAppRehearsalLink } from "@/lib/utils";
 import DeleteButton from "@/components/DeleteButton";
@@ -48,7 +48,15 @@ export default async function RehearsalsPage() {
             <p className="text-white/60">Ekibin disiplini, sahnenin başarısıdır.</p>
           </div>
           {canManage && (
-            <NudgeButton />
+            <div className="flex flex-col md:flex-row gap-3">
+              <form action={startInstantAttendance as any}>
+                <button type="submit" className="btn btn-outline border-[var(--primary-gold)] text-[var(--primary-gold)] flex items-center gap-2 hover:bg-[var(--primary-gold)] hover:text-black py-2 px-6 rounded-full text-xs font-bold transition-all">
+                  <ion-icon name="flashlight-outline"></ion-icon>
+                  Hızlı Yoklama Başlat
+                </button>
+              </form>
+              <NudgeButton />
+            </div>
           )}
         </div>
         <p className="text-[var(--text-muted)] max-w-2xl mx-auto">
