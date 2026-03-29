@@ -545,12 +545,18 @@ export async function startInstantAttendance(formData?: FormData) {
     const timeStr = now.toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' });
     const title = `Anlık Yoklama - ${dateStr}`;
 
+    const expiresAt = Date.now() + 30000;
     const docRef = await adminDb.collection('rehearsals').add({
         title,
         date: `${dateStr} - Saat: ${timeStr} (Anlık)`,
         location: 'Sahne / Salon',
         notes: 'Bu kayıt yönetim panelinden anlık olarak başlatılmıştır.',
-        attendance: [],
+        attendance: {},
+        pulseCheck: {
+            active: true,
+            expiresAt,
+            responses: []
+        },
         createdAt: now.toISOString()
     });
 
