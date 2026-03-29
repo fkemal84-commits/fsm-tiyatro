@@ -49,10 +49,14 @@ export default function FlashAttendanceOverlay() {
           const remaining = Math.max(0, Math.floor((expiresAt - now) / 1000));
 
           if (remaining > 0 && !hasResponded) {
+            // Başlatan kişi kendi ekranında görmesin
+            const isStarter = userId === docData.pulseStartedBy;
+            // SADECE SAHNE KADROSU (AKTOR, PLAYER) görsün
+            // Genel üyeler (MEMBER) ve Yöneticiler görmesin
+            const isActor = ['AKTOR', 'PLAYER'].includes(userRole);
             const isManager = ['ADMIN', 'SUPERADMIN', 'DIRECTOR', 'ASST_DIRECTOR'].includes(userRole);
-            const isActor = ['AKTOR', 'MEMBER', 'PLAYER'].includes(userRole);
 
-            if (isActor || isManager || (session.user as any).isAdminMode) {
+            if (isActor && !isStarter && !isManager) {
               setActiveRehearsal({ id, ...docData });
               setTimeLeft(remaining);
               setResponded(false);
