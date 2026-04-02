@@ -13,6 +13,8 @@ export default function Navbar({ session: initialSession }: { session?: any }) {
   const [scrolled, setScrolled] = useState(false);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [activeDropdown, setActiveDropdown] = useState<string | null>(null);
+  const [touchStart, setTouchStart] = useState<number | null>(null);
+  const [touchEnd, setTouchEnd] = useState<number | null>(null);
   const pathname = usePathname();
 
   useEffect(() => {
@@ -115,7 +117,21 @@ export default function Navbar({ session: initialSession }: { session?: any }) {
         </button>
 
         {/* MOBILE DRAWER (Visible only on Mobile) */}
-        <div className={`mobile-drawer ${isMenuOpen ? 'open' : ''}`}>
+        <div 
+          className={`mobile-drawer ${isMenuOpen ? 'open' : ''}`}
+          onTouchStart={(e) => setTouchStart(e.targetTouches[0].clientX)}
+          onTouchMove={(e) => setTouchEnd(e.targetTouches[0].clientX)}
+          onTouchEnd={() => {
+            if (!touchStart || !touchEnd) return;
+            const distance = touchEnd - touchStart;
+            const isLeftToRight = distance > 70; // Soldan sağa itme mesafesi
+            if (isLeftToRight) {
+              setIsMenuOpen(false);
+            }
+            setTouchStart(null);
+            setTouchEnd(null);
+          }}
+        >
           <div className="mobile-drawer-content">
             <ul className={`mobile-nav-links ${activeDropdown ? 'slide-left' : ''}`}>
               {/* LEVEL 1 */}
