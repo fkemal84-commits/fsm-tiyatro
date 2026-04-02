@@ -36,38 +36,29 @@ export default async function RehearsalsPage(props: { searchParams: Promise<{ vi
   const canManage = ['SUPERADMIN', 'ADMIN', 'DIRECTOR', 'ASST_DIRECTOR'].includes(role) && (session?.user as any)?.isAdminMode;
 
   const rehearsalsSnapshot = await adminDb.collection('rehearsals').get();
-  console.log(`[DEBUG_TIYATRO] Veritabanından gelen toplam prova sayısı: ${rehearsalsSnapshot.size}`);
-  
   const allRehearsals = rehearsalsSnapshot.docs
     .map(doc => ({ id: doc.id, ...doc.data() as any }))
     .sort((a, b) => new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime());
 
-  const now = new Date();
-  // Tarihleri karşılaştırmak için bugünü normalize et
-  const today = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
-
-  const parseRehearsalDate = (dateStr: string) => {
-    if (!dateStr) return 0;
-    if (dateStr.includes('(Anlık)')) return today + (24 * 60 * 60 * 1000); // 1 gün sonrası gibi say
-    try {
-      // Robust regex-based parsing
-      const cleanStr = dateStr.trim();
-      const match = cleanStr.match(/^(\d{4})-(\d{1,2})-(\d{1,2})/);
-      if (!match) return 0;
-
-      const year = parseInt(match[1]);
-      const month = parseInt(match[2]);
-      const day = parseInt(match[3]);
-
-      return new Date(year, month - 1, day).getTime();
-    } catch {
-      return 0;
-    }
-  };
+  // İstanbul (UTC+3) Saat Dilimine Göre Bugünün Tarihi (YYYY-MM-DD)
+  const todayStr = new Date().toLocaleDateString('en-CA', { timeZone: 'Europe/Istanbul' });
 
   const activeRehearsals = allRehearsals.filter(r => r.pulseActive === true);
-  const upcomingRehearsals = allRehearsals.filter(r => !r.pulseActive && parseRehearsalDate(r.date) >= today);
-  const pastRehearsals = allRehearsals.filter(r => !r.pulseActive && parseRehearsalDate(r.date) < today);
+  
+  // Gelecek ve Geçmiş ayrımı (String bazlı karşılaştırma en güvenlisi)
+  const upcomingRehearsals = allRehearsals.filter(r => {
+    if (r.pulseActive) return false;
+    if (!r.date) return false;
+    const rDate = r.date.split(' - ')[0];
+    return rDate >= todayStr;
+  });
+
+  const pastRehearsals = allRehearsals.filter(r => {
+    if (r.pulseActive) return false;
+    if (!r.date) return false;
+    const rDate = r.date.split(' - ')[0];
+    return rDate < todayStr;
+  });
 
   // Yoklama için kullanıcıları çek
   const usersSnap = await adminDb.collection('users').get();
