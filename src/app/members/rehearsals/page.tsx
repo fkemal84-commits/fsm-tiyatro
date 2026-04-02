@@ -246,7 +246,7 @@ export default async function RehearsalsPage(props: { searchParams: Promise<{ vi
                   <div className="h-[1px] flex-1 bg-gradient-to-r from-red-500/20 to-transparent"></div>
                 </div>
                 <div className="space-y-8">
-                  {activeRehearsals.map(renderRehearsalCard)}
+                  {activeRehearsals.map(r => renderRehearsalCard(r, true))}
                 </div>
               </section>
             )}
