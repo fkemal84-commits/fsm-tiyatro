@@ -47,11 +47,15 @@ export default async function RehearsalsPage(props: { searchParams: Promise<{ vi
     if (!dateStr) return 0;
     if (dateStr.includes('(Anlık)')) return today + (24 * 60 * 60 * 1000); // 1 gün sonrası gibi say
     try {
-      // Format: "YYYY-MM-DD - Saat: HH:MM"
-      // Sadece ana tarihi çek: "YYYY-MM-DD"
-      const datePart = dateStr.split(' - ')[0]; 
-      const [year, month, day] = datePart.split('-').map(Number);
-      // Yerel saat uyuşmazlıklarını önlemek için normalize et
+      // Robust regex-based parsing
+      const cleanStr = dateStr.trim();
+      const match = cleanStr.match(/^(\d{4})-(\d{1,2})-(\d{1,2})/);
+      if (!match) return 0;
+
+      const year = parseInt(match[1]);
+      const month = parseInt(match[2]);
+      const day = parseInt(match[3]);
+
       return new Date(year, month - 1, day).getTime();
     } catch {
       return 0;

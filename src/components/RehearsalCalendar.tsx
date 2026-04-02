@@ -28,8 +28,16 @@ export default function RehearsalCalendar({ rehearsals }: { rehearsals: any[] })
   const getRehearsalsForDay = (day: number) => {
     return rehearsals.filter(r => {
       if (!r.date || r.date.includes('(Anlık)')) return false;
-      const datePart = r.date.split(' - ')[0]; // "YYYY-MM-DD"
-      const [y, m, d] = datePart.split('-').map(Number);
+
+      // Robust date parsing for "YYYY-MM-DD" style
+      const dateStr = r.date.trim();
+      const match = dateStr.match(/^(\d{4})-(\d{1,2})-(\d{1,2})/);
+      if (!match) return false;
+
+      const y = parseInt(match[1]);
+      const m = parseInt(match[2]);
+      const d = parseInt(match[3]);
+
       return d === day && (m - 1) === month && y === year;
     });
   };
