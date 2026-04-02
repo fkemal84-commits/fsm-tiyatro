@@ -26,19 +26,12 @@ export default function RehearsalCalendar({ rehearsals }: { rehearsals: any[] })
   };
 
   const getRehearsalsForDay = (day: number) => {
+    // Current day in YYYY-MM-DD format for direct string comparison
+    const targetDateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+    
     return rehearsals.filter(r => {
       if (!r.date || r.date.includes('(Anlık)')) return false;
-
-      // Robust date parsing for "YYYY-MM-DD" style
-      const dateStr = r.date.trim();
-      const match = dateStr.match(/^(\d{4})-(\d{1,2})-(\d{1,2})/);
-      if (!match) return false;
-
-      const y = parseInt(match[1]);
-      const m = parseInt(match[2]);
-      const d = parseInt(match[3]);
-
-      return d === day && (m - 1) === month && y === year;
+      return r.date.startsWith(targetDateStr);
     });
   };
 
