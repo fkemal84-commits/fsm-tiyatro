@@ -26,8 +26,16 @@ export default function RehearsalCalendar({ rehearsals }: { rehearsals: any[] })
   };
 
   const getRehearsalsForDay = (day: number) => {
-    // Current day in YYYY-MM-DD format for direct string comparison
+    // Bugünün tarih objesini oluştur (Karşılaştırma için)
+    const now = new Date();
+    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+
+    // Takvimdeki o günü oluştur
     const targetDateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+    const targetDate = new Date(year, month, day);
+
+    // Sadece gelecek provalar veya bugün (Takvim temiz kalmalı)
+    if (targetDate < today) return [];
     
     return rehearsals.filter(r => {
       if (!r.date || r.date.includes('(Anlık)')) return false;

@@ -22,17 +22,17 @@ async function requireAuth(allowedRoles: string[]) {
 
   const uSnap = await adminDb.collection('users').where('email', '==', session.user.email).limit(1).get();
   if (uSnap.empty) throw new Error("Kullanıcı kaydı bulunamadı.");
-  
+
   const user = uSnap.docs[0].data();
   const uid = uSnap.docs[0].id;
-  
+
   // GİZLİ YOL DENETİMİ: Eğer hassas (Admin/Superadmin) bir yetki isteniyorsa, 
   // oturumun mutlaka /tanerabi üzerinden açılmış olması gerekir.
   const isAdminAction = allowedRoles.some(role => ['ADMIN', 'SUPERADMIN', 'DIRECTOR'].includes(role));
   const isAdminMode = (session.user as any)?.isAdminMode === true;
 
   if (isAdminAction && !isAdminMode) {
-      throw new Error("Bu işlem için yönetici modunda (güvenli kanal) giriş yapmalısınız.");
+    throw new Error("Bu işlem için yönetici modunda (güvenli kanal) giriş yapmalısınız.");
   }
 
   if (!allowedRoles.includes(user.role)) {
@@ -43,7 +43,7 @@ async function requireAuth(allowedRoles: string[]) {
       throw new Error("Bu işlemi yapmaya yetkiniz yok.");
     }
   }
-  
+
   return { session, user, uid };
 }
 
@@ -56,7 +56,7 @@ async function deleteStorageFile(publicUrl: string) {
     const urlObj = new URL(publicUrl);
     const pathname = decodeURI(urlObj.pathname);
     const bucketName = process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET;
-    
+
     // Path format: /bucket-name/folder/filename
     const pathParts = pathname.split('/');
     const bucketIndex = pathParts.findIndex(p => p === bucketName);
@@ -95,7 +95,7 @@ async function uploadToStorage(file: File, folder: string) {
   const uniquePrefix = Date.now() + '-' + Math.round(Math.random() * 1E9);
   const safeName = file.name.replace(/[^a-zA-Z0-9.-]/g, '');
   const filename = `${folder}/${uniquePrefix}-${safeName}`;
-  
+
   const bucketName = process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET;
   console.log(`[STORAGE] Hedef Yol: ${filename}, Bucket: ${bucketName || 'Varsayılan'}`);
 
@@ -104,20 +104,20 @@ async function uploadToStorage(file: File, folder: string) {
 
   try {
     await fileRef.save(buffer, {
-      metadata: { 
+      metadata: {
         contentType: file.type,
         cacheControl: 'public, max-age=31536000'
       }
     });
     console.log(`[STORAGE] Dosya kaydedildi, public hale getiriliyor...`);
-    
+
     // 3. Dosyayı public hale getirmeyi dene
     try {
       await fileRef.makePublic();
     } catch (e: any) {
       console.warn(`[STORAGE] makePublic() uyarısı: ${e.message}`);
     }
-    
+
     // 4. URL Oluşturma
     let publicUrl = "";
     if (bucketName) {
@@ -125,7 +125,7 @@ async function uploadToStorage(file: File, folder: string) {
     } else {
       publicUrl = fileRef.publicUrl();
     }
-    
+
     console.log(`[STORAGE] Yükleme tamamlandı. URL: ${publicUrl}`);
     return publicUrl;
   } catch (error: any) {
@@ -140,7 +140,7 @@ export async function addPost(formData: FormData) {
     const content = formData.get('content') as string;
     const imageFile = formData.get('image') as File;
     const category = (formData.get('category') as string) || 'KULİS';
-    
+
     if (!title || !content) return { error: "Başlık ve içerik gereklidir." };
 
     let imageUrl = '/default-cover.svg';
@@ -225,7 +225,7 @@ export async function registerUser(formData: FormData) {
     const consent = formData.get('consent') ? true : false;
 
     if (!email || !password || !rawPhone) return { error: "Tüm alanlar zorunludur." };
-    
+
     // Telefon doğrulama (Sadece rakam ve 10 hane)
     const phoneRegex = /^[0-9]{10}$/;
     if (!phoneRegex.test(rawPhone)) {
@@ -313,15 +313,15 @@ export async function updateProfile(formData: FormData) {
 
   try {
     const { uid } = await requireAuth(['MEMBER', 'AKTOR', 'EDITOR', 'DIRECTOR', 'ASST_DIRECTOR', 'ADMIN', 'SUPERADMIN']);
-    
+
     await adminDb.collection('users').doc(uid).update({
-        ...(photoUrl ? { photoUrl } : {}),
-        department: department || '',
-        hobbies: hobbies || '',
-        pastPlays: pastPlays || '',
-        skills: skills || '',
-        bio: bio || '',
-        updatedAt: new Date().toISOString()
+      ...(photoUrl ? { photoUrl } : {}),
+      department: department || '',
+      hobbies: hobbies || '',
+      pastPlays: pastPlays || '',
+      skills: skills || '',
+      bio: bio || '',
+      updatedAt: new Date().toISOString()
     });
 
     revalidatePath('/profile');
@@ -341,7 +341,7 @@ export async function saveFCMToken(token: string) {
     }
 
     const email = session.user.email.toLowerCase();
-    
+
     await adminDb.collection('fcmTokens').doc(token).set({
       email,
       userId: (session.user as any).id || '',
@@ -404,7 +404,7 @@ export async function testPushToSelf() {
   if (!session?.user?.email) return { error: "Oturum açmalısınız." };
 
   const email = session.user.email.toLowerCase();
-  
+
   try {
     const tokensSnap = await adminDb.collection('fcmTokens').where('email', '==', email).get();
     const tokens = tokensSnap.docs.map(doc => doc.id);
@@ -412,9 +412,9 @@ export async function testPushToSelf() {
     if (tokens.length === 0) return { error: "Cihazınız henüz kayıt edilmemiş. Lütfen bildirim butonuna basın." };
 
     const message = {
-      notification: { 
-        title: "🎭 Test Bildirimi", 
-        body: "Tebrikler! Bildirim sisteminiz kusursuz çalışıyor." 
+      notification: {
+        title: "🎭 Test Bildirimi",
+        body: "Tebrikler! Bildirim sisteminiz kusursuz çalışıyor."
       },
       tokens: tokens
     };
@@ -449,23 +449,23 @@ export async function addRehearsal(formData: FormData) {
     }
 
     const dateObj = new Date(rehearsalDate);
-    const formattedDate = dateObj.toLocaleDateString('tr-TR', { 
-      day: 'numeric', 
-      month: 'long', 
+    const formattedDate = dateObj.toLocaleDateString('tr-TR', {
+      day: 'numeric',
+      month: 'long',
       year: 'numeric',
       weekday: 'long'
     });
-    
+
     const date = `${formattedDate} - Saat: ${rehearsalTime}`;
 
     await requireAuth(['SUPERADMIN', 'ADMIN', 'DIRECTOR', 'ASST_DIRECTOR', 'AKTOR']);
 
-    await adminDb.collection('rehearsals').add({ 
-        title, 
-        date, 
-        location, 
-        notes,
-        createdAt: new Date().toISOString()
+    await adminDb.collection('rehearsals').add({
+      title,
+      date,
+      location,
+      notes,
+      createdAt: new Date().toISOString()
     });
 
     await sendPushToAll(
@@ -495,22 +495,22 @@ export async function addEvent(formData: FormData) {
     if (!title || !eventDate || !eventTime || !location) return { error: "Gerekli alanlar eksik." };
 
     const dateObj = new Date(eventDate);
-    const formattedDate = dateObj.toLocaleDateString('tr-TR', { 
-      day: 'numeric', 
-      month: 'long', 
+    const formattedDate = dateObj.toLocaleDateString('tr-TR', {
+      day: 'numeric',
+      month: 'long',
       year: 'numeric'
     });
-    
+
     const date = `${formattedDate} - Saat: ${eventTime}`;
 
     await requireAuth(['SUPERADMIN', 'ADMIN']);
 
-    await adminDb.collection('events').add({ 
-        title, 
-        date, 
-        location, 
-        description: description || '',
-        createdAt: new Date().toISOString()
+    await adminDb.collection('events').add({
+      title,
+      date,
+      location,
+      description: description || '',
+      createdAt: new Date().toISOString()
     });
 
     await sendPushToAll(
@@ -531,7 +531,7 @@ export async function addEvent(formData: FormData) {
 export async function nudgePlayers(targetUserIds?: string[]) {
   try {
     await requireAuth(['SUPERADMIN', 'ADMIN', 'DIRECTOR', 'ASST_DIRECTOR']);
-    
+
     const messages = [
       "🎭 Ezberler su gibi olsun arkadaşlar. Sahne sizi bekler! 🎬",
       "📢 Sahne tozu yutmaya az kaldı, mazeret istemiyorum! 🎭",
@@ -545,9 +545,9 @@ export async function nudgePlayers(targetUserIds?: string[]) {
       "🎭 Sahne disiplini olmayan, pandomim yapsın! 🤫🎭",
       "🎬 Sesin salona ulaşmıyorsa, fısıldaşmaya devam etme! 📣",
       "🎭 'Godot'yu Beklerken' değil burası, seni bekliyoruz! ⏳🎞️",
-      "📢 Tekstini yastığının altına koyup uyuma, oku! 📖😴",
+      "📢 Textini yastığının altına koyup uyuma, oku! 📖😴",
       "🎭 Kuliste gıybet bittiyse sahneye buyurun beyler/bayanlar! ☕",
-      "🎬 Bu oyunun yıldızı sensin ama sadece provaya gelirsen! ⭐",
+      "🎬 Bu oyunun yıldızı sensin ama sadece ezerbini tamamlarsan! ⭐",
       "🎭 Kostümün sığmıyorsa bu senin değil, diyetsizliğin suçudur! 🍎😂",
       "📢 Repliklerin havada uçuştuğu saatlerdeyiz, yakala! 💨",
       "🎭 Karakterine gir dedik, kapıda kal demedik! 🚪🚶‍♀️",
@@ -564,7 +564,7 @@ export async function nudgePlayers(targetUserIds?: string[]) {
       "📢 Sahne üzerinde uyuyan güzel istemiyoruz, canlanın! 🤴✨",
       "🎭 Duygu ver dedik, borç ver demedik! Oynayın! 😂💸",
       "🎬 Perde açıldığında 'öksürük' krizine girmek istemiyorsan çalış! 😷",
-      "🎭 Sanat sanat içindir ama bu prova senin içindir! 🎨",
+      "🎭 Sanat sanat içindir; prova senin için! 🎨",
       "📢 Reji masasında ejderha besliyorum, geç kalanı yiyor! 🐉😂",
       "🎭 Replik geçişlerin I-KAR-US gibi yere çakılmasın! ☀️🪽",
       "🎬 Teksti unutup doğaçlama yapma, Oscar vermiyoruz! 🏆",
@@ -582,9 +582,9 @@ export async function nudgePlayers(targetUserIds?: string[]) {
       // Sadece seçilenlere gönder
       const tokensSnap = await adminDb.collection('fcmTokens').where('userId', 'in', targetUserIds).get();
       const tokens = tokensSnap.docs.map(doc => doc.id);
-      
+
       if (tokens.length === 0) return { success: false, error: "Seçilen oyuncuların kayıtlı cihazı bulunamadı." };
-      
+
       const message = {
         notification: { title: "🎭 Yönetmen Dürtmesi!", body: randomMsg },
         data: { url: '/members/rehearsals' },
@@ -596,7 +596,7 @@ export async function nudgePlayers(targetUserIds?: string[]) {
       // Herkese gönder
       res = await sendPushToAll("🎭 Yönetmen Dürtmesi!", randomMsg, '/members/rehearsals');
     }
-    
+
     return { success: true, ...res };
   } catch (error: any) {
     return { error: error.message };
@@ -614,11 +614,11 @@ export async function addTeamNeed(formData: FormData) {
 
   await requireAuth(['SUPERADMIN', 'ADMIN']);
 
-  await adminDb.collection('teamNeeds').add({ 
-      roleName, 
-      description, 
-      isActive: true,
-      createdAt: new Date().toISOString()
+  await adminDb.collection('teamNeeds').add({
+    roleName,
+    description,
+    isActive: true,
+    createdAt: new Date().toISOString()
   });
   revalidatePath('/members');
 }
@@ -657,11 +657,11 @@ export async function uploadAvatar(formData: FormData) {
 
   try {
     const { user, uid } = await requireAuth(['MEMBER', 'AKTOR', 'EDITOR', 'DIRECTOR', 'ASST_DIRECTOR', 'ADMIN', 'SUPERADMIN']);
-    
+
     const email = user.email.toLowerCase();
     const folder = `avatars/${email.replace(/[@.]/g, '_')}`;
     console.log(`[AVATAR] ${email} için avatar yüklemesi başlatıldı...`);
-    
+
     const publicUrl = await uploadToStorage(file, folder);
 
     await adminDb.collection('users').doc(uid).update({ photoUrl: publicUrl });
@@ -702,7 +702,7 @@ export async function deleteUserRecord(formData: FormData) {
 
   // Firestore Veritabanından Kullanıcıyı Sil
   await targetDoc.ref.delete();
-  
+
   revalidatePath('/tanerabi/dashboard');
   redirect('/tanerabi/dashboard');
 }
@@ -716,7 +716,7 @@ export async function deletePost(formData: FormData) {
 
   const postRef = adminDb.collection('posts').doc(postId);
   const postDoc = await postRef.get();
-  
+
   if (!postDoc.exists) return;
   const postData = postDoc.data();
 
@@ -807,11 +807,11 @@ export async function uploadScript(formData: FormData) {
 
   try {
     const { user } = await requireAuth(['SUPERADMIN', 'ADMIN', 'DIRECTOR', 'ASST_DIRECTOR']);
-    
+
     const uniquePrefix = Date.now() + '-' + Math.round(Math.random() * 1E9);
     const safeName = file.name.replace(/[^a-zA-Z0-9.-]/g, '');
     const filename = `scripts/${uniquePrefix}-${safeName}`;
-    
+
     const bucketName = process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET;
     const bucket = adminStorage.bucket(bucketName);
     const fileRef = bucket.file(filename);
@@ -820,13 +820,13 @@ export async function uploadScript(formData: FormData) {
     const buffer = Buffer.from(bytes);
 
     await fileRef.save(buffer, {
-      metadata: { 
+      metadata: {
         contentType: 'application/pdf',
         cacheControl: 'public, max-age=31536000'
       }
     });
 
-    try { await fileRef.makePublic(); } catch (e) {}
+    try { await fileRef.makePublic(); } catch (e) { }
 
     const fileUrl = `https://storage.googleapis.com/${bucketName}/${filename}`;
 
@@ -852,10 +852,10 @@ export async function deleteScript(formData: FormData) {
 
   try {
     await requireAuth(['SUPERADMIN', 'ADMIN', 'DIRECTOR']);
-    
+
     const scriptRef = adminDb.collection('scripts').doc(scriptId);
     const scriptDoc = await scriptRef.get();
-    
+
     if (scriptDoc.exists) {
       const data = scriptDoc.data();
       if (data?.fileUrl) {
@@ -875,15 +875,15 @@ export async function toggleLike(postId: string) {
   try {
     const { user } = await requireAuth(['MEMBER', 'AKTOR', 'EDITOR', 'DIRECTOR', 'ASST_DIRECTOR', 'ADMIN', 'SUPERADMIN']);
     const email = user.email.toLowerCase();
-    
+
     const postRef = adminDb.collection('posts').doc(postId);
     const postDoc = await postRef.get();
-    
+
     if (!postDoc.exists) return { error: "Yazı bulunamadı." };
-    
+
     const likes = postDoc.data()?.likes || [];
     const isLiked = likes.includes(email);
-    
+
     if (isLiked) {
       await postRef.update({
         likes: likes.filter((e: string) => e !== email)
@@ -893,7 +893,7 @@ export async function toggleLike(postId: string) {
         likes: [...likes, email]
       });
     }
-    
+
     revalidatePath(`/blog/${postId}`);
     revalidatePath('/blog');
     return { success: true, isLiked: !isLiked };
@@ -910,7 +910,7 @@ export async function addComment(formData: FormData) {
 
   try {
     const { user } = await requireAuth(['MEMBER', 'AKTOR', 'EDITOR', 'DIRECTOR', 'ASST_DIRECTOR', 'ADMIN', 'SUPERADMIN']);
-    
+
     await adminDb.collection('posts').doc(postId).collection('comments').add({
       content,
       author: user.name,
@@ -931,12 +931,12 @@ export async function addComment(formData: FormData) {
 export async function startPulseCheck(rehearsalId: string) {
   try {
     await requireAuth(['SUPERADMIN', 'ADMIN', 'DIRECTOR', 'ASST_DIRECTOR']);
-    
+
     const session = await getServerSession(authOptions);
     const userId = (session?.user as any)?.id;
-    
-    const expiresAt = Date.now() + 60000; 
-    
+
+    const expiresAt = Date.now() + 60000;
+
     await adminDb.collection('rehearsals').doc(rehearsalId).update({
       pulseActive: true,
       pulseExpiresAt: expiresAt,
@@ -958,21 +958,21 @@ export async function respondToPulse(rehearsalId: string) {
 
     const doc = await adminDb.collection('rehearsals').doc(rehearsalId).get();
     const data = doc.data();
-    
+
     if (!data?.pulseActive || Date.now() > data.pulseExpiresAt) {
       throw new Error("Yoklama süresi dolmuş veya hiç başlatılmamış.");
     }
 
     // Kullanıcıyı yanıtlara ekle (Object Structure: { userId, joinedAt })
     const currentResponses = data.pulseResponses || [];
-    
+
     // Daha önce yanıt vermiş mi kontrol et (Object array içinde)
     const hasResponded = currentResponses.some((r: any) => (typeof r === 'string' ? r === userId : r.userId === userId));
-    
+
     if (!hasResponded) {
       const now = new Date();
       const timeString = now.toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
-      
+
       const newResponse = {
         userId,
         joinedAt: Date.now(),
@@ -994,7 +994,7 @@ export async function respondToPulse(rehearsalId: string) {
 export async function addManualAttendance(rehearsalId: string, userId: string, status: string, note: string) {
   try {
     await requireAuth(['SUPERADMIN', 'ADMIN', 'DIRECTOR', 'ASST_DIRECTOR']);
-    
+
     const docRef = adminDb.collection('rehearsals').doc(rehearsalId);
     const doc = await docRef.get();
     if (!doc.exists) throw new Error("Prova bulunamadı.");
@@ -1022,7 +1022,7 @@ export async function addManualAttendance(rehearsalId: string, userId: string, s
 export async function finalizeAttendance(rehearsalId: string, attendanceData: any, attendanceNotes: string) {
   try {
     await requireAuth(['SUPERADMIN', 'ADMIN', 'DIRECTOR', 'ASST_DIRECTOR']);
-    
+
     await adminDb.collection('rehearsals').doc(rehearsalId).update({
       attendance: attendanceData,
       attendanceNotes,
@@ -1052,16 +1052,16 @@ export async function startInstantAttendance(formData?: FormData) {
 
     const expiresAt = Date.now() + 60000;
     const docRef = await adminDb.collection('rehearsals').add({
-        title,
-        date: `${dateStr} - Saat: ${timeStr} (Anlık)`,
-        location: 'Sahne / Salon',
-        notes: 'Bu kayıt yönetim panelinden anlık olarak başlatılmıştır.',
-        attendance: {},
-        pulseActive: true,
-        pulseExpiresAt: expiresAt,
-        pulseResponses: [],
-        pulseStartedBy: userId,
-        createdAt: now.toISOString()
+      title,
+      date: `${dateStr} - Saat: ${timeStr} (Anlık)`,
+      location: 'Sahne / Salon',
+      notes: 'Bu kayıt yönetim panelinden anlık olarak başlatılmıştır.',
+      attendance: {},
+      pulseActive: true,
+      pulseExpiresAt: expiresAt,
+      pulseResponses: [],
+      pulseStartedBy: userId,
+      createdAt: now.toISOString()
     });
 
     revalidatePath('/members/rehearsals');
@@ -1108,10 +1108,10 @@ export async function requestPasswordReset(formData: FormData) {
   } catch (error: any) {
     console.error("[PWD_RESET_REQ] Detaylı Hata:", error);
     // Hatanın sebebini kullanıcıya (ve bize) daha açık göstermek için:
-    const errorMessage = error.message?.includes("Resend") 
+    const errorMessage = error.message?.includes("Resend")
       ? "E-posta servisi (Resend) bağlantı hatası verdi. Lütfen API anahtarını kontrol edin."
       : error.message || "Bilinmeyen bir hata oluştu.";
-    
+
     return { error: `İşlem başarısız: ${errorMessage}` };
   }
 }
@@ -1137,7 +1137,7 @@ export async function completePasswordReset(formData: FormData) {
 
     const resetDoc = resetSnap.docs[0];
     const resetData = resetDoc.data();
-    
+
     if (new Date(resetData.expiresAt) < new Date()) {
       await resetDoc.ref.delete();
       return { error: "Link süresi dolmuş." };
@@ -1163,7 +1163,7 @@ export async function completePasswordReset(formData: FormData) {
 export async function updateUserPlays(userId: string, playIds: string[]) {
   try {
     await requireAuth(['SUPERADMIN', 'ADMIN', 'DIRECTOR', 'ASST_DIRECTOR']);
-    
+
     await adminDb.collection('users').doc(userId).update({
       assignedPlays: playIds,
       updatedAt: new Date().toISOString()
@@ -1174,6 +1174,27 @@ export async function updateUserPlays(userId: string, playIds: string[]) {
     return { success: true };
   } catch (error: any) {
     console.error("[UPDATE_USER_PLAYS] Hata:", error);
+    return { error: error.message };
+  }
+}
+
+/**
+ * Mevcut bir prova kaydı için yoklamayı (pulse) aktif hale getirir.
+ */
+export async function activateRehearsalPulse(rehearsalId: string) {
+  try {
+    await requireAuth(['SUPERADMIN', 'ADMIN', 'DIRECTOR', 'ASST_DIRECTOR']);
+    
+    await adminDb.collection('rehearsals').doc(rehearsalId).update({
+      pulseActive: true,
+      updatedAt: new Date().toISOString()
+    });
+
+    revalidatePath('/members/rehearsals');
+    revalidatePath('/members/attendance');
+    return { success: true };
+  } catch (error: any) {
+    console.error("[ACTIVATE_REHEARSAL_PULSE] Hata:", error);
     return { error: error.message };
   }
 }

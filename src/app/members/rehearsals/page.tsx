@@ -1,7 +1,7 @@
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { adminDb } from "@/lib/firebase-admin";
-import { addRehearsal, deleteRehearsal, startInstantAttendance } from "@/app/actions";
+import { addRehearsal, deleteRehearsal, startInstantAttendance, activateRehearsalPulse } from "@/app/actions";
 import NudgeButton from "@/components/NudgeButton";
 import { getWhatsAppRehearsalLink } from "@/lib/utils";
 import DeleteButton from "@/components/DeleteButton";
@@ -81,83 +81,100 @@ export default async function RehearsalsPage(props: { searchParams: Promise<{ vi
   const presetLocations = Array.from(new Set(presets.map(p => p.location).filter(Boolean)));
   const presetTimes = Array.from(new Set(presets.map(p => p.time).filter(Boolean)));
 
-  const renderRehearsalCard = (r: any) => {
+  const renderRehearsalCard = (r: any, isUpcoming: boolean = false) => {
     const isInstant = r.date?.includes('(Anlık)');
+    const isActive = r.pulseActive === true;
     
     return (
-      <div key={r.id} className="p-6 bg-white/5 rounded-3xl border border-white/10 hover:border-[var(--primary-gold)]/50 transition-all group relative overflow-hidden">
-        {isInstant && (
-          <div className="absolute top-0 right-10 bg-[var(--primary-gold)] text-black text-[8px] font-bold px-3 py-1 rounded-bl-xl uppercase tracking-tighter">
-            ANLIK YOKLAMA LOGU
-          </div>
-        )}
+      <div key={r.id} className={`p-6 rounded-[2rem] border transition-all group relative overflow-hidden ${
+        isActive 
+          ? 'bg-red-500/[0.03] border-red-500/30 shadow-[0_0_40px_rgba(239,68,68,0.05)]' 
+          : 'bg-white/5 border-white/10 hover:border-[var(--primary-gold)]/50'
+      }`}>
+        {/* Durum Rozetleri */}
+        <div className="absolute top-0 right-0 flex">
+           {isActive && (
+             <div className="bg-red-500 text-white text-[9px] font-black px-4 py-1.5 rounded-bl-2xl uppercase tracking-widest animate-pulse shadow-lg">
+               CANLI YAYINDA
+             </div>
+           )}
+           {isInstant && !isActive && (
+             <div className="bg-white/10 text-white/40 text-[8px] font-bold px-3 py-1 rounded-bl-xl uppercase tracking-tighter">
+               ANLIK LOG
+             </div>
+           )}
+        </div>
 
-        <div className="flex justify-between items-start mb-6">
-          <div className="space-y-1">
-            <div className="flex items-center gap-2">
-               <ion-icon name={isInstant ? "flash" : "calendar"} style={{ color: 'var(--primary-gold)', fontSize: '1rem' }}></ion-icon>
-               <h3 className="text-white text-xl font-bold tracking-tight">{r.title}</h3>
-            </div>
+        <div className="flex flex-col md:flex-row justify-between items-start gap-6 mb-8 mt-2">
+          <div className="space-y-2">
             <div className="flex items-center gap-3">
-               <span className="text-[var(--primary-gold)] text-[10px] font-mono bg-[var(--primary-gold)]/10 px-2 py-0.5 rounded border border-[var(--primary-gold)]/20">
-                 {new Date(r.createdAt).toLocaleDateString('tr-TR')} | {new Date(r.createdAt).toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' })}
-               </span>
-               <span className="text-white/30 text-[10px] uppercase tracking-widest">ID: {r.id.slice(-4)}</span>
+               <div className={`w-12 h-12 rounded-2xl flex items-center justify-center text-2xl transition-all ${
+                 isActive ? 'bg-red-500/20 text-red-500' : 'bg-[var(--primary-gold)]/10 text-[var(--primary-gold)] shadow-glow-sm'
+               }`}>
+                 <ion-icon name={isInstant ? "flash" : "calendar-number"}></ion-icon>
+               </div>
+               <div>
+                  <h3 className="text-white text-2xl font-black tracking-tighter leading-none mb-1">{r.title}</h3>
+                  <p className="text-[10px] text-white/30 uppercase font-bold tracking-widest">{r.id.slice(-6)} • LOG KAYDI</p>
+               </div>
             </div>
           </div>
           
-          <div className="flex gap-2">
+          <div className="flex items-center gap-3 self-end md:self-auto">
             {canManage && (
               <>
-                {!isInstant && (
-                  <a 
-                    href={getWhatsAppRehearsalLink(r)} 
-                    target="_blank" 
-                    rel="noopener noreferrer"
-                    className="w-10 h-10 bg-[#25D366]/10 text-[#25D366] rounded-xl flex items-center justify-center hover:bg-[#25D366] hover:text-white transition-all border border-[#25D366]/20"
-                    title="WhatsApp Duyurusu"
-                  >
-                    <ion-icon name="logo-whatsapp" style={{ fontSize: '1.2rem' }}></ion-icon>
-                  </a>
-                )}
                 <DeleteButton 
                   action={deleteRehearsal as any} 
                   id={r.id} 
                   name={r.title} 
-                  confirmMessage="Bu yoklama kaydını sonsuza dek silmek istediğine emin misin?" 
+                  confirmMessage="Bu yoklama kaydını ve bütün geçmişini kalıcı olarak silmek istediğine emin misin?" 
                   idFieldName="rehearsalId"
                 />
+                {!isInstant && isUpcoming && !isActive && (
+                   <form action={async () => { 'use server'; await activateRehearsalPulse(r.id); }}>
+                     <button type="submit" className="btn btn-primary py-3 px-6 rounded-2xl text-[10px] font-black tracking-widest uppercase shadow-glow bg-red-600 hover:bg-red-500 border-none flex items-center gap-2">
+                       <ion-icon name="play-circle-outline" style={{ fontSize: '1.2rem' }}></ion-icon>
+                       YOKLAMAYI BAŞLAT
+                     </button>
+                   </form>
+                )}
               </>
             )}
           </div>
         </div>
         
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
-          <div className="flex items-center gap-3 text-white/80 bg-white/5 p-3 rounded-2xl border border-white/5 group-hover:bg-white/10 transition-colors">
-            <ion-icon name="navigate-outline" style={{ color: 'var(--primary-gold)' }}></ion-icon>
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-8">
+          <div className="flex items-center gap-4 bg-black/40 p-4 rounded-[1.5rem] border border-white/5 group-hover:border-white/10 transition-all">
+            <div className="w-10 h-10 rounded-xl bg-white/5 flex items-center justify-center text-[var(--primary-gold)] text-lg">
+              <ion-icon name="time-outline"></ion-icon>
+            </div>
             <div className="flex flex-col">
-              <span className="text-[10px] text-white/30 uppercase font-bold tracking-tighter">PLANLANAN ZAMAN/TARİH</span>
-              <span className="text-xs font-semibold">{r.date || 'Belirtilmedi'}</span>
+              <span className="text-[9px] text-white/20 uppercase font-black">Planlanan Vakit</span>
+              <span className="text-sm font-bold text-white/90">{r.date || 'Belirtilmedi'}</span>
             </div>
           </div>
-          <div className="flex items-center gap-3 text-white/80 bg-white/5 p-3 rounded-2xl border border-white/5 group-hover:bg-white/10 transition-colors">
-            <ion-icon name="location-outline" style={{ color: 'var(--primary-gold)' }}></ion-icon>
+          <div className="flex items-center gap-4 bg-black/40 p-4 rounded-[1.5rem] border border-white/5 group-hover:border-white/10 transition-all">
+            <div className="w-10 h-10 rounded-xl bg-white/5 flex items-center justify-center text-[var(--primary-gold)] text-lg">
+              <ion-icon name="map-outline"></ion-icon>
+            </div>
             <div className="flex flex-col">
-              <span className="text-[10px] text-white/30 uppercase font-bold tracking-tighter">MEKAN / SAHNE</span>
-              <span className="text-xs font-semibold">{r.location || 'Sahne'}</span>
+              <span className="text-[9px] text-white/20 uppercase font-black">Prova Mekanı</span>
+              <span className="text-sm font-bold text-white/90">{r.location || 'Haliç Yerleşkesi'}</span>
             </div>
           </div>
         </div>
   
-        {r.notes && (
-          <div className="mb-6 p-4 bg-black/40 rounded-2xl border border-white/5 border-l-2 border-l-[var(--primary-gold)]/50">
-            <h4 className="text-[10px] font-bold text-[var(--primary-gold)] uppercase mb-2 tracking-widest opacity-70">Plan Notları:</h4>
-            <p className="text-white/60 text-xs italic leading-relaxed">{r.notes}</p>
+        {r.notes ? (
+          <div className="mb-8 p-5 bg-white/[0.02] rounded-2xl border border-dashed border-white/10 relative">
+            <div className="absolute -top-3 left-6 px-3 bg-[#0a0a0a] text-[var(--primary-gold)] text-[9px] font-black tracking-widest border border-white/10 rounded-full">YÖNETMEN NOTU</div>
+            <p className="text-white/50 text-xs italic leading-relaxed">{r.notes}</p>
           </div>
+        ) : (
+          <div className="h-4"></div>
         )}
   
-        {canManage && (
-          <div className="pt-4 border-t border-white/10">
+        {(canManage && (isActive || !isUpcoming)) && (
+          <div className="pt-8 border-t border-white/10 mt-2">
             <AttendanceManager 
               rehearsalId={r.id} 
               allUsers={allTeam} 
@@ -306,10 +323,10 @@ export default async function RehearsalsPage(props: { searchParams: Promise<{ vi
               </section>
             )}
 
-            {/* GELECEK PROVALAR & GÜNCEL LOGLAR */}
+            {/* GELECEK PROVA TAKVİM */}
             <section>
               <div className="flex items-center gap-4 mb-8">
-                <h2 className="text-white text-2xl font-bold serif-font">Güncel Provalar & Loglar</h2>
+                <h2 className="text-white text-2xl font-bold serif-font underline decoration-[var(--primary-gold)] underline-offset-8">Gelecek Prova Takvimi</h2>
                 <div className="h-[1px] flex-1 bg-gradient-to-r from-white/20 to-transparent"></div>
               </div>
               
@@ -319,16 +336,23 @@ export default async function RehearsalsPage(props: { searchParams: Promise<{ vi
                 </div>
               ) : (
                 <div className="space-y-8">
-                  {upcomingRehearsals.map(renderRehearsalCard)}
+                  {upcomingRehearsals.map(r => renderRehearsalCard(r, true))}
                 </div>
               )}
             </section>
 
-            {/* GEÇMİŞ ARŞİV - Sadece Yönetici Modu'ndaki yetkililer görebilir */}
+            {/* GEÇMİŞ PROVA LOGLARI (ARŞİV) */}
             {canManage && (
-              <ArchiveWrapper count={pastRehearsals.length}>
-                {pastRehearsals.map(renderRehearsalCard)}
-              </ArchiveWrapper>
+              <section className="mt-20 pt-20 border-t border-white/10">
+                <div className="flex items-center gap-4 mb-10">
+                   <h2 className="text-white/30 text-xl font-bold serif-font uppercase tracking-widest">Geçmiş Prova Logları (Arşiv)</h2>
+                   <div className="h-[1px] flex-1 bg-white/5"></div>
+                   <span className="text-[10px] text-white/20 font-black">{pastRehearsals.length} KAYIT</span>
+                </div>
+                <div className="space-y-8 opacity-60 hover:opacity-100 transition-opacity">
+                  {pastRehearsals.map(r => renderRehearsalCard(r, false))}
+                </div>
+              </section>
             )}
           </>
         )}
