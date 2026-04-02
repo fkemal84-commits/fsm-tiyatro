@@ -156,9 +156,9 @@ export default async function MembersDashboard() {
           )}
         </div>
 
-        {/* SENARYO KÜTÜPHANESİ - Sadece yetkililere/oyunculara özel */}
+        {/* SENARYO KÜTÜPHANESİ - SADECE YETKİLİLER VE AKTÖRLERE ÖZEL */}
         <div className="md:col-span-2">
-          {(role === 'AKTOR' || role === 'DIRECTOR' || role === 'SUPERADMIN' || role === 'ADMIN') && (
+          {['AKTOR', 'PLAYER', 'DIRECTOR', 'ASST_DIRECTOR', 'SUPERADMIN', 'ADMIN'].includes(role) && (
             <ScriptVault initialScripts={scripts} canManage={canManageScripts} />
           )}
         </div>

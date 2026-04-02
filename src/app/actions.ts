@@ -426,7 +426,6 @@ export async function testPushToSelf() {
   }
 }
 
-// Prova eklendiğinde bildirim gönder
 export async function addRehearsal(formData: FormData) {
   try {
     const title = formData.get('title') as string;
@@ -434,8 +433,20 @@ export async function addRehearsal(formData: FormData) {
     const rehearsalTime = formData.get('rehearsalTime') as string;
     const location = formData.get('location') as string;
     const notes = formData.get('notes') as string;
+    const saveAsPreset = formData.get('saveAsPreset') === 'on';
 
     if (!title || !rehearsalDate || !rehearsalTime || !location) return { error: "Gerekli alanlar eksik." };
+
+    // Eğer şablon olarak kaydet seçildiyse presetlere ekle
+    if (saveAsPreset) {
+      await adminDb.collection('presets').add({
+        type: 'rehearsal',
+        title,
+        location,
+        time: rehearsalTime,
+        createdAt: new Date().toISOString()
+      });
+    }
 
     const dateObj = new Date(rehearsalDate);
     const formattedDate = dateObj.toLocaleDateString('tr-TR', { 
@@ -464,6 +475,7 @@ export async function addRehearsal(formData: FormData) {
     );
 
     revalidatePath('/members');
+    revalidatePath('/members/rehearsals');
     return { success: true };
   } catch (error: any) {
     console.error("[ADD_REHEARSAL] Hata:", error);
@@ -516,19 +528,75 @@ export async function addEvent(formData: FormData) {
 }
 
 // Dürtme bildirimi
-export async function nudgePlayers() {
+export async function nudgePlayers(targetUserIds?: string[]) {
   try {
     await requireAuth(['SUPERADMIN', 'ADMIN', 'DIRECTOR', 'ASST_DIRECTOR']);
     
     const messages = [
-      "🎭 Beyler/Bayanlar, ezberler ne alemde? Reji masasında bekliyoruz! 🎬👀",
-      "🎬 Ezber geçmeyen var mı? Akşam provada sahne sizi bekler! 😂🎭",
-      "🎭 Ezberler su gibi olsun arkadaşlar. Sahne aşkına! 🌊😂",
-      "📢 Bugün ezbersiz gelenlere ceza olarak dekora yardım var! 🎨🎭"
+      "🎭 Ezberler su gibi olsun arkadaşlar. Sahne sizi bekler! 🎬",
+      "📢 Sahne tozu yutmaya az kaldı, mazeret istemiyorum! 🎭",
+      "🎬 Rolünü yaşamayan, kuliste çay dağıtır! 😂",
+      "🎭 Tiradın ortasında unutulan replik, yönetmenin kalbine inen oktur! 🏹",
+      "📢 Provaya geç kalan dekora yardım eder, ona göre! 🎨",
+      "🎭 'Olmak ya da olmamak' değil mesele, 'Gelmek ya da gelmemek'! 🚶‍♂️",
+      "🎬 Reji masasında sinirden kalem kırdırtmayın bana! ✏️💥",
+      "🎭 Işıklar yandığında orada mısın yoksa evde Netflix mi? 📺",
+      "📢 Bugün ezbersiz geleni suyla ıslatırım, şaka değil! 💧😂",
+      "🎭 Sahne disiplini olmayan, pandomim yapsın! 🤫🎭",
+      "🎬 Sesin salona ulaşmıyorsa, fısıldaşmaya devam etme! 📣",
+      "🎭 'Godot'yu Beklerken' değil burası, seni bekliyoruz! ⏳🎞️",
+      "📢 Tekstini yastığının altına koyup uyuma, oku! 📖😴",
+      "🎭 Kuliste gıybet bittiyse sahneye buyurun beyler/bayanlar! ☕",
+      "🎬 Bu oyunun yıldızı sensin ama sadece provaya gelirsen! ⭐",
+      "🎭 Kostümün sığmıyorsa bu senin değil, diyetsizliğin suçudur! 🍎😂",
+      "📢 Repliklerin havada uçuştuğu saatlerdeyiz, yakala! 💨",
+      "🎭 Karakterine gir dedik, kapıda kal demedik! 🚪🚶‍♀️",
+      "🎬 Reji sinirli, reji gergin, reji acıktı! Gel de yemek söyleyelim! 🍕",
+      "🎭 Sahnedeki gölgen bile senden daha iyi oynuyor şu an! 👤😂",
+      "📢 Dekoru taşıyacak kollara, repliği taşıyacak beyne ihtiyaç var! 💪🧠",
+      "🎭 Hayalindeki alkışlar için bugün terlemek zorundasın! 🔥👏",
+      "🎬 Perde arkasında saklanma, sahnenin tozuna bulan! 🕸️",
+      "🎭 Bu oyun bitmez, sen gelirsen ama belki biter! 😂",
+      "📢 Mazeretin 'otobüs kaçtı' ise, koşarak gelmeye başla! 🏃‍♂️",
+      "🎭 Tiyatro bir ekip işidir, ekibin en zayıf halkası olma! ⛓️",
+      "🎬 Ezberin sıfırsa makyajın seni kurtarmaz! 💄🤡",
+      "🎭 Replikleri kendi dilinde değil, yazarın dilinde söyle! 👅",
+      "📢 Sahne üzerinde uyuyan güzel istemiyoruz, canlanın! 🤴✨",
+      "🎭 Duygu ver dedik, borç ver demedik! Oynayın! 😂💸",
+      "🎬 Perde açıldığında 'öksürük' krizine girmek istemiyorsan çalış! 😷",
+      "🎭 Sanat sanat içindir ama bu prova senin içindir! 🎨",
+      "📢 Reji masasında ejderha besliyorum, geç kalanı yiyor! 🐉😂",
+      "🎭 Replik geçişlerin I-KAR-US gibi yere çakılmasın! ☀️🪽",
+      "🎬 Teksti unutup doğaçlama yapma, Oscar vermiyoruz! 🏆",
+      "🎭 Alkışlar kulağında çınlasın, tekstin elinde paralansın! 👏📖",
+      "📢 Bugün provada olmayan, gala yemeğinde de olmaz! 🥙😂",
+      "🎭 Dram dedik ama senin gelmemen kadar dramatik değil! 🎭😢",
+      "🎬 Kuliste fısıldaşma, sahnede haykır! 🗣️",
+      "🎭 En kötü prova bile, yapılmayan provadan iyidir! 🎭",
+      "📢 'To be or not to be', provaya gel gerisini sorma! 🎞️"
     ];
     const randomMsg = messages[Math.floor(Math.random() * messages.length)];
 
-    const res = await sendPushToAll("🎭 Yönetmen Dürtmesi!", randomMsg, '/members/rehearsals');
+    let res;
+    if (targetUserIds && targetUserIds.length > 0) {
+      // Sadece seçilenlere gönder
+      const tokensSnap = await adminDb.collection('fcmTokens').where('userId', 'in', targetUserIds).get();
+      const tokens = tokensSnap.docs.map(doc => doc.id);
+      
+      if (tokens.length === 0) return { success: false, error: "Seçilen oyuncuların kayıtlı cihazı bulunamadı." };
+      
+      const message = {
+        notification: { title: "🎭 Yönetmen Dürtmesi!", body: randomMsg },
+        data: { url: '/members/rehearsals' },
+        tokens: tokens
+      };
+      const response = await adminMessaging.sendEachForMulticast(message);
+      res = { success: true, count: response.successCount, failure: response.failureCount };
+    } else {
+      // Herkese gönder
+      res = await sendPushToAll("🎭 Yönetmen Dürtmesi!", randomMsg, '/members/rehearsals');
+    }
+    
     return { success: true, ...res };
   } catch (error: any) {
     return { error: error.message };
@@ -722,6 +790,7 @@ export async function deleteRehearsal(formData: FormData) {
   await requireAuth(['SUPERADMIN', 'ADMIN', 'DIRECTOR', 'ASST_DIRECTOR', 'AKTOR']);
   await adminDb.collection('rehearsals').doc(rehearsalId).delete();
 
+  revalidatePath('/members');
   revalidatePath('/members/rehearsals');
 }
 
@@ -1085,6 +1154,27 @@ export async function completePasswordReset(formData: FormData) {
   } catch (error: any) {
     console.error("[PWD_RESET_COMPLETE] Hata:", error);
     return { error: "Hata oluştu." };
+  }
+}
+
+/**
+ * Kullanıcıya oyun/kadro ataması yapar.
+ */
+export async function updateUserPlays(userId: string, playIds: string[]) {
+  try {
+    await requireAuth(['SUPERADMIN', 'ADMIN', 'DIRECTOR', 'ASST_DIRECTOR']);
+    
+    await adminDb.collection('users').doc(userId).update({
+      assignedPlays: playIds,
+      updatedAt: new Date().toISOString()
+    });
+
+    revalidatePath('/members/team');
+    revalidatePath(`/tanerabi/users/${userId}`);
+    return { success: true };
+  } catch (error: any) {
+    console.error("[UPDATE_USER_PLAYS] Hata:", error);
+    return { error: error.message };
   }
 }
 
