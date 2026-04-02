@@ -10,13 +10,17 @@ import { redirect } from "next/navigation";
 import { Metadata } from "next";
 import Link from "next/link";
 import ArchiveWrapper from "@/components/ArchiveWrapper";
+import RehearsalCalendar from "@/components/RehearsalCalendar";
 
 export const metadata: Metadata = {
   title: "Özel Prova Takvimi",
   description: "Oyuncu ve yöneticilere özel detaylı prova takvimi.",
 };
 
-export default async function RehearsalsPage() {
+export default async function RehearsalsPage(props: { searchParams: Promise<{ view?: string }> }) {
+  const searchParams = await props.searchParams;
+  const view = searchParams.view || 'list';
+  
   const session = await getServerSession(authOptions);
   const role = (session?.user as any)?.role;
 
@@ -41,9 +45,14 @@ export default async function RehearsalsPage() {
 
   const parseRehearsalDate = (dateStr: string) => {
     if (!dateStr) return 0;
-    if (dateStr.includes('(Anlık)')) return today + 1; // Anlık olanları bugün ve sonrası say
+    if (dateStr.includes('(Anlık)')) return today + (24 * 60 * 60 * 1000); // 1 gün sonrası gibi say
     try {
-      return new Date(dateStr).getTime();
+      // Format: "YYYY-MM-DD - Saat: HH:MM"
+      // Sadece ana tarihi çek: "YYYY-MM-DD"
+      const datePart = dateStr.split(' - ')[0]; 
+      const [year, month, day] = datePart.split('-').map(Number);
+      // Yerel saat uyuşmazlıklarını önlemek için normalize et
+      return new Date(year, month - 1, day).getTime();
     } catch {
       return 0;
     }
@@ -164,7 +173,23 @@ export default async function RehearsalsPage() {
         <div className="flex justify-between items-center mb-10 flex-wrap gap-6">
           <div className="text-left">
             <h1 className="serif-font text-5xl text-white mb-2">Prova <span className="text-[var(--primary-gold)]">Takvimi</span></h1>
-            <p className="text-white/60">Disiplin, sahnenin ruhudur.</p>
+            <p className="text-white/60 mb-6">Disiplin, sahnenin ruhudur.</p>
+            
+            {/* GÖRÜNÜM DEGISTIRICI */}
+            <div className="inline-flex p-1 bg-white/5 rounded-2xl border border-white/10 shadow-inner">
+              <Link 
+                href="/members/rehearsals?view=list" 
+                className={`px-8 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${view !== 'calendar' ? 'bg-[var(--primary-gold)] text-black shadow-glow-sm scale-105' : 'text-white/40 hover:text-white hover:bg-white/5 opacity-60'}`}
+              >
+                LİSTE
+              </Link>
+              <Link 
+                href="/members/rehearsals?view=calendar" 
+                className={`px-8 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${view === 'calendar' ? 'bg-[var(--primary-gold)] text-black shadow-glow-sm scale-105' : 'text-white/40 hover:text-white hover:bg-white/5 opacity-60'}`}
+              >
+                TAKVİM 🗓️
+              </Link>
+            </div>
           </div>
           {canManage && (
              <div className="flex flex-col sm:flex-row gap-3">
@@ -185,117 +210,123 @@ export default async function RehearsalsPage() {
       </header>
 
       <div className="max-w-4xl mx-auto space-y-16">
-        {/* CANLI YOKLAMA BÖLÜMÜ (Halıhazırda Aktifse) */}
-        {activeRehearsals.length > 0 && (
-          <section className="animate-pulse-slow">
-            <div className="flex items-center gap-4 mb-8">
-              <h2 className="text-red-500 text-2xl font-bold serif-font flex items-center gap-3">
-                <span className="w-3 h-3 bg-red-500 rounded-full animate-ping"></span>
-                Canlı Yoklama / Nabız Açık!
-              </h2>
-              <div className="h-[1px] flex-1 bg-gradient-to-r from-red-500/20 to-transparent"></div>
-            </div>
-            <div className="space-y-8">
-              {activeRehearsals.map(renderRehearsalCard)}
-            </div>
-          </section>
-        )}
+        {view === 'calendar' ? (
+           <RehearsalCalendar rehearsals={allRehearsals} />
+        ) : (
+          <>
+            {/* CANLI YOKLAMA BÖLÜMÜ (Halıhazırda Aktifse) */}
+            {activeRehearsals.length > 0 && (
+              <section className="animate-pulse-slow">
+                <div className="flex items-center gap-4 mb-8">
+                  <h2 className="text-red-500 text-2xl font-bold serif-font flex items-center gap-3">
+                    <span className="w-3 h-3 bg-red-500 rounded-full animate-ping"></span>
+                    Canlı Yoklama / Nabız Açık!
+                  </h2>
+                  <div className="h-[1px] flex-1 bg-gradient-to-r from-red-500/20 to-transparent"></div>
+                </div>
+                <div className="space-y-8">
+                  {activeRehearsals.map(renderRehearsalCard)}
+                </div>
+              </section>
+            )}
 
-        {/* YENİ PROVA EKLEME FORMU */}
-        {canManage && (
-          <section className="glass-card border-dashed border-[var(--primary-gold)]/30">
-            <h2 className="text-[var(--primary-gold)] text-xl mb-8 flex items-center gap-3 font-bold uppercase tracking-widest text-sm">
-              <ion-icon name="add-circle-outline" style={{ fontSize: '1.5rem' }}></ion-icon> 
-              Yeni Prova Takvimi Oluştur
-            </h2>
-            <form action={addRehearsal as any} className="grid grid-cols-1 md:grid-cols-2 gap-5">
-              <div className="flex flex-col gap-2">
-                <label className="text-[10px] font-bold text-white/40 uppercase ml-2">PROVA KONUSU / OYUN</label>
-                <input 
-                  type="text" 
-                  name="title" 
-                  list="presetTitles"
-                  placeholder="Örn: Hamlet 1. Perde" 
-                  className="p-4 rounded-2xl bg-black/50 text-white border border-white/10 focus:border-[var(--primary-gold)] transition-all outline-none" 
-                  required 
-                />
-                <datalist id="presetTitles">
-                  {presetTitles.map((t: any) => <option key={t as string} value={t as string} />)}
-                </datalist>
-              </div>
+            {/* YENİ PROVA EKLEME FORMU */}
+            {canManage && (
+              <section className="glass-card border-dashed border-[var(--primary-gold)]/30">
+                <h2 className="text-[var(--primary-gold)] text-xl mb-8 flex items-center gap-3 font-bold uppercase tracking-widest text-sm">
+                  <ion-icon name="add-circle-outline" style={{ fontSize: '1.5rem' }}></ion-icon> 
+                  Yeni Prova Takvimi Oluştur
+                </h2>
+                <form action={addRehearsal as any} className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                  <div className="flex flex-col gap-2">
+                    <label className="text-[10px] font-bold text-white/40 uppercase ml-2">PROVA KONUSU / OYUN</label>
+                    <input 
+                      type="text" 
+                      name="title" 
+                      list="presetTitles"
+                      placeholder="Örn: Hamlet 1. Perde" 
+                      className="p-4 rounded-2xl bg-black/50 text-white border border-white/10 focus:border-[var(--primary-gold)] transition-all outline-none" 
+                      required 
+                    />
+                    <datalist id="presetTitles">
+                      {presetTitles.map((t: any) => <option key={t as string} value={t as string} />)}
+                    </datalist>
+                  </div>
 
-              <div className="flex flex-col gap-2">
-                <label className="text-[10px] font-bold text-white/40 uppercase ml-2">MEKAN / SAHNE</label>
-                <input 
-                  type="text" 
-                  name="location" 
-                  list="presetLocations"
-                  placeholder="Örn: Haliç Yerleşkesi" 
-                  className="p-4 rounded-2xl bg-black/50 text-white border border-white/10 focus:border-[var(--primary-gold)] transition-all outline-none" 
-                  required 
-                />
-                <datalist id="presetLocations">
-                  {presetLocations.map((l: any) => <option key={l as string} value={l as string} />)}
-                </datalist>
+                  <div className="flex flex-col gap-2">
+                    <label className="text-[10px] font-bold text-white/40 uppercase ml-2">MEKAN / SAHNE</label>
+                    <input 
+                      type="text" 
+                      name="location" 
+                      list="presetLocations"
+                      placeholder="Örn: Haliç Yerleşkesi" 
+                      className="p-4 rounded-2xl bg-black/50 text-white border border-white/10 focus:border-[var(--primary-gold)] transition-all outline-none" 
+                      required 
+                    />
+                    <datalist id="presetLocations">
+                      {presetLocations.map((l: any) => <option key={l as string} value={l as string} />)}
+                    </datalist>
+                  </div>
+                  
+                  <div className="flex flex-col md:flex-row gap-5 md:col-span-2">
+                    <div className="flex-1 flex flex-col gap-2">
+                      <label className="text-[10px] font-bold text-white/40 uppercase ml-2">TARİH</label>
+                      <input type="date" name="rehearsalDate" className="w-full p-4 rounded-2xl bg-black/50 text-white border border-white/10 focus:border-[var(--primary-gold)] transition-all outline-none" required />
+                    </div>
+                    <div className="flex-1 flex flex-col gap-2">
+                      <label className="text-[10px] font-bold text-white/40 uppercase ml-2">SAAT</label>
+                      <input 
+                        type="time" 
+                        name="rehearsalTime" 
+                        list="presetTimes"
+                        className="w-full p-4 rounded-2xl bg-black/50 text-white border border-white/10 focus:border-[var(--primary-gold)] transition-all outline-none" 
+                        required 
+                      />
+                      <datalist id="presetTimes">
+                        {presetTimes.map((t: any) => <option key={t as string} value={t as string} />)}
+                      </datalist>
+                    </div>
+                  </div>
+
+                  <textarea name="notes" placeholder="Yönetmen Notu (Opsiyonel)" className="md:col-span-2 p-4 rounded-2xl bg-black/50 text-white border border-white/10 focus:border-[var(--primary-gold)] transition-all outline-none min-h-[100px]" />
+                  
+                  <div className="md:col-span-2 flex items-center gap-3 px-2">
+                    <input type="checkbox" name="saveAsPreset" id="saveAsPreset" className="accent-[var(--primary-gold)]" />
+                    <label htmlFor="saveAsPreset" className="text-xs text-white/60 cursor-pointer hover:text-white transition-colors">Bu bilgileri şablon (preset) olarak kaydet</label>
+                  </div>
+
+                  <button type="submit" className="md:col-span-2 btn btn-primary py-4 font-bold tracking-widest uppercase text-xs shadow-glow mt-2">
+                    TAKVİME MÜHÜRLE
+                  </button>
+                </form>
+              </section>
+            )}
+
+            {/* GELECEK PROVALAR & GÜNCEL LOGLAR */}
+            <section>
+              <div className="flex items-center gap-4 mb-8">
+                <h2 className="text-white text-2xl font-bold serif-font">Güncel Provalar & Loglar</h2>
+                <div className="h-[1px] flex-1 bg-gradient-to-r from-white/20 to-transparent"></div>
               </div>
               
-              <div className="flex flex-col md:flex-row gap-5 md:col-span-2">
-                <div className="flex-1 flex flex-col gap-2">
-                  <label className="text-[10px] font-bold text-white/40 uppercase ml-2">TARİH</label>
-                  <input type="date" name="rehearsalDate" className="w-full p-4 rounded-2xl bg-black/50 text-white border border-white/10 focus:border-[var(--primary-gold)] transition-all outline-none" required />
+              {upcomingRehearsals.length === 0 ? (
+                <div className="p-10 text-center glass-card border-white/5">
+                    <p className="text-[var(--text-muted)] italic text-sm">Şu an için aktif bir kayıt bulunmuyor.</p>
                 </div>
-                <div className="flex-1 flex flex-col gap-2">
-                  <label className="text-[10px] font-bold text-white/40 uppercase ml-2">SAAT</label>
-                  <input 
-                    type="time" 
-                    name="rehearsalTime" 
-                    list="presetTimes"
-                    className="w-full p-4 rounded-2xl bg-black/50 text-white border border-white/10 focus:border-[var(--primary-gold)] transition-all outline-none" 
-                    required 
-                  />
-                  <datalist id="presetTimes">
-                    {presetTimes.map((t: any) => <option key={t as string} value={t as string} />)}
-                  </datalist>
+              ) : (
+                <div className="space-y-8">
+                  {upcomingRehearsals.map(renderRehearsalCard)}
                 </div>
-              </div>
+              )}
+            </section>
 
-              <textarea name="notes" placeholder="Yönetmen Notu (Opsiyonel)" className="md:col-span-2 p-4 rounded-2xl bg-black/50 text-white border border-white/10 focus:border-[var(--primary-gold)] transition-all outline-none min-h-[100px]" />
-              
-              <div className="md:col-span-2 flex items-center gap-3 px-2">
-                <input type="checkbox" name="saveAsPreset" id="saveAsPreset" className="accent-[var(--primary-gold)]" />
-                <label htmlFor="saveAsPreset" className="text-xs text-white/60 cursor-pointer hover:text-white transition-colors">Bu bilgileri şablon (preset) olarak kaydet</label>
-              </div>
-
-              <button type="submit" className="md:col-span-2 btn btn-primary py-4 font-bold tracking-widest uppercase text-xs shadow-glow mt-2">
-                TAKVİME MÜHÜRLE
-              </button>
-            </form>
-          </section>
-        )}
-
-        {/* GELECEK PROVALAR & GÜNCEL LOGLAR */}
-        <section>
-          <div className="flex items-center gap-4 mb-8">
-            <h2 className="text-white text-2xl font-bold serif-font">Güncel Provalar & Loglar</h2>
-            <div className="h-[1px] flex-1 bg-gradient-to-r from-white/20 to-transparent"></div>
-          </div>
-          
-          {upcomingRehearsals.length === 0 ? (
-            <div className="p-10 text-center glass-card border-white/5">
-                <p className="text-[var(--text-muted)] italic text-sm">Şu an için aktif bir kayıt bulunmuyor.</p>
-            </div>
-          ) : (
-            <div className="space-y-8">
-              {upcomingRehearsals.map(renderRehearsalCard)}
-            </div>
-          )}
-        </section>
-
-        {/* GEÇMİŞ ARŞİV - Sadece Yönetici Modu'ndaki yetkililer görebilir */}
-        {canManage && (
-          <ArchiveWrapper count={pastRehearsals.length}>
-            {pastRehearsals.map(renderRehearsalCard)}
-          </ArchiveWrapper>
+            {/* GEÇMİŞ ARŞİV - Sadece Yönetici Modu'ndaki yetkililer görebilir */}
+            {canManage && (
+              <ArchiveWrapper count={pastRehearsals.length}>
+                {pastRehearsals.map(renderRehearsalCard)}
+              </ArchiveWrapper>
+            )}
+          </>
         )}
       </div>
     </div>
