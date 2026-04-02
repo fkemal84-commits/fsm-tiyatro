@@ -5,59 +5,80 @@ import { useState, useEffect, useCallback } from 'react';
 const PULL_THRESHOLD = 80; // Yenileme için gereken çekme mesafesi (px)
 
 export default function PullToRefresh() {
-  const [startY, setStartY] = useState(0);
+  const [startPos, setStartPos] = useState({ x: 0, y: 0 });
   const [pullDistance, setPullDistance] = useState(0);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [canPull, setCanPull] = useState(false);
+  const [isHorizontalSwipe, setIsHorizontalSwipe] = useState(false);
 
   const handleTouchStart = useCallback((e: TouchEvent) => {
-    // Sadece sayfanın en üstündeyken çekme hareketine izin ver
-    if (window.scrollY === 0) {
-      setStartY(e.touches[0].pageY);
+    // Sayfanın en üstünde miyiz? (Küçük bir tolerans payı bırakıyoruz)
+    const isAtTop = window.scrollY <= 5;
+    
+    if (isAtTop && !isRefreshing) {
+      setStartPos({ x: e.touches[0].pageX, y: e.touches[0].pageY });
       setCanPull(true);
+      setIsHorizontalSwipe(false);
     } else {
       setCanPull(false);
     }
-  }, []);
+  }, [isRefreshing]);
 
   const handleTouchMove = useCallback((e: TouchEvent) => {
-    if (!canPull || isRefreshing) return;
+    if (!canPull || isRefreshing || isHorizontalSwipe) return;
 
+    const currentX = e.touches[0].pageX;
     const currentY = e.touches[0].pageY;
-    const distance = currentY - startY;
+    
+    const deltaX = Math.abs(currentX - startPos.x);
+    const deltaY = currentY - startPos.y;
 
-    if (distance > 0) {
-      // Direnç efekti (daha yavaş çekilme hissi)
-      const easedDistance = Math.min(distance * 0.4, PULL_THRESHOLD + 20);
+    // SADECE dikey hareket varsa ve aşağı doğru çekiliyorsa devam et
+    // Eğer yatay hareket baskınsa (Geri gitme hareketi gibi), sisteme yolu aç
+    if (deltaX > Math.abs(deltaY) && deltaX > 10) {
+      setIsHorizontalSwipe(true);
+      setPullDistance(0);
+      return;
+    }
+
+    if (deltaY > 0) {
+      // Logaritmik direnç efekti (daha kaliteli bir çekme hissi sağlar)
+      const resistance = 0.4;
+      const easedDistance = Math.min(deltaY * resistance, PULL_THRESHOLD + 40);
       setPullDistance(easedDistance);
       
-      // Sayfa kaymasını engelle (sadece çekme sırasında)
-      if (easedDistance > 10 && e.cancelable) {
+      // Native browser refresh'i ve bounce'u engellemek için
+      if (easedDistance > 5 && e.cancelable) {
         e.preventDefault();
       }
     }
-  }, [canPull, isRefreshing, startY]);
+  }, [canPull, isRefreshing, isHorizontalSwipe, startPos]);
 
   const handleTouchEnd = useCallback(() => {
-    if (!canPull || isRefreshing) return;
+    if (!canPull || isRefreshing || isHorizontalSwipe) {
+      setPullDistance(0);
+      return;
+    }
 
     if (pullDistance >= PULL_THRESHOLD) {
       setIsRefreshing(true);
       setPullDistance(PULL_THRESHOLD);
       
-      // Sayfayı yenile
+      // Android/iOS haptic feedback
       if ('vibrate' in navigator) {
-        navigator.vibrate(50);
+        try {
+          navigator.vibrate(20);
+        } catch (e) {}
       }
       
       setTimeout(() => {
         window.location.reload();
-      }, 500);
+      }, 400);
     } else {
       setPullDistance(0);
     }
     setCanPull(false);
-  }, [canPull, isRefreshing, pullDistance]);
+  }, [canPull, isRefreshing, isHorizontalSwipe, pullDistance]);
 
   useEffect(() => {
     window.addEventListener('touchstart', handleTouchStart, { passive: false });

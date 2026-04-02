@@ -31,7 +31,9 @@ body {
   margin: 0;
   -webkit-font-smoothing: antialiased;
   position: relative;
-  
+  /* Pull-to-refresh ve geri gitme hareketleri için optimizasyon */
+  overscroll-behavior-y: contain; 
+  overscroll-behavior-x: auto;
 }
 
 body::before {

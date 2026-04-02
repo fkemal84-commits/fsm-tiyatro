@@ -15,7 +15,20 @@ export default async function TeamDirectory() {
 
   const usersSnap = await adminDb.collection('users').get();
   const members = usersSnap.docs
-    .map(doc => ({ id: doc.id, ...doc.data() as any }))
+    .map(doc => {
+      const data = doc.data();
+      return { 
+        id: doc.id, 
+        name: data.name, 
+        surname: data.surname, 
+        email: data.email, 
+        role: data.role, 
+        photoUrl: data.photoUrl || '', 
+        bio: data.bio || '', 
+        skills: data.skills || '', 
+        phone: data.phone || '' 
+      };
+    })
     .filter(u => u.role !== 'USER' && u.name) // Sadece profili olanları göster
     .sort((a, b) => (a.name || '').localeCompare(b.name || ''));
 

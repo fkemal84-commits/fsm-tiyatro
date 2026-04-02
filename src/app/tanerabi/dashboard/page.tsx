@@ -17,11 +17,23 @@ export default async function Dashboard() {
       redirect('/');
     }
 
-    // Veritabanından tüm üyeleri çek
+    // Veritabanından tüm üyeleri çek - GÜVENLİK NOTU: Sadece gerekli alanları alıyoruz (Şifre hash'leri sızmasın!)
     const usersSnapshot = await adminDb.collection('users').get();
     const users = usersSnapshot.docs
-      .map(doc => ({ id: doc.id, ...doc.data() as any }))
-      .sort((a, b) => new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime());
+      .map(doc => {
+        const data = doc.data();
+        return {
+          id: doc.id,
+          name: data.name || '',
+          surname: data.surname || '',
+          email: data.email || '',
+          role: data.role || 'MEMBER',
+          createdAt: data.createdAt || new Date().toISOString(),
+          phone: data.phone || '',
+          department: data.department || ''
+        };
+      })
+      .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
 
     // Mevcut içerikleri çek
     const postsSnapshot = await adminDb.collection('posts').get();
@@ -350,13 +362,14 @@ export default async function Dashboard() {
       </div>
     );
   } catch (error: any) {
+    // GÜVENLİK NOTU: Prodüksiyonda detaylı hata mesajlarını ve stack trace'i gizliyoruz.
     return (
       <div style={{ padding: '10rem 5%', color: '#fff', textAlign: 'center' }}>
-        <h1 style={{ color: '#ff4d4d' }}>Dashboard Yüklenemedi (Sistem Hatası)</h1>
-        <p style={{ marginTop: '1rem', opacity: 0.8 }}>Hata Detayı: {error.message || 'Bilinmeyen Hata'}</p>
-        <pre style={{ background: 'rgba(0,0,0,0.5)', padding: '1rem', marginTop: '1rem', borderRadius: '8px', textAlign: 'left', display: 'inline-block' }}>
-          {error.stack}
-        </pre>
+        <h1 style={{ color: '#ff4d4d' }}>Dashboard Yüklenemedi</h1>
+        <p style={{ marginTop: '1rem', opacity: 0.8 }}>Sistemde geçici bir sorun oluştu. Lütfen daha sonra tekrar deneyiniz.</p>
+        <div style={{ marginTop: '2rem' }}>
+          <a href="/" className="btn btn-outline">Ana Sayfaya Dön</a>
+        </div>
       </div>
     );
   }

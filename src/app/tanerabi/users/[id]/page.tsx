@@ -19,8 +19,22 @@ export default async function AdminUserProfile({ params }: { params: Promise<{ i
 
   const docSnap = await adminDb.collection('users').doc(resolvedParams.id).get();
   if (!docSnap.exists) notFound();
-  const userRecord = { id: docSnap.id, ...(docSnap.data() as any) };
-  userRecord.createdAt = userRecord.createdAt ? new Date(userRecord.createdAt) : new Date();
+  const data = docSnap.data()!;
+  const userRecord = { 
+    id: docSnap.id, 
+    name: data.name,
+    surname: data.surname,
+    email: data.email,
+    role: data.role,
+    phone: data.phone || '',
+    photoUrl: data.photoUrl || '',
+    department: data.department || '',
+    hobbies: data.hobbies || '',
+    pastPlays: data.pastPlays || '',
+    skills: data.skills || '',
+    bio: data.bio || '',
+    createdAt: data.createdAt ? new Date(data.createdAt) : new Date()
+  };
 
   const defaultAvatar = "/default-avatar.svg";
 
