@@ -17,6 +17,8 @@ export const metadata: Metadata = {
   description: "Oyuncu ve yöneticilere özel detaylı prova takvimi.",
 };
 
+export const dynamic = 'force-dynamic';
+
 export default async function RehearsalsPage(props: { searchParams: Promise<{ view?: string }> }) {
   const searchParams = await props.searchParams;
   const view = searchParams.view || 'list';
@@ -25,7 +27,6 @@ export default async function RehearsalsPage(props: { searchParams: Promise<{ vi
   const role = (session?.user as any)?.role;
 
   // Sadece Admin, Aktör ve Yönetmenler girebilir
-  // AKTOR veya MEMBER (normal üye girişi yapan oyuncular) erişebilir
   const allowedRoles = ['SUPERADMIN', 'ADMIN', 'DIRECTOR', 'ASST_DIRECTOR', 'AKTOR', 'MEMBER'];
   if (!allowedRoles.includes(role)) {
     redirect('/members');
@@ -35,6 +36,8 @@ export default async function RehearsalsPage(props: { searchParams: Promise<{ vi
   const canManage = ['SUPERADMIN', 'ADMIN', 'DIRECTOR', 'ASST_DIRECTOR'].includes(role) && (session?.user as any)?.isAdminMode;
 
   const rehearsalsSnapshot = await adminDb.collection('rehearsals').get();
+  console.log(`[DEBUG_TIYATRO] Veritabanından gelen toplam prova sayısı: ${rehearsalsSnapshot.size}`);
+  
   const allRehearsals = rehearsalsSnapshot.docs
     .map(doc => ({ id: doc.id, ...doc.data() as any }))
     .sort((a, b) => new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime());
