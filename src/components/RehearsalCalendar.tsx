@@ -26,16 +26,15 @@ export default function RehearsalCalendar({ rehearsals }: { rehearsals: any[] })
   };
 
   const getRehearsalsForDay = (day: number) => {
-    // Takvimdeki o günü oluştur (YYYY-MM-DD formatında)
-    const targetDateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
-    
-    const dayRehearsals = rehearsals.filter(r => {
+    return rehearsals.filter(r => {
       if (!r.date || r.date.includes('(Anlık)')) return false;
-      // String bazlı eşleşme (Saat dilimi derdi yok)
-      return r.date.startsWith(targetDateStr);
+      
+      // Tarihi parçalarına ayır ve sayısal olarak karşılaştır (Padding sorununu çözer)
+      const datePart = r.date.split(' - ')[0];
+      const [ry, rm, rd] = datePart.split('-').map(Number);
+      
+      return ry === year && (rm - 1) === month && rd === day;
     });
-
-    return dayRehearsals;
   };
 
   const daysArr = [];
@@ -52,6 +51,7 @@ export default function RehearsalCalendar({ rehearsals }: { rehearsals: any[] })
       <div className="flex flex-col md:flex-row justify-between items-center mb-10 gap-6 relative z-10">
         <h2 className="serif-font text-3xl md:text-4xl text-white">
           {monthNames[month]} <span className="text-[var(--primary-gold)]">{year}</span>
+          <span className="text-[10px] ml-3 opacity-30 font-mono tracking-widest">({rehearsals.length} Kayıt)</span>
         </h2>
         <div className="flex gap-3">
           <button 
