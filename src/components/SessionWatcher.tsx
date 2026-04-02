@@ -45,6 +45,9 @@ export default function SessionWatcher() {
           update({
             role: dbRole,
             isAdminMode: nextIsAdminMode
+          }).then(() => {
+            // Sayfayı zorunlu yenile ki Server Component'lar (Layout, Header vb.) da güncellensin
+            window.location.reload();
           });
         }
       }

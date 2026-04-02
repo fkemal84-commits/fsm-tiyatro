@@ -124,9 +124,16 @@ export default function Navbar({ session: initialSession }: { session?: any }) {
           onTouchEnd={() => {
             if (!touchStart || !touchEnd) return;
             const distance = touchEnd - touchStart;
-            const isLeftToRight = distance > 70; // Soldan sağa itme mesafesi
+            const isLeftToRight = distance > 70; 
+            
             if (isLeftToRight) {
-              setIsMenuOpen(false);
+              if (activeDropdown) {
+                // Eğer alt menüdeysek önce ana menüye dön
+                setActiveDropdown(null);
+              } else {
+                // Eğer zaten ana menüdeysek menüyü kapat
+                setIsMenuOpen(false);
+              }
             }
             setTouchStart(null);
             setTouchEnd(null);

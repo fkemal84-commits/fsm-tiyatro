@@ -54,53 +54,65 @@ export default function Register() {
   };
 
   return (
-    <div className="hero" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '100vh', paddingTop: '6rem' }}>
-      <div className="glass-card" style={{ maxWidth: '500px', width: '90%' }}>
+    <div className="hero flex items-center justify-center min-h-screen pt-20 md:pt-24 pb-10">
+      <div className="glass-card w-[92%] max-w-[500px] p-6 md:p-10">
         
         {successMessage ? (
-          <div style={{ textAlign: 'center', padding: '1rem' }}>
-             <div style={{ fontSize: '4rem', color: 'var(--primary-gold)', marginBottom: '1.5rem' }}>
+          <div className="text-center py-4">
+             <div className="text-6xl md:text-7xl text-[var(--primary-gold)] mb-6">
                 <ion-icon name="checkmark-circle-outline"></ion-icon>
              </div>
-             <h2 className="serif-font" style={{ color: '#fff', fontSize: '1.8rem', marginBottom: '1rem' }}>Süreç Başlatıldı</h2>
-             <p style={{ color: 'var(--text-muted)', fontSize: '1rem', lineHeight: '1.6', marginBottom: '2rem' }}>{successMessage}</p>
-             <a href="/login" className="btn btn-primary" style={{ width: '100%' }}>Giriş Sayfasına Dön</a>
+             <h2 className="serif-font text-2xl md:text-3xl text-white mb-4">Süreç Başlatıldı</h2>
+             <p className="text-[var(--text-muted)] text-sm md:text-base leading-relaxed mb-8">{successMessage}</p>
+             <a href="/login" className="btn btn-primary w-full">Giriş Sayfasına Dön</a>
           </div>
         ) : (
           <>
-            <h2 className="serif-font" style={{ fontSize: '2.5rem', color: 'var(--primary-gold)', marginBottom: '0.5rem', textAlign: 'center' }}>Aileye Katıl</h2>
-            <p style={{ color: 'var(--text-muted)', marginBottom: '2rem', textAlign: 'center', fontSize: '1rem' }}>FSM Tiyatro ve Sinema Kulübü Resmi Öğrenci ve Üye Kayıt Formu</p>
+            <h2 className="serif-font text-3xl md:text-4xl text-[var(--primary-gold)] mb-2 text-center">Aileye Katıl</h2>
+            <p className="text-[var(--text-muted)] mb-8 text-center text-xs md:text-sm">FSM Tiyatro ve Sinema Kulübü Resmi Öğrenci ve Üye Kayıt Formu</p>
             
-            {error && <div style={{ background: 'rgba(139,0,0,0.5)', color: '#fff', padding: '0.8rem', borderRadius: '8px', marginBottom: '1rem', border: '1px solid rgba(255,0,0,0.3)' }}>{error}</div>}
-
-            <form onSubmit={handleRegister} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-              <div style={{ display: 'flex', gap: '1rem' }}>
-                <input type="text" name="name" placeholder="Adınız" style={{ flex: 1, padding: '0.8rem', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.2)', background: 'rgba(0,0,0,0.3)', color: '#fff' }} required />
-                <input type="text" name="surname" placeholder="Soyadınız" style={{ flex: 1, padding: '0.8rem', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.2)', background: 'rgba(0,0,0,0.3)', color: '#fff' }} required />
+            {error && <div className="bg-red-900/50 text-white p-3 rounded-lg mb-4 border border-red-500/30 text-sm text-center">{error}</div>}
+ 
+            <form onSubmit={handleRegister} className="flex flex-col gap-4">
+              <div className="flex flex-col md:flex-row gap-4">
+                <input 
+                  type="text" 
+                  name="name" 
+                  placeholder="Adınız" 
+                  className="flex-1 p-3.5 rounded-xl border border-white/10 bg-black/40 text-white outline-none focus:border-[var(--primary-gold)]/50 transition-all" 
+                  required 
+                />
+                <input 
+                  type="text" 
+                  name="surname" 
+                  placeholder="Soyadınız" 
+                  className="flex-1 p-3.5 rounded-xl border border-white/10 bg-black/40 text-white outline-none focus:border-[var(--primary-gold)]/50 transition-all" 
+                  required 
+                />
               </div>
-              <input type="email" name="email" placeholder="Okul (fsm.edu.tr) veya Kişisel E-posta" style={{ padding: '0.8rem', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.2)', background: 'rgba(0,0,0,0.3)', color: '#fff' }} required />
-              <div style={{ display: 'flex', gap: '0.5rem' }}>
+              
+              <input 
+                type="email" 
+                name="email" 
+                placeholder="Okul (fsm.edu.tr) veya Kişisel E-posta" 
+                className="w-full p-3.5 rounded-xl border border-white/10 bg-black/40 text-white outline-none focus:border-[var(--primary-gold)]/50 transition-all" 
+                required 
+              />
+              
+              <div className="flex gap-2">
                 <select 
                   name="countryCode" 
-                  style={{ 
-                    padding: '0.8rem', 
-                    borderRadius: '8px', 
-                    border: '1px solid rgba(255,255,255,0.2)', 
-                    background: 'rgba(0,0,0,0.3)', 
-                    color: '#fff',
-                    width: '90px'
-                  }} 
+                  className="w-[85px] p-3.5 rounded-xl border border-white/10 bg-black/40 text-white outline-none focus:border-[var(--primary-gold)]/50 transition-all text-xs"
                   defaultValue="+90"
                 >
                   <option value="+90">TR +90</option>
                   <option value="+1">US +1</option>
                   <option value="+44">UK +44</option>
                   <option value="+49">DE +49</option>
-                  <option value="+33">FR +3 French</option>
+                  <option value="+33">FR +33</option>
                   <option value="+31">NL +31</option>
                   <option value="+971">UAE +971</option>
                   <option value="+966">SA +966</option>
-                  <option value="+90">Diğer</option>
                 </select>
                 <input 
                   type="tel" 
@@ -109,19 +121,33 @@ export default function Register() {
                   onChange={handlePhoneChange}
                   placeholder="5XX XXX XX XX" 
                   inputMode="numeric"
-                  style={{ flex: 1, padding: '0.8rem', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.2)', background: 'rgba(0,0,0,0.3)', color: '#fff' }} 
+                  className="flex-1 p-3.5 rounded-xl border border-white/10 bg-black/40 text-white outline-none focus:border-[var(--primary-gold)]/50 transition-all" 
                   required 
-                  title="Lütfen 10 haneli telefon numaranızı başında 0 olmadan giriniz (Örn: 532 123 45 67)"
+                  title="Lütfen 10 haneli telefon numaranızı başında 0 olmadan giriniz"
                 />
               </div>
-              <input type="password" name="password" placeholder="Sisteme Giriş Şifrenizi Belirleyin" style={{ padding: '0.8rem', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.2)', background: 'rgba(0,0,0,0.3)', color: '#fff' }} required minLength={6} />
               
-              <label style={{ display: 'flex', gap: '0.8rem', alignItems: 'flex-start', margin: '0.5rem 0', cursor: 'pointer', fontSize: '0.85rem', color: 'var(--text-muted)' }}>
-                <input type="checkbox" name="consent" style={{ marginTop: '0.2rem' }} required />
-                <span style={{ lineHeight: '1.4' }}>Kişisel verilerimin kulüp faaliyetleri kapsamında işlenmesine dair <a href="#" style={{ color: 'var(--primary-gold)', textDecoration: 'underline' }}>Üye Aydınlatma ve Açık Rıza Metnini</a> okudum, anladım ve onaylıyorum.</span>
+              <input 
+                type="password" 
+                name="password" 
+                placeholder="Sisteme Giriş Şifrenizi Belirleyin" 
+                className="w-full p-3.5 rounded-xl border border-white/10 bg-black/40 text-white outline-none focus:border-[var(--primary-gold)]/50 transition-all" 
+                required 
+                minLength={6} 
+              />
+              
+              <label className="flex gap-3 items-start my-1 cursor-pointer group">
+                <input type="checkbox" name="consent" className="mt-1 accent-[var(--primary-gold)]" required />
+                <span className="text-[11px] md:text-xs text-[var(--text-muted)] leading-relaxed group-hover:text-white transition-colors">
+                  Kişisel verilerimin kulüp faaliyetleri kapsamında işlenmesine dair <a href="#" className="underline text-[var(--primary-gold)]">Üye Aydınlatma ve Açık Rıza Metnini</a> okudum, anladım ve onaylıyorum.
+                </span>
               </label>
-
-              <button type="submit" className="btn btn-primary" style={{ width: '100%', marginTop: '0.5rem' }} disabled={loading}>
+ 
+              <button 
+                type="submit" 
+                className="btn btn-primary w-full mt-2 py-4 font-bold tracking-wider" 
+                disabled={loading}
+              >
                 {loading ? 'Sisteme Kaydediliyor...' : 'Kaydı Tamamla ve Üye Ol'}
               </button>
             </form>

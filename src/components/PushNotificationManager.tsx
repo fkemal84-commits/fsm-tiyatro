@@ -18,14 +18,28 @@ export default function PushNotificationManager({ session: initialSession }: { s
 
   const [regStatus, setRegStatus] = useState<string>('');
   const [showDelayed, setShowDelayed] = useState(false);
+  const [isDismissed, setIsDismissed] = useState(false);
 
-  // 5 saniye sonra uyarının görünmesine izin ver
+  // 5 saniye sonra uyarının görünmesine izin ver ve dismissal kontrolü yap
   useEffect(() => {
+    const dismissedUntil = localStorage.getItem('push_notif_dismissed_until');
+    if (dismissedUntil && Date.now() < parseInt(dismissedUntil)) {
+      setIsDismissed(true);
+      return;
+    }
+
     const timer = setTimeout(() => {
       setShowDelayed(true);
     }, 5000);
     return () => clearTimeout(timer);
   }, []);
+
+  const handleDismiss = () => {
+    // 3 gün boyunca bir daha sorma
+    const expireTime = Date.now() + 3 * 24 * 60 * 60 * 1000;
+    localStorage.setItem('push_notif_dismissed_until', expireTime.toString());
+    setIsDismissed(true);
+  };
 
   const registerToken = async (currentPermission: string) => {
     if (currentPermission !== 'granted' || !messaging || !currentSession) return;
@@ -95,7 +109,7 @@ export default function PushNotificationManager({ session: initialSession }: { s
 
   // Eğer her şey tamamsa ve kayıt yapıldıysa (veya reddedildiyse) bileşeni gizle
   // Ama hata varsa veya register bekliyorsak uyaralım
-  if (!isSupported || !currentSession || !showDelayed) return null;
+  if (!isSupported || !currentSession || !showDelayed || isDismissed) return null;
   
   if (permission === 'granted' && regStatus === 'done') return null;
   if (permission === 'denied' && regStatus !== 'error') return null;
