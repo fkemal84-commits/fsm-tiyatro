@@ -150,6 +150,7 @@ export default function Register() {
                 className="w-full p-3.5 rounded-xl border border-white/10 bg-black/40 text-white outline-none focus:border-[var(--primary-gold)]/50 transition-all" 
                 required 
                 minLength={6} 
+                autoComplete="new-password"
               />
               
               <label className="flex gap-3 items-start my-1 cursor-pointer group">

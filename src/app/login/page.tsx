@@ -70,6 +70,7 @@ export default function Login() {
             onChange={(e) => setPassword(e.target.value)}
             style={{ padding: '1rem', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.2)', background: 'rgba(0,0,0,0.5)', color: '#fff' }}
             required
+            autoComplete="current-password"
           />
           <button type="submit" className="btn btn-primary" style={{ marginTop: '0.5rem', width: '100%' }} disabled={loading}>
             {loading ? 'Giriş Yapılıyor...' : 'Sisteme Gir'}
