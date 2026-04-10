@@ -75,11 +75,11 @@ export default async function RootLayout({
         }} />
       </head>
       <body className="antialiased">
-        <Providers>
-          <SessionWatcher />
+        <Providers session={session}>
+          {session && <SessionWatcher />}
           <PullToRefresh />
-          <PushNotificationManager session={session} />
-          <FlashAttendanceOverlay />
+          {session && <PushNotificationManager session={session} />}
+          {session && <FlashAttendanceOverlay />}
           <Navbar session={session} />
           {children}
           <Footer />

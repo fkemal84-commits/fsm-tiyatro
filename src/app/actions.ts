@@ -224,7 +224,20 @@ export async function registerUser(formData: FormData) {
     const password = formData.get('password') as string;
     const consent = formData.get('consent') ? true : false;
 
-    if (!email || !password || !rawPhone) return { error: "Tüm alanlar zorunludur." };
+    // --- INPUT VALIDATION & SANITIZATION ---
+    if (!email || !password || !rawPhone || !name || !surname) {
+      return { error: "Tüm alanlar zorunludur." };
+    }
+
+    // Uzunluk Kontrolleri (Injection ve DoS önlemi)
+    if (name.length > 50 || surname.length > 50) return { error: "İsim veya soyisim çok uzun." };
+    if (email.length > 100) return { error: "E-posta adresi çok uzun." };
+    if (password.length > 512) return { error: "Geçersiz şifre formatı." }; // Hash bekliyoruz
+    if (rawPhone.length > 15) return { error: "Telefon numarası çok uzun." };
+
+    // Tip ve Format Kontrolleri
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) return { error: "Geçersiz e-posta formatı." };
 
     // Telefon doğrulama (Sadece rakam ve 10 hane)
     const phoneRegex = /^[0-9]{10}$/;
@@ -286,7 +299,10 @@ export async function changePassword(formData: FormData) {
   const newPasswordConfirm = formData.get('newPasswordConfirm') as string;
 
   if (newPassword !== newPasswordConfirm) return { error: "Yazdığınız yeni şifreler eşleşmiyor!" };
-  if (newPassword.length < 6) return { error: "Girdiğiniz yeni şifre en az 6 karakter olmalıdır." };
+  
+  // Şifre hash uzunluğu kontrolü (Client-side'dan hash gelmeli)
+  if (newPassword.length < 6) return { error: "Girdiğiniz yeni şifre geçersiz." };
+  if (newPassword.length > 512) return { error: "Şifre verisi çok büyük." };
 
   try {
     const { user, uid } = await requireAuth(['MEMBER', 'AKTOR', 'EDITOR', 'DIRECTOR', 'ASST_DIRECTOR', 'ADMIN', 'SUPERADMIN']);

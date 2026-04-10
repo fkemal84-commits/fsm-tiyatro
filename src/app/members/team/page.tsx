@@ -22,6 +22,9 @@ export default async function TeamDirectory(props: { searchParams: Promise<{ pla
   const playsSnap = await adminDb.collection('plays').get();
   const allPlays = playsSnap.docs.map(doc => ({ id: doc.id, title: doc.data().title }));
 
+  // KVKK Koruması: Sadece Yönetim (Admin/Direktör) iletişim bilgilerini görebilir
+  const isPrivileged = ['SUPERADMIN', 'ADMIN', 'DIRECTOR', 'ASST_DIRECTOR'].includes(currentUserRole);
+
   const usersSnap = await adminDb.collection('users').get();
   let members = usersSnap.docs
     .map(doc => {
@@ -30,12 +33,12 @@ export default async function TeamDirectory(props: { searchParams: Promise<{ pla
         id: doc.id, 
         name: data.name, 
         surname: data.surname, 
-        email: data.email, 
+        email: isPrivileged ? data.email : '••••@••••.•••', // Maskeleme
         role: data.role, 
         photoUrl: data.photoUrl || '', 
         bio: data.bio || '', 
         skills: data.skills || '', 
-        phone: data.phone || '',
+        phone: isPrivileged ? (data.phone || '') : '', // Gizleme
         assignedPlays: (data.assignedPlays as string[]) || [] 
       };
     })

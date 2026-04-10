@@ -29,13 +29,29 @@ export default function Register() {
     setPhoneDisplay(formatPhone(e.target.value));
   };
 
+  const hashPassword = async (pwd: string) => {
+    const encoder = new TextEncoder();
+    const data = encoder.encode(pwd);
+    const hash = await crypto.subtle.digest('SHA-256', data);
+    return Array.from(new Uint8Array(hash))
+      .map(b => b.toString(16).padStart(2, '0'))
+      .join('');
+  };
+
   const handleRegister = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setLoading(true);
     setError('');
-    const formData = new FormData(e.currentTarget);
+    const form = e.currentTarget;
+    const formData = new FormData(form);
     
     try {
+      const password = formData.get('password') as string;
+      if (password) {
+        const hashed = await hashPassword(password);
+        formData.set('password', hashed);
+      }
+
       const res = await registerUser(formData);
       if (res?.error) {
         setError(res.error);
@@ -47,8 +63,8 @@ export default function Register() {
         setSuccessMessage("Kayıt başarılı! Okul e-postanızla anında üye oldunuz. Şimdi giriş yapabilirsiniz.");
         setTimeout(() => router.push('/login'), 3000);
       }
-    } catch {
-      setError("Beklenmedik bir hata oluştu.");
+    } catch (err: any) {
+      setError("Beklenmedik bir hata oluştu: " + err.message);
       setLoading(false);
     }
   };
