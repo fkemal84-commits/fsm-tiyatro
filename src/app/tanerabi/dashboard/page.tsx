@@ -65,7 +65,7 @@ export default async function Dashboard() {
 
         {(role === 'SUPERADMIN' || role === 'ADMIN') && (
           <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '3rem' }}>
-            <a href="/tanerabi/tickets" className="btn btn-primary" style={{ padding: '1rem 2rem', fontSize: '1.1rem', display: 'flex', alignItems: 'center', gap: '0.5rem', background: 'var(--primary-gold)', color: 'black' }}>
+            <a href="/members/tickets" className="btn btn-primary" style={{ padding: '1rem 2rem', fontSize: '1.1rem', display: 'flex', alignItems: 'center', gap: '0.5rem', background: 'var(--primary-gold)', color: 'black' }}>
                <ion-icon name="ticket-outline"></ion-icon> Bilet Satış & Kontrol Merkezi
             </a>
           </div>
@@ -175,6 +175,7 @@ export default async function Dashboard() {
                               <select name="newRole" defaultValue={u.role} style={{ padding: '0.4rem', borderRadius: '6px', background: 'rgba(0,0,0,0.5)', color: u.role === 'SUPERADMIN' ? '#ff4d4d' : u.role === 'ADMIN' ? 'var(--primary-gold)' : '#fff', border: '1px solid rgba(255,255,255,0.2)', fontSize: '0.85rem' }}>
                                 {role === 'SUPERADMIN' && <option value="SUPERADMIN">SUPERADMIN</option>}
                                 {role === 'SUPERADMIN' && <option value="ADMIN">ADMIN</option>}
+                                <option value="SALES">SATIŞ PERSONELİ</option>
                                 <option value="EDITOR">İÇERİK EDİTÖRÜ</option>
                                 <option value="DIRECTOR">YÖNETMEN</option>
                                 <option value="ASST_DIRECTOR">YRD. YÖNETMEN</option>
@@ -184,7 +185,7 @@ export default async function Dashboard() {
                               <button type="submit" className="btn btn-outline" style={{ padding: '0.3rem 0.6rem', fontSize: '0.75rem', borderColor: 'var(--text-muted)' }}>Mührü Ver</button>
                             </form>
                           ) : (
-                            <span style={{ color: u.role === 'SUPERADMIN' ? '#ff4d4d' : u.role === 'ADMIN' ? 'var(--primary-gold)' : 'var(--text-muted)', fontWeight: 'bold' }}>{u.role === 'EDITOR' ? 'İÇERİK EDİTÖRÜ' : u.role === 'DIRECTOR' ? 'YÖNETMEN 🎭' : u.role === 'ASST_DIRECTOR' ? 'YRD. YÖNETMEN 🎬' : u.role === 'AKTOR' ? 'AKTÖR 🎭' : u.role === 'PLAYER' ? 'OYUNCU (Eski) 🎭' : u.role === 'MEMBER' ? 'ÜYE' : u.role}</span>
+                            <span style={{ color: u.role === 'SUPERADMIN' ? '#ff4d4d' : u.role === 'ADMIN' ? 'var(--primary-gold)' : u.role === 'SALES' ? '#4ade80' : 'var(--text-muted)', fontWeight: 'bold' }}>{u.role === 'EDITOR' ? 'İÇERİK EDİTÖRÜ' : u.role === 'SALES' ? 'SATIŞ PERSONELİ 🎟️' : u.role === 'DIRECTOR' ? 'YÖNETMEN 🎭' : u.role === 'ASST_DIRECTOR' ? 'YRD. YÖNETMEN 🎬' : u.role === 'AKTOR' ? 'AKTÖR 🎭' : u.role === 'PLAYER' ? 'OYUNCU (Eski) 🎭' : u.role === 'MEMBER' ? 'ÜYE' : u.role}</span>
                           )}
                         </td>
                         <td style={{ padding: '1rem' }}>{u.email}</td>

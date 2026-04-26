@@ -35,7 +35,7 @@ export default function TicketManagementPage() {
           <h1 className="text-3xl font-black text-white tracking-tight">Gişe & Bilet Yönetimi</h1>
           <p className="text-white/40 mt-1">Sistemden elden sattığınız biletleri isimlere tanımlayın.</p>
         </div>
-        <a href="/tanerabi/tickets/scan" className="btn btn-primary bg-green-500 hover:bg-green-600 border-none flex gap-2">
+        <a href="/members/tickets/scan" className="btn btn-primary bg-green-500 hover:bg-green-600 border-none flex gap-2">
           <ion-icon name="scan-outline"></ion-icon> Kapı Kontrol (QR Tarayıcı)
         </a>
       </div>
@@ -88,6 +88,27 @@ export default function TicketManagementPage() {
                 className="w-full bg-black/50 border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-[var(--primary-gold)] placeholder:text-white/20"
                 placeholder="İleride doğrulama ihtimaline karşı"
              />
+          </div>
+
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="block text-xs font-bold text-white/50 uppercase mb-2">SIRA (OPSİYONEL)</label>
+              <input 
+                name="row" 
+                type="text" 
+                className="w-full bg-black/50 border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-[var(--primary-gold)] placeholder:text-white/20"
+                placeholder="Örn: C"
+              />
+            </div>
+            <div>
+              <label className="block text-xs font-bold text-white/50 uppercase mb-2">KOLTUK NO (OPSİYONEL)</label>
+              <input 
+                name="seatNumber" 
+                type="text" 
+                className="w-full bg-black/50 border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-[var(--primary-gold)] placeholder:text-white/20"
+                placeholder="Örn: 14"
+              />
+            </div>
           </div>
 
           <button 

@@ -101,7 +101,7 @@ export default function Navbar({ session: initialSession }: { session?: any }) {
 
             <li><Link href="/blog" className={pathname === '/blog' ? 'active' : ''}>Blog</Link></li>
             
-            {(role === 'AKTOR' || role === 'SUPERADMIN' || role === 'ADMIN' || role === 'PLAYER' || role === 'DIRECTOR' || role === 'MEMBER') && (
+            {(role === 'AKTOR' || role === 'SUPERADMIN' || role === 'ADMIN' || role === 'PLAYER' || role === 'DIRECTOR' || role === 'MEMBER' || role === 'SALES') && (
               <li className="nav-dropdown">
                 <span className="dropdown-trigger" style={{ color: 'var(--primary-gold)' }}>
                   Sahne Arkası <ion-icon name="chevron-down-outline"></ion-icon>
@@ -110,6 +110,9 @@ export default function Navbar({ session: initialSession }: { session?: any }) {
                   <li><Link href="/members/rehearsals">Prova Takvimi</Link></li>
                   <li><Link href="/members/team">Ekip Rehberi</Link></li>
                   <li><Link href="/members/scripts">Senaryo Kasası</Link></li>
+                  {(role === 'SUPERADMIN' || role === 'ADMIN' || role === 'SALES') && (
+                    <li><Link href="/members/tickets" style={{ color: 'var(--primary-gold)' }}>🎫 Bilet Gişesi</Link></li>
+                  )}
                 </ul>
               </li>
             )}
@@ -156,7 +159,7 @@ export default function Navbar({ session: initialSession }: { session?: any }) {
                   Kulüp <ion-icon name="chevron-forward-outline"></ion-icon>
                 </div>
                 <Link href="/blog" onClick={() => setIsMenuOpen(false)}>Blog</Link>
-                {(role === 'AKTOR' || role === 'SUPERADMIN' || role === 'ADMIN' || role === 'PLAYER' || role === 'DIRECTOR' || role === 'MEMBER') && (
+                {(role === 'AKTOR' || role === 'SUPERADMIN' || role === 'ADMIN' || role === 'PLAYER' || role === 'DIRECTOR' || role === 'MEMBER' || role === 'SALES') && (
                   <div className="mobile-dropdown-trigger" style={{ color: 'var(--primary-gold)' }} onClick={() => setActiveDropdown('stage')}>
                     Sahne Arkası <ion-icon name="chevron-forward-outline"></ion-icon>
                   </div>
@@ -180,6 +183,9 @@ export default function Navbar({ session: initialSession }: { session?: any }) {
                     <Link href="/members/rehearsals" onClick={() => setIsMenuOpen(false)}>Prova Takvimi</Link>
                     <Link href="/members/team" onClick={() => setIsMenuOpen(false)}>Ekip Rehberi</Link>
                     <Link href="/members/scripts" onClick={() => setIsMenuOpen(false)}>Senaryo Kasası</Link>
+                    {(role === 'SUPERADMIN' || role === 'ADMIN' || role === 'SALES') && (
+                       <Link href="/members/tickets" onClick={() => setIsMenuOpen(false)} style={{ color: 'var(--primary-gold)' }}>🎫 Bilet Gişesi</Link>
+                    )}
                   </div>
                 )}
               </li>

@@ -1225,20 +1225,24 @@ export async function addTicket(formData: FormData) {
     const name = formData.get('name') as string;
     const surname = formData.get('surname') as string;
     const identifier = formData.get('identifier') as string; // Telefon veya No
+    const row = formData.get('row') as string;
+    const seatNumber = formData.get('seatNumber') as string;
 
-    if (!name || !surname || !identifier) return { error: "Lütfen tüm alanları doldurun." };
+    if (!name || !surname || !identifier) return { error: "Lütfen tüm zorunlu alanları doldurun." };
 
-    await requireAuth(['SUPERADMIN', 'ADMIN']);
+    await requireAuth(['SUPERADMIN', 'ADMIN', 'SALES']);
 
     const newTicket = await adminDb.collection('tickets').add({
       name: name.trim().toLowerCase(),
       surname: surname.trim().toLowerCase(),
       identifier: identifier.trim(),
+      row: row ? row.trim() : null,
+      seatNumber: seatNumber ? seatNumber.trim() : null,
       status: 'VALID',
       createdAt: new Date().toISOString()
     });
 
-    revalidatePath('/tanerabi/tickets');
+    revalidatePath('/members/tickets');
     return { success: true, ticketId: newTicket.id };
   } catch (error: any) {
     console.error("[ADD_TICKET] Hata:", error);
@@ -1270,7 +1274,9 @@ export async function findTicket(formData: FormData) {
         id: doc.id,
         name: data.name,
         surname: data.surname,
-        status: data.status
+        status: data.status,
+        row: data.row || null,
+        seatNumber: data.seatNumber || null
       }
     };
   } catch (error: any) {
@@ -1281,7 +1287,7 @@ export async function findTicket(formData: FormData) {
 
 export async function verifyTicket(ticketId: string) {
   try {
-    await requireAuth(['SUPERADMIN', 'ADMIN']);
+    await requireAuth(['SUPERADMIN', 'ADMIN', 'SALES']);
     
     const ticketRef = adminDb.collection('tickets').doc(ticketId);
     const doc = await ticketRef.get();

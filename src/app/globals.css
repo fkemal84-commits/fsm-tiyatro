@@ -229,7 +229,8 @@ h1, h2, h3, h4, .serif-font {
     background: #050505;
     z-index: 1000;
     transition: transform 0.5s cubic-bezier(0.16, 1, 0.3, 1);
-    overflow: hidden;
+    overflow-y: auto;
+    overflow-x: hidden;
   }
 
   .mobile-drawer.open {
@@ -238,7 +239,8 @@ h1, h2, h3, h4, .serif-font {
 
   .mobile-drawer-content {
     padding: 7rem 2rem 2rem;
-    height: 100%;
+    min-height: 100%;
+    height: auto;
     display: flex;
     flex-direction: column;
   }
