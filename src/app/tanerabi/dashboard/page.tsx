@@ -59,9 +59,17 @@ export default async function Dashboard() {
 
     return (
       <div style={{ padding: '8rem 5% 4rem', minHeight: '100vh', background: 'var(--bg-dark)' }}>
-        <h1 className="serif-font" style={{ fontSize: '3rem', color: 'var(--primary-gold)', marginBottom: '2rem', textAlign: 'center' }}>
+        <h1 className="serif-font" style={{ fontSize: '3rem', color: 'var(--primary-gold)', marginBottom: '1rem', textAlign: 'center' }}>
           {role === 'EDITOR' ? 'İçerik Stüdyosu' : 'Ana Kontrol ve Yönetim Paneli'}
         </h1>
+
+        {(role === 'SUPERADMIN' || role === 'ADMIN') && (
+          <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '3rem' }}>
+            <a href="/tanerabi/tickets" className="btn btn-primary" style={{ padding: '1rem 2rem', fontSize: '1.1rem', display: 'flex', alignItems: 'center', gap: '0.5rem', background: 'var(--primary-gold)', color: 'black' }}>
+               <ion-icon name="ticket-outline"></ion-icon> Bilet Satış & Kontrol Merkezi
+            </a>
+          </div>
+        )}
 
         {/* ONAY BEKLEYENLER - SADECE ADMIN VE SUPERADMIN GÖREBİLİR */}
         {(role === 'SUPERADMIN' || role === 'ADMIN') && pendingUsers.length > 0 && (

@@ -472,6 +472,8 @@ export async function addRehearsal(formData: FormData) {
       weekday: 'long'
     });
 
+    const isoDate = dateObj.toISOString().split('T')[0];
+
     const date = `${formattedDate} - Saat: ${rehearsalTime}`;
 
     await requireAuth(['SUPERADMIN', 'ADMIN', 'DIRECTOR', 'ASST_DIRECTOR', 'AKTOR']);
@@ -479,6 +481,7 @@ export async function addRehearsal(formData: FormData) {
     await adminDb.collection('rehearsals').add({
       title,
       date,
+      isoDate,
       location,
       notes,
       createdAt: new Date().toISOString()
@@ -1215,3 +1218,89 @@ export async function activateRehearsalPulse(rehearsalId: string) {
   }
 }
 
+// --- BİLET SİSTEMİ EYLEMLERİ ---
+
+export async function addTicket(formData: FormData) {
+  try {
+    const name = formData.get('name') as string;
+    const surname = formData.get('surname') as string;
+    const identifier = formData.get('identifier') as string; // Telefon veya No
+
+    if (!name || !surname || !identifier) return { error: "Lütfen tüm alanları doldurun." };
+
+    await requireAuth(['SUPERADMIN', 'ADMIN']);
+
+    const newTicket = await adminDb.collection('tickets').add({
+      name: name.trim().toLowerCase(),
+      surname: surname.trim().toLowerCase(),
+      identifier: identifier.trim(),
+      status: 'VALID',
+      createdAt: new Date().toISOString()
+    });
+
+    revalidatePath('/tanerabi/tickets');
+    return { success: true, ticketId: newTicket.id };
+  } catch (error: any) {
+    console.error("[ADD_TICKET] Hata:", error);
+    return { error: error.message };
+  }
+}
+
+export async function findTicket(formData: FormData) {
+  try {
+    const name = formData.get('name') as string;
+    const surname = formData.get('surname') as string;
+    
+    if (!name || !surname) return { error: "İsim ve soyisim gereklidir." };
+
+    const snapshot = await adminDb.collection('tickets')
+      .where('name', '==', name.trim().toLowerCase())
+      .where('surname', '==', surname.trim().toLowerCase())
+      .get();
+      
+    if (snapshot.empty) return { error: "Bu bilgilere ait bir bilet bulunamadı." };
+
+    // Sadece ilk bileti getir (Geliştirilebilir)
+    const doc = snapshot.docs[0];
+    const data = doc.data();
+
+    return { 
+      success: true, 
+      ticket: {
+        id: doc.id,
+        name: data.name,
+        surname: data.surname,
+        status: data.status
+      }
+    };
+  } catch (error: any) {
+    console.error("[FIND_TICKET] Hata:", error);
+    return { error: "Sorgulama sırasında bir hata oluştu." };
+  }
+}
+
+export async function verifyTicket(ticketId: string) {
+  try {
+    await requireAuth(['SUPERADMIN', 'ADMIN']);
+    
+    const ticketRef = adminDb.collection('tickets').doc(ticketId);
+    const doc = await ticketRef.get();
+    
+    if (!doc.exists) return { error: "Böyle bir bilet sistemde kayıtlı değil!" };
+    
+    const data = doc.data();
+    if (data?.status === 'USED') {
+      return { error: `Bu bilet daha önce kullanılmış!` };
+    }
+
+    await ticketRef.update({ 
+      status: 'USED', 
+      usedAt: new Date().toISOString() 
+    });
+
+    return { success: true, message: `${data?.name.toUpperCase()} ${data?.surname.toUpperCase()} - GİRİŞ ONAYLANDI` };
+  } catch (error: any) {
+    console.error("[VERIFY_TICKET] Hata:", error);
+    return { error: error.message || "Bilet doğrulanırken bir hata oluştu." };
+  }
+}

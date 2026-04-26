@@ -82,6 +82,11 @@ export default function Navbar({ session: initialSession }: { session?: any }) {
         <div className="desktop-nav">
           <ul className="nav-links">
             <li><Link href="/" className={pathname === '/' ? 'active' : ''}>Ana Sayfa</Link></li>
+            <li>
+              <Link href="/biletimi-bul" className={pathname === '/biletimi-bul' ? 'active' : ''} style={{ display: 'flex', alignItems: 'center', gap: '0.3rem', color: 'var(--primary-gold)' }}>
+                 <ion-icon name="qr-code-outline"></ion-icon> Biletimi Bul
+              </Link>
+            </li>
             
             <li className="nav-dropdown">
               <span className="dropdown-trigger">
@@ -144,6 +149,9 @@ export default function Navbar({ session: initialSession }: { session?: any }) {
               {/* LEVEL 1 */}
               <li className="mobile-nav-level">
                 <Link href="/" onClick={() => setIsMenuOpen(false)}>Ana Sayfa</Link>
+                <Link href="/biletimi-bul" onClick={() => setIsMenuOpen(false)} style={{ color: 'var(--primary-gold)', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                  <ion-icon name="qr-code-outline"></ion-icon> Biletimi Bul
+                </Link>
                 <div className="mobile-dropdown-trigger" onClick={() => setActiveDropdown('klub')}>
                   Kulüp <ion-icon name="chevron-forward-outline"></ion-icon>
                 </div>

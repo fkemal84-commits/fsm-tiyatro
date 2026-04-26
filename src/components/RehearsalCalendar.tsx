@@ -41,11 +41,33 @@ export default function RehearsalCalendar({ rehearsals }: { rehearsals: any[] })
   // Performans için provaları önceden haritala
   const rehearsalsMap = useMemo(() => {
     const map: Record<string, any[]> = {};
+    const monthNamesTr = [
+      "Ocak", "Şubat", "Mart", "Nisan", "Mayıs", "Haziran",
+      "Temmuz", "Ağustos", "Eylül", "Ekim", "Kasım", "Aralık"
+    ];
+
     rehearsals.forEach(r => {
       if (!r.date || r.date.includes('(Anlık)')) return;
-      const datePart = r.date.split(' - ')[0]; // YYYY-MM-DD
-      if (!map[datePart]) map[datePart] = [];
-      map[datePart].push(r);
+      
+      let finalKey = r.isoDate;
+      const datePart = r.date.split(' - ')[0]; // Örn: "26 Mayıs 2026 Perşembe"
+
+      if (!finalKey) {
+        // Eski kayıtlar için (isoDate yoksa) Türkçe tarihi YYYY-MM-DD'ye çevir
+        const parts = datePart.split(' ');
+        if (parts.length >= 3) {
+          const d = parts[0].padStart(2, '0');
+          const mIdx = monthNamesTr.indexOf(parts[1]);
+          const m = String(mIdx + 1).padStart(2, '0');
+          const y = parts[2];
+          if (mIdx !== -1) finalKey = `${y}-${m}-${d}`;
+        }
+      }
+
+      const keyToUse = finalKey || datePart;
+
+      if (!map[keyToUse]) map[keyToUse] = [];
+      map[keyToUse].push(r);
     });
     return map;
   }, [rehearsals]);
