@@ -36,7 +36,7 @@ export const authOptions: NextAuthOptions = {
         let sessionRole = (realRole === 'AKTOR' || realRole === 'PLAYER') ? realRole : 'MEMBER';
         let isAdminMode = false;
         
-        const isManagementRole = ['ADMIN', 'SUPERADMIN', 'DIRECTOR', 'ASST_DIRECTOR'].includes(realRole as string);
+        const isManagementRole = ['ADMIN', 'SUPERADMIN', 'DIRECTOR', 'ASST_DIRECTOR', 'EDITOR', 'SALES'].includes(realRole as string);
 
         if (isAdminEntry && isManagementRole) {
           sessionRole = realRole;

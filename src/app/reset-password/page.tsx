@@ -27,6 +27,15 @@ function ResetPasswordForm() {
     }
   }, [success, countdown, router]);
 
+  const hashPassword = async (pwd: string) => {
+    const encoder = new TextEncoder();
+    const data = encoder.encode(pwd);
+    const hash = await crypto.subtle.digest('SHA-256', data);
+    return Array.from(new Uint8Array(hash))
+      .map(b => b.toString(16).padStart(2, '0'))
+      .join('');
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (newPassword !== confirmPassword) {
@@ -42,10 +51,12 @@ function ResetPasswordForm() {
     setLoading(true);
     setMessage(null);
 
+    const hashedNewPassword = await hashPassword(newPassword);
+
     const formData = new FormData();
     formData.append('token', token || '');
     formData.append('email', email || '');
-    formData.append('newPassword', newPassword);
+    formData.append('newPassword', hashedNewPassword);
 
     const result = await completePasswordReset(formData);
 

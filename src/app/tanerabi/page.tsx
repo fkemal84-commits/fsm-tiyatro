@@ -9,23 +9,39 @@ export default function AdminSecretLogin() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
+  const hashPassword = async (pwd: string) => {
+    const encoder = new TextEncoder();
+    const data = encoder.encode(pwd);
+    const hash = await crypto.subtle.digest('SHA-256', data);
+    return Array.from(new Uint8Array(hash))
+      .map(b => b.toString(16).padStart(2, '0'))
+      .join('');
+  };
+
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
     setError('');
 
-    const res = await signIn('credentials', {
-      redirect: false,
-      email,
-      password,
-      isAdminEntry: "true",
-    });
+    try {
+      const hashedPassword = await hashPassword(password);
+      
+      const res = await signIn('credentials', {
+        redirect: false,
+        email,
+        password: hashedPassword,
+        isAdminEntry: "true",
+      });
 
-    if (res?.error) {
-      setError('Kayıtlı e-posta veya şifre hatalı. Gizli alana giriş reddedildi.');
+      if (res?.error) {
+        setError('Kayıtlı e-posta veya şifre hatalı. Gizli alana giriş reddedildi.');
+        setLoading(false);
+      } else {
+        window.location.href = '/tanerabi/dashboard';
+      }
+    } catch (err: any) {
+      setError("Bağlantı hatası: " + err.message);
       setLoading(false);
-    } else {
-      window.location.href = '/tanerabi/dashboard';
     }
   };
 
