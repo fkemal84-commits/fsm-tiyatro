@@ -77,9 +77,10 @@ export default function TicketScannerPage() {
   };
 
   return (
-    <div className="space-y-6 flex flex-col items-center">
+    <div style={{ padding: '8rem 5% 4rem', minHeight: '100vh', background: 'var(--bg-dark)' }}>
+      <div className="space-y-6 flex flex-col items-center max-w-4xl mx-auto">
         <div className="w-full max-w-lg mb-4 text-center">
-            <h1 className="text-3xl font-black text-white tracking-tight mb-2">QR Bilet Kontrol</h1>
+            <h1 className="text-3xl font-black text-[var(--primary-gold)] tracking-tight mb-2">QR Bilet Kontrol</h1>
             <p className="text-white/40 text-sm">Seyircinin gösterdiği QR kodu kameraya okutun.</p>
         </div>
 
@@ -120,6 +121,7 @@ export default function TicketScannerPage() {
                </button>
             </div>
         )}
+      </div>
     </div>
   );
 }

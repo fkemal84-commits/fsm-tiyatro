@@ -29,18 +29,19 @@ export default function TicketManagementPage() {
   };
 
   return (
-    <div className="space-y-8">
-      <div className="flex justify-between items-end border-b border-white/5 pb-6">
-        <div>
-          <h1 className="text-3xl font-black text-white tracking-tight">Gişe & Bilet Yönetimi</h1>
-          <p className="text-white/40 mt-1">Sistemden elden sattığınız biletleri isimlere tanımlayın.</p>
+    <div style={{ padding: '8rem 5% 4rem', minHeight: '100vh', background: 'var(--bg-dark)' }}>
+      <div className="space-y-8 max-w-4xl mx-auto">
+        <div className="flex flex-col md:flex-row justify-between items-start md:items-end border-b border-white/5 pb-6 gap-6">
+          <div>
+            <h1 className="text-3xl font-black text-[var(--primary-gold)] tracking-tight">Gişe & Bilet Yönetimi</h1>
+            <p className="text-white/60 mt-1">Sistemden elden sattığınız biletleri isimlere tanımlayın.</p>
+          </div>
+          <a href="/members/tickets/scan" className="btn btn-primary bg-green-500 hover:bg-green-600 border-none flex gap-2 text-white w-full md:w-auto justify-center">
+            <ion-icon name="scan-outline" style={{ fontSize: '1.2rem' }}></ion-icon> Kapı Kontrol
+          </a>
         </div>
-        <a href="/members/tickets/scan" className="btn btn-primary bg-green-500 hover:bg-green-600 border-none flex gap-2">
-          <ion-icon name="scan-outline"></ion-icon> Kapı Kontrol (QR Tarayıcı)
-        </a>
-      </div>
 
-      <div className="glass-card p-6 border-white/10 max-w-2xl bg-white/[0.01]">
+        <div className="glass-card p-6 md:p-8 border-white/10 max-w-2xl bg-white/[0.02] shadow-2xl mx-auto md:mx-0">
         <h2 className="text-xl font-bold text-[var(--primary-gold)] mb-6 flex gap-2 items-center">
           <ion-icon name="ticket-outline"></ion-icon> Yeni Bilet Tanımla
         </h2>
@@ -120,6 +121,7 @@ export default function TicketManagementPage() {
           </button>
         </form>
       </div>
+    </div>
     </div>
   );
 }
