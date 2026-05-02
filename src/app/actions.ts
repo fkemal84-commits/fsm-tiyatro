@@ -1310,3 +1310,21 @@ export async function verifyTicket(ticketId: string) {
     return { error: error.message || "Bilet doğrulanırken bir hata oluştu." };
   }
 }
+
+export async function deleteTicket(formData: FormData) {
+  const ticketId = formData.get('ticketId') as string;
+  if (!ticketId) return { error: "Bilet ID'si eksik." };
+
+  try {
+    await requireAuth(['SUPERADMIN', 'ADMIN', 'SALES']);
+    
+    const ticketRef = adminDb.collection('tickets').doc(ticketId);
+    await ticketRef.delete();
+    
+    revalidatePath('/members/tickets');
+    return { success: true };
+  } catch (error: any) {
+    console.error("[DELETE_TICKET] Hata:", error);
+    return { error: error.message || "Bilet silinirken bir hata oluştu." };
+  }
+}
