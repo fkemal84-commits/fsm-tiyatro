@@ -36,11 +36,12 @@ export default function SeatMap({ occupiedSeats, onSeatSelect, selectedSeat, rea
   };
 
   return (
-    <div className="w-full flex flex-col items-center bg-black/40 border border-white/10 p-6 rounded-2xl overflow-x-auto custom-scrollbar">
-      {/* SAHNE */}
-      <div className="w-full max-w-2xl bg-[var(--primary-gold)]/20 border border-[var(--primary-gold)]/50 rounded-t-full h-12 flex items-center justify-center mb-10 shadow-[0_-10px_30px_rgba(212,175,55,0.1)]">
-        <span className="text-[var(--primary-gold)] font-black tracking-widest text-sm uppercase">SAHNE</span>
-      </div>
+    <div className="w-full bg-black/40 border border-white/10 p-6 rounded-2xl overflow-x-auto custom-scrollbar">
+      <div className="flex flex-col items-center min-w-max w-full">
+        {/* SAHNE */}
+        <div className="w-full max-w-2xl bg-[var(--primary-gold)]/20 border border-[var(--primary-gold)]/50 rounded-t-full h-12 flex items-center justify-center mb-10 shadow-[0_-10px_30px_rgba(212,175,55,0.1)]">
+          <span className="text-[var(--primary-gold)] font-black tracking-widest text-sm uppercase">SAHNE</span>
+        </div>
 
       <div className="flex flex-col gap-3 min-w-max">
         {ROWS.map((row) => {
@@ -109,6 +110,7 @@ export default function SeatMap({ occupiedSeats, onSeatSelect, selectedSeat, rea
           </div>
         )}
       </div>
+    </div>
     </div>
   );
 }

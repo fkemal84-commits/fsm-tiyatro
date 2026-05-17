@@ -206,8 +206,8 @@ export default function TicketClientView({ initialTickets }: Props) {
                 </div>
               </div>
 
-              <div className="overflow-x-auto custom-scrollbar flex-1">
-                <table className="w-full text-left text-white border-collapse text-sm">
+              <div className="overflow-x-auto custom-scrollbar flex-1 w-full">
+                <table className="w-full min-w-[600px] text-left text-white border-collapse text-sm">
                   <thead>
                     <tr className="border-b border-white/20 text-white/60">
                       <th className="p-3">Ad Soyad</th>
