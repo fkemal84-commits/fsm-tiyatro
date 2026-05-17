@@ -1245,10 +1245,30 @@ export async function addTicket(formData: FormData) {
     });
 
     revalidatePath('/members/tickets');
-    return { success: true, ticketId: newTicket.id };
+    return { success: true };
   } catch (error: any) {
     console.error("[ADD_TICKET] Hata:", error);
-    return { error: error.message };
+    return { error: "Bilet oluşturulurken bir hata oluştu." };
+  }
+}
+
+export async function updateTicketReference(formData: FormData) {
+  try {
+    const ticketId = formData.get('ticketId') as string;
+    const newReference = formData.get('reference') as string;
+
+    if (!ticketId) return { error: "Bilet ID bulunamadı." };
+
+    await requireAuth(['SUPERADMIN', 'ADMIN', 'SALES']);
+
+    await adminDb.collection('tickets').doc(ticketId).update({
+      reference: newReference ? newReference.trim() : null
+    });
+
+    return { success: true };
+  } catch (error: any) {
+    console.error("[UPDATE_REFERENCE] Hata:", error);
+    return { error: "Referans güncellenirken bir hata oluştu." };
   }
 }
 

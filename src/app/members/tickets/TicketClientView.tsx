@@ -1,7 +1,8 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { addTicket, deleteTicket, getOccupiedSeats } from '@/app/actions';
+import { useRouter } from 'next/navigation';
+import { addTicket, deleteTicket, getOccupiedSeats, updateTicketReference } from '@/app/actions';
 import DeleteButton from '@/components/DeleteButton';
 import SeatMap, { OccupiedSeat } from '@/components/SeatMap';
 
@@ -27,6 +28,9 @@ export default function TicketClientView({ initialTickets }: Props) {
   const [searchTerm, setSearchTerm] = useState('');
   const [occupiedSeats, setOccupiedSeats] = useState<OccupiedSeat[]>([]);
   const [selectedSeat, setSelectedSeat] = useState<{ row: string; seatNumber: string } | null>(null);
+  const [editingRefId, setEditingRefId] = useState<string | null>(null);
+  const [editingRefValue, setEditingRefValue] = useState<string>('');
+  const router = useRouter();
 
   useEffect(() => {
     loadOccupiedSeats();
@@ -58,6 +62,20 @@ export default function TicketClientView({ initialTickets }: Props) {
   }, {} as Record<string, number>);
 
   const sortedReferences = Object.entries(referenceStats).sort((a, b) => b[1] - a[1]);
+
+  const handleUpdateReference = async (ticketId: string, newReference: string) => {
+    const formData = new FormData();
+    formData.set('ticketId', ticketId);
+    formData.set('reference', newReference);
+    
+    const res = await updateTicketReference(formData);
+    if (res.error) {
+      setMessage({ type: 'error', text: res.error });
+    } else if (res.success) {
+      setEditingRefId(null);
+      router.refresh();
+    }
+  };
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -266,8 +284,50 @@ export default function TicketClientView({ initialTickets }: Props) {
                         <td className="p-3 text-center text-[var(--primary-gold)]">
                           {(ticket.row || ticket.seatNumber) ? `${ticket.row || '-'} / ${ticket.seatNumber || '-'}` : '-'}
                         </td>
-                        <td className="p-3 text-center text-white/60 text-xs">
-                          {ticket.reference || '-'}
+                        <td className="p-3 text-center text-white/60 text-xs cursor-pointer group" onClick={() => {
+                          if (editingRefId !== ticket.id) {
+                              setEditingRefId(ticket.id);
+                              setEditingRefValue(ticket.reference || '');
+                          }
+                        }}>
+                          {editingRefId === ticket.id ? (
+                            <div className="flex items-center justify-center gap-1" onClick={e => e.stopPropagation()}>
+                              <input 
+                                type="text" 
+                                value={editingRefValue} 
+                                onChange={e => setEditingRefValue(e.target.value)}
+                                className="w-20 bg-black/50 border border-white/20 rounded px-2 py-1 text-white focus:border-[var(--primary-gold)] outline-none text-xs"
+                                autoFocus
+                                onKeyDown={e => {
+                                  if (e.key === 'Enter') handleUpdateReference(ticket.id, editingRefValue);
+                                  if (e.key === 'Escape') setEditingRefId(null);
+                                }}
+                              />
+                              <button 
+                                className="text-green-400 hover:text-green-300 transition-colors p-1"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  handleUpdateReference(ticket.id, editingRefValue);
+                                }}
+                              >
+                                <ion-icon name="checkmark-outline"></ion-icon>
+                              </button>
+                              <button 
+                                className="text-red-400 hover:text-red-300 transition-colors p-1"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  setEditingRefId(null);
+                                }}
+                              >
+                                <ion-icon name="close-outline"></ion-icon>
+                              </button>
+                            </div>
+                          ) : (
+                            <span className="group-hover:text-white transition-colors flex items-center justify-center gap-1">
+                              {ticket.reference || '-'}
+                              <ion-icon name="pencil-outline" className="opacity-0 group-hover:opacity-100 transition-opacity"></ion-icon>
+                            </span>
+                          )}
                         </td>
                         <td className="p-3 text-center">
                           <span className={`px-2 py-1 rounded-md text-xs font-bold ${
