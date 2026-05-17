@@ -49,50 +49,54 @@ export default function SeatMap({ occupiedSeats, onSeatSelect, selectedSeat, rea
           const seats = Array.from({ length: seatCount }, (_, i) => (i + 1).toString());
 
           return (
-            <div key={row} className="flex items-center gap-4">
-              <div className="w-6 text-center text-white/50 font-bold text-sm select-none">
-                {row}
-              </div>
-              
-              <div className="flex gap-2">
-                {seats.map((seat) => {
-                  const occupied = isSeatOccupied(row, seat);
-                  const selected = selectedSeat?.row === row && selectedSeat?.seatNumber === seat;
-                  
-                  let seatClass = "w-8 h-8 rounded-t-lg rounded-b-sm flex items-center justify-center text-[10px] font-bold transition-all ";
-                  
-                  if (occupied) {
-                    seatClass += "bg-red-500/20 text-red-400 border border-red-500/30 cursor-not-allowed shadow-[0_0_10px_rgba(239,68,68,0.2)]";
-                  } else if (selected) {
-                    seatClass += "bg-[var(--primary-gold)] text-black shadow-[0_0_15px_rgba(212,175,55,0.5)] scale-110";
-                  } else {
-                    seatClass += "bg-white/20 text-white hover:bg-white/40 cursor-pointer";
-                    if (readonly) seatClass += " cursor-default hover:bg-white/20";
-                  }
+            <React.Fragment key={row}>
+              <div className="flex items-center gap-4">
+                <div className="w-6 text-center text-white/50 font-bold text-sm select-none">
+                  {row}
+                </div>
+                
+                <div className="flex gap-2">
+                  {seats.map((seat) => {
+                    const occupied = isSeatOccupied(row, seat);
+                    const selected = selectedSeat?.row === row && selectedSeat?.seatNumber === seat;
+                    
+                    let seatClass = "w-8 h-8 rounded-t-lg rounded-b-sm flex items-center justify-center text-[10px] font-bold transition-all ";
+                    
+                    if (occupied) {
+                      seatClass += "bg-red-500/20 text-red-400 border border-red-500/30 cursor-not-allowed shadow-[0_0_10px_rgba(239,68,68,0.2)]";
+                    } else if (selected) {
+                      seatClass += "bg-[var(--primary-gold)] text-black shadow-[0_0_15px_rgba(212,175,55,0.5)] scale-110";
+                    } else {
+                      seatClass += "bg-white/20 text-white hover:bg-white/40 cursor-pointer";
+                      if (readonly) seatClass += " cursor-default hover:bg-white/20";
+                    }
 
-                  const isAisle = (row !== 'A' && row !== 'T') && seat === '9';
+                    const isAisle = (row !== 'A' && row !== 'T') && seat === '9';
 
-                  return (
-                    <React.Fragment key={`${row}-${seat}`}>
-                      <button
-                        type="button"
-                        disabled={occupied || readonly}
-                        onClick={() => handleSeatClick(row, seat)}
-                        className={seatClass}
-                        title={occupied ? "Dolu" : `Sıra: ${row}, Koltuk: ${seat}`}
-                      >
-                        {seat}
-                      </button>
-                      {isAisle && <div className="w-8 md:w-12" aria-hidden="true"></div>}
-                    </React.Fragment>
-                  );
-                })}
+                    return (
+                      <React.Fragment key={`${row}-${seat}`}>
+                        <button
+                          type="button"
+                          disabled={occupied || readonly}
+                          onClick={() => handleSeatClick(row, seat)}
+                          className={seatClass}
+                          title={occupied ? "Dolu" : `Sıra: ${row}, Koltuk: ${seat}`}
+                        >
+                          {seat}
+                        </button>
+                        {isAisle && <div className="w-8 md:w-12" aria-hidden="true"></div>}
+                      </React.Fragment>
+                    );
+                  })}
+                </div>
+                
+                <div className="w-6 text-center text-white/50 font-bold text-sm select-none">
+                  {row}
+                </div>
               </div>
-              
-              <div className="w-6 text-center text-white/50 font-bold text-sm select-none">
-                {row}
-              </div>
-            </div>
+              {/* Yatay Yürüme Yolu (H ve I sıraları arası) */}
+              {row === 'H' && <div className="h-6 md:h-10 w-full" aria-hidden="true"></div>}
+            </React.Fragment>
           );
         })}
       </div>
