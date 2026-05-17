@@ -5,6 +5,9 @@ import React from 'react';
 export interface OccupiedSeat {
   row: string;
   seatNumber: string;
+  name?: string;
+  surname?: string;
+  reference?: string | null;
 }
 
 interface SeatMapProps {
@@ -73,6 +76,19 @@ export default function SeatMap({ occupiedSeats, onSeatSelect, selectedSeat, rea
 
                     const isAisle = (row !== 'A' && row !== 'T') && seat === '9';
 
+                    let tooltipText = `Sıra: ${row}, Koltuk: ${seat}`;
+                    if (occupied) {
+                      const occupant = occupiedSeats.find(s => s.row === row && s.seatNumber === seat);
+                      if (occupant && occupant.name) {
+                        tooltipText = `Dolu: ${occupant.name.toUpperCase()} ${occupant.surname?.toUpperCase() || ''}`;
+                        if (occupant.reference) {
+                          tooltipText += ` (Ref: ${occupant.reference})`;
+                        }
+                      } else {
+                        tooltipText = "Dolu";
+                      }
+                    }
+
                     return (
                       <React.Fragment key={`${row}-${seat}`}>
                         <button
@@ -80,7 +96,7 @@ export default function SeatMap({ occupiedSeats, onSeatSelect, selectedSeat, rea
                           disabled={occupied || readonly}
                           onClick={() => handleSeatClick(row, seat)}
                           className={seatClass}
-                          title={occupied ? "Dolu" : `Sıra: ${row}, Koltuk: ${seat}`}
+                          title={tooltipText}
                         >
                           {seat}
                         </button>

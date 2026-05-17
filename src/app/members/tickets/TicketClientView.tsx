@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { addTicket, deleteTicket, getOccupiedSeats, updateTicketReference } from '@/app/actions';
+import { addTicket, deleteTicket, updateTicketReference } from '@/app/actions';
 import DeleteButton from '@/components/DeleteButton';
 import SeatMap, { OccupiedSeat } from '@/components/SeatMap';
 
@@ -26,22 +26,20 @@ export default function TicketClientView({ initialTickets }: Props) {
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState({ type: '', text: '' });
   const [searchTerm, setSearchTerm] = useState('');
-  const [occupiedSeats, setOccupiedSeats] = useState<OccupiedSeat[]>([]);
   const [selectedSeat, setSelectedSeat] = useState<{ row: string; seatNumber: string } | null>(null);
   const [editingRefId, setEditingRefId] = useState<string | null>(null);
   const [editingRefValue, setEditingRefValue] = useState<string>('');
   const router = useRouter();
 
-  useEffect(() => {
-    loadOccupiedSeats();
-  }, [initialTickets]);
-
-  const loadOccupiedSeats = async () => {
-    const res = await getOccupiedSeats();
-    if (res.success && res.seats) {
-      setOccupiedSeats(res.seats);
-    }
-  };
+  const occupiedSeats: OccupiedSeat[] = initialTickets
+    .filter(t => t.row && t.seatNumber)
+    .map(t => ({
+      row: t.row!,
+      seatNumber: t.seatNumber!,
+      name: t.name,
+      surname: t.surname,
+      reference: t.reference
+    }));
 
   const filteredTickets = initialTickets.filter(ticket => {
     const term = searchTerm.toLowerCase();
@@ -96,7 +94,7 @@ export default function TicketClientView({ initialTickets }: Props) {
         setMessage({ type: 'success', text: 'Bilet başarıyla oluşturuldu ve sisteme eklendi!' });
         (e.target as HTMLFormElement).reset();
         setSelectedSeat(null);
-        loadOccupiedSeats();
+        router.refresh();
       }
     } catch (err) {
       setMessage({ type: 'error', text: 'Beklenmeyen bir hata oluştu.' });
