@@ -61,7 +61,7 @@ export default function SeatMap({ occupiedSeats, onSeatSelect, selectedSeat, rea
                   let seatClass = "w-8 h-8 rounded-t-lg rounded-b-sm flex items-center justify-center text-[10px] font-bold transition-all ";
                   
                   if (occupied) {
-                    seatClass += "bg-white/10 text-white/30 cursor-not-allowed";
+                    seatClass += "bg-red-500/20 text-red-400 border border-red-500/30 cursor-not-allowed shadow-[0_0_10px_rgba(239,68,68,0.2)]";
                   } else if (selected) {
                     seatClass += "bg-[var(--primary-gold)] text-black shadow-[0_0_15px_rgba(212,175,55,0.5)] scale-110";
                   } else {
@@ -95,8 +95,8 @@ export default function SeatMap({ occupiedSeats, onSeatSelect, selectedSeat, rea
       {/* İkon / Durum Açıklamaları */}
       <div className="flex items-center gap-6 mt-8 pt-6 border-t border-white/10 w-full justify-center">
         <div className="flex items-center gap-2">
-          <div className="w-4 h-4 bg-white/10 rounded-t-md rounded-b-sm"></div>
-          <span className="text-xs text-white/50 font-bold">DOLU</span>
+          <div className="w-4 h-4 bg-red-500/20 border border-red-500/30 rounded-t-md rounded-b-sm shadow-[0_0_5px_rgba(239,68,68,0.2)]"></div>
+          <span className="text-xs text-red-400 font-bold">DOLU</span>
         </div>
         <div className="flex items-center gap-2">
           <div className="w-4 h-4 bg-white/20 rounded-t-md rounded-b-sm"></div>
