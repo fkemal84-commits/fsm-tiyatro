@@ -1227,6 +1227,7 @@ export async function addTicket(formData: FormData) {
     const identifier = formData.get('identifier') as string; // Telefon veya No
     const row = formData.get('row') as string;
     const seatNumber = formData.get('seatNumber') as string;
+    const reference = formData.get('reference') as string;
 
     if (!name || !surname || !identifier) return { error: "Lütfen tüm zorunlu alanları doldurun." };
 
@@ -1238,6 +1239,7 @@ export async function addTicket(formData: FormData) {
       identifier: identifier.trim(),
       row: row ? row.trim() : null,
       seatNumber: seatNumber ? seatNumber.trim() : null,
+      reference: reference ? reference.trim() : null,
       status: 'VALID',
       createdAt: new Date().toISOString()
     });

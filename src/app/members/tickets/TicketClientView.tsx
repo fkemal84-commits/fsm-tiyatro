@@ -12,6 +12,7 @@ interface Ticket {
   identifier: string;
   row: string | null;
   seatNumber: string | null;
+  reference?: string | null;
   status: string;
   createdAt: string;
 }
@@ -43,7 +44,8 @@ export default function TicketClientView({ initialTickets }: Props) {
     return (
       ticket.name?.toLowerCase().includes(term) ||
       ticket.surname?.toLowerCase().includes(term) ||
-      ticket.identifier?.toLowerCase().includes(term)
+      ticket.identifier?.toLowerCase().includes(term) ||
+      ticket.reference?.toLowerCase().includes(term)
     );
   });
 
@@ -141,6 +143,16 @@ export default function TicketClientView({ initialTickets }: Props) {
                    />
                 </div>
 
+                <div>
+                   <label className="block text-xs font-bold text-white/50 uppercase mb-2">REFERANS (KİM SATTI?)</label>
+                   <input 
+                      name="reference" 
+                      type="text" 
+                      className="w-full bg-black/50 border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-[var(--primary-gold)] placeholder:text-white/20"
+                      placeholder="Örn: Ayşe veya X Gişesi"
+                   />
+                </div>
+
                 <div className="grid grid-cols-2 gap-4">
                   <div>
                     <label className="block text-xs font-bold text-white/50 uppercase mb-2">SIRA (OPSİYONEL)</label>
@@ -213,6 +225,7 @@ export default function TicketClientView({ initialTickets }: Props) {
                       <th className="p-3">Ad Soyad</th>
                       <th className="p-3">İletişim / No</th>
                       <th className="p-3 text-center">Koltuk</th>
+                      <th className="p-3 text-center">Referans</th>
                       <th className="p-3 text-center">Durum</th>
                       <th className="p-3 text-center">İşlem</th>
                     </tr>
@@ -224,6 +237,9 @@ export default function TicketClientView({ initialTickets }: Props) {
                         <td className="p-3 text-white/80">{ticket.identifier}</td>
                         <td className="p-3 text-center text-[var(--primary-gold)]">
                           {(ticket.row || ticket.seatNumber) ? `${ticket.row || '-'} / ${ticket.seatNumber || '-'}` : '-'}
+                        </td>
+                        <td className="p-3 text-center text-white/60 text-xs">
+                          {ticket.reference || '-'}
                         </td>
                         <td className="p-3 text-center">
                           <span className={`px-2 py-1 rounded-md text-xs font-bold ${
