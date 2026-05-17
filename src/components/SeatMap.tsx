@@ -70,17 +70,21 @@ export default function SeatMap({ occupiedSeats, onSeatSelect, selectedSeat, rea
                     if (readonly) seatClass += " cursor-default hover:bg-white/20";
                   }
 
+                  const isAisle = (row !== 'A' && row !== 'T') && seat === '9';
+
                   return (
-                    <button
-                      key={`${row}-${seat}`}
-                      type="button"
-                      disabled={occupied || readonly}
-                      onClick={() => handleSeatClick(row, seat)}
-                      className={seatClass}
-                      title={occupied ? "Dolu" : `Sıra: ${row}, Koltuk: ${seat}`}
-                    >
-                      {seat}
-                    </button>
+                    <React.Fragment key={`${row}-${seat}`}>
+                      <button
+                        type="button"
+                        disabled={occupied || readonly}
+                        onClick={() => handleSeatClick(row, seat)}
+                        className={seatClass}
+                        title={occupied ? "Dolu" : `Sıra: ${row}, Koltuk: ${seat}`}
+                      >
+                        {seat}
+                      </button>
+                      {isAisle && <div className="w-8 md:w-12" aria-hidden="true"></div>}
+                    </React.Fragment>
                   );
                 })}
               </div>
