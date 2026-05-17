@@ -28,6 +28,7 @@ export default async function TicketManagementPage() {
       identifier: data.identifier || '',
       row: data.row || null,
       seatNumber: data.seatNumber || null,
+      reference: data.reference || null,
       status: data.status || 'VALID',
       createdAt: data.createdAt || new Date().toISOString()
     };
