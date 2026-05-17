@@ -1264,20 +1264,21 @@ export async function findTicket(formData: FormData) {
       
     if (snapshot.empty) return { error: "Bu bilgilere ait bir bilet bulunamadı." };
 
-    // Sadece ilk bileti getir (Geliştirilebilir)
-    const doc = snapshot.docs[0];
-    const data = doc.data();
-
-    return { 
-      success: true, 
-      ticket: {
+    const tickets = snapshot.docs.map(doc => {
+      const data = doc.data();
+      return {
         id: doc.id,
         name: data.name,
         surname: data.surname,
         status: data.status,
         row: data.row || null,
         seatNumber: data.seatNumber || null
-      }
+      };
+    });
+
+    return { 
+      success: true, 
+      tickets 
     };
   } catch (error: any) {
     console.error("[FIND_TICKET] Hata:", error);

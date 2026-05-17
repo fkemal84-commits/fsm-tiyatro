@@ -8,7 +8,7 @@ import SeatMap, { OccupiedSeat } from '@/components/SeatMap';
 export default function BiletimiBulPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
-  const [ticket, setTicket] = useState<any>(null);
+  const [tickets, setTickets] = useState<any[]>([]);
   const [occupiedSeats, setOccupiedSeats] = useState<OccupiedSeat[]>([]);
 
   useEffect(() => {
@@ -25,7 +25,7 @@ export default function BiletimiBulPage() {
     e.preventDefault();
     setLoading(true);
     setError('');
-    setTicket(null);
+    setTickets([]);
 
     const formData = new FormData(e.currentTarget);
     
@@ -33,8 +33,8 @@ export default function BiletimiBulPage() {
       const res = await findTicket(formData);
       if (res.error) {
         setError(res.error);
-      } else if (res.success && res.ticket) {
-        setTicket(res.ticket);
+      } else if (res.success && res.tickets) {
+        setTickets(res.tickets);
       }
     } catch (err: any) {
       setError("Bağlantı hatası oluştu. Lütfen tekrar deneyin.");
@@ -53,7 +53,7 @@ export default function BiletimiBulPage() {
            <p className="text-white/50 text-sm md:text-base">Adınızı ve soyadınızı girerek biletinize ait QR kodu görüntüleyebilirsiniz. Lütfen kapı girişinde bu ekranı görevliye gösterin.</p>
         </div>
 
-        {!ticket ? (
+        {tickets.length === 0 ? (
           <div className="space-y-16">
             <div className="glass-card p-6 md:p-10 shadow-2xl animate-fade-in max-w-xl mx-auto">
               <form onSubmit={handleSubmit} className="space-y-6">
@@ -107,14 +107,22 @@ export default function BiletimiBulPage() {
           </div>
         </div>
         ) : (
-          <div className="space-y-8 max-w-xl mx-auto">
+          <div className="space-y-8 max-w-4xl mx-auto">
             <button 
-               onClick={() => setTicket(null)}
+               onClick={() => setTickets([])}
                className="text-white/40 hover:text-white text-sm font-bold flex items-center gap-2 transition-colors mx-auto"
             >
               <ion-icon name="arrow-back-outline"></ion-icon> Geri Dön
             </button>
-            <TicketQR ticket={ticket} />
+            <div className="text-center mb-8">
+              <h2 className="text-2xl font-black text-[var(--primary-gold)]">Adınıza Kayıtlı Biletler</h2>
+              <p className="text-white/60 text-sm mt-2">Toplam {tickets.length} biletiniz bulunmaktadır. Lütfen girişte ilgili bileti görevliye gösteriniz.</p>
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+              {tickets.map(ticket => (
+                <TicketQR key={ticket.id} ticket={ticket} />
+              ))}
+            </div>
           </div>
         )}
       </div>
