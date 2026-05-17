@@ -49,6 +49,16 @@ export default function TicketClientView({ initialTickets }: Props) {
     );
   });
 
+  const referenceStats = initialTickets.reduce((acc, ticket) => {
+    if (ticket.reference) {
+      const ref = ticket.reference.trim().toUpperCase();
+      acc[ref] = (acc[ref] || 0) + 1;
+    }
+    return acc;
+  }, {} as Record<string, number>);
+
+  const sortedReferences = Object.entries(referenceStats).sort((a, b) => b[1] - a[1]);
+
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setLoading(true);
@@ -201,6 +211,24 @@ export default function TicketClientView({ initialTickets }: Props) {
           {/* Sağ Sütun: Bilet Listesi */}
           <div className="lg:col-span-2">
             <div className="glass-card p-6 md:p-8 border-white/10 bg-white/[0.02] shadow-2xl h-full flex flex-col">
+              
+              {/* Referans Özeti */}
+              {sortedReferences.length > 0 && (
+                <div className="mb-8 p-5 bg-black/40 border border-white/10 rounded-xl">
+                  <h3 className="text-xs font-bold text-white/50 mb-4 uppercase tracking-widest flex items-center gap-2">
+                    <ion-icon name="people-outline"></ion-icon> SATIŞ LİDERLİK TABLOSU (KİM KAÇ BİLET SATTI?)
+                  </h3>
+                  <div className="flex flex-wrap gap-3">
+                    {sortedReferences.map(([refName, count]) => (
+                      <div key={refName} className="flex items-center gap-3 bg-[var(--primary-gold)]/10 border border-[var(--primary-gold)]/30 px-4 py-2 rounded-lg shadow-[0_0_10px_rgba(212,175,55,0.05)]">
+                        <span className="text-sm font-bold text-white">{refName}</span>
+                        <span className="text-xs bg-[var(--primary-gold)] text-black font-black px-2 py-0.5 rounded-full">{count}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
               <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4">
                 <h2 className="text-xl font-bold text-[var(--primary-gold)] flex gap-2 items-center">
                   <ion-icon name="list-outline"></ion-icon> Satılan Biletler
