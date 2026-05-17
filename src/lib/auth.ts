@@ -17,10 +17,10 @@ export const authOptions: NextAuthOptions = {
         const email = credentials.email.toLowerCase();
         const snapshot = await adminDb.collection('users').where('email', '==', email).limit(1).get();
         if (snapshot.empty) return null;
-        
+
         const userDoc = snapshot.docs[0];
         const user = userDoc.data();
-        
+
         const isPasswordValid = await bcrypt.compare(credentials.password, user.password);
         if (!isPasswordValid) return null;
 
@@ -29,38 +29,24 @@ export const authOptions: NextAuthOptions = {
 
         const isAdminEntry = credentials.isAdminEntry === "true";
         const realRole = user.role;
-        
-        let sessionRole = realRole; 
-        let isAdminMode = false;
-        
-        const isManagementRole = ['ADMIN', 'DIRECTOR', 'ASST_DIRECTOR', 'EDITOR', 'SALES'].includes(realRole as string);
 
-        if (isManagementRole) {
+        // GİZLİ YOL MANTIĞI: Eğer /tanerabi üzerinden girilmediyse, 
+        // Admin/Yönetmen unvanlarını MEMBER olarak sessize al.
+        // Ancak AKTOR unvanı her zaman açık kalsın.
+        let sessionRole = (realRole === 'AKTOR' || realRole === 'PLAYER') ? realRole : 'MEMBER';
+        let isAdminMode = false;
+
+        const isManagementRole = ['ADMIN', 'SUPERADMIN', 'DIRECTOR', 'ASST_DIRECTOR', 'EDITOR', 'SALES'].includes(realRole as string);
+
+        if (isAdminEntry && isManagementRole) {
+          sessionRole = realRole;
           isAdminMode = true;
         }
 
-        // SUPERADMIN Özel Koruması: Sadece /tanerabi (Gizli Kapı) üzerinden girilince açılır
-        if (realRole === 'SUPERADMIN') {
-          if (isAdminEntry) {
-            isAdminMode = true;
-            sessionRole = 'SUPERADMIN';
-          } else {
-            // Normal yoldan giren bir superadmin'i ADMIN yetkisiyle içeri al (Böylece gişe vb. çalışır)
-            // Sadece superadmin'e özel silme gibi yetkiler gizli kalır
-            sessionRole = 'ADMIN';
-            isAdminMode = true; 
-          }
-        }
-
-        // İzole edilen veya silinen hesaplar ile üye grubu
-        if (realRole === 'MEMBER' || realRole === 'PENDING') {
-           isAdminMode = false;
-        }
-
-        return { 
-          id: userDoc.id, 
-          email: user.email, 
-          name: `${user.name} ${user.surname}`, 
+        return {
+          id: userDoc.id,
+          email: user.email,
+          name: `${user.name} ${user.surname}`,
           role: sessionRole,
           isAdminMode: isAdminMode
         };

@@ -1328,3 +1328,25 @@ export async function deleteTicket(formData: FormData) {
     return { error: error.message || "Bilet silinirken bir hata oluştu." };
   }
 }
+
+export async function getOccupiedSeats() {
+  try {
+    const snapshot = await adminDb.collection('tickets').get();
+    const occupiedSeats: { row: string, seatNumber: string }[] = [];
+    
+    snapshot.forEach(doc => {
+      const data = doc.data();
+      if (data.row && data.seatNumber) {
+        occupiedSeats.push({
+          row: data.row.toUpperCase(),
+          seatNumber: data.seatNumber.toString()
+        });
+      }
+    });
+
+    return { success: true, seats: occupiedSeats };
+  } catch (error: any) {
+    console.error("[GET_OCCUPIED_SEATS] Hata:", error);
+    return { error: "Koltuk bilgileri alınırken bir hata oluştu." };
+  }
+}

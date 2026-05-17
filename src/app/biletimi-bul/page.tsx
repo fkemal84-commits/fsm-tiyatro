@@ -1,13 +1,25 @@
 'use client';
 
-import { useState } from 'react';
-import { findTicket } from '@/app/actions';
+import { useState, useEffect } from 'react';
+import { findTicket, getOccupiedSeats } from '@/app/actions';
 import TicketQR from '@/components/TicketQR';
+import SeatMap, { OccupiedSeat } from '@/components/SeatMap';
 
 export default function BiletimiBulPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [ticket, setTicket] = useState<any>(null);
+  const [occupiedSeats, setOccupiedSeats] = useState<OccupiedSeat[]>([]);
+
+  useEffect(() => {
+    const loadSeats = async () => {
+      const res = await getOccupiedSeats();
+      if (res.success && res.seats) {
+        setOccupiedSeats(res.seats);
+      }
+    };
+    loadSeats();
+  }, []);
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -35,15 +47,16 @@ export default function BiletimiBulPage() {
     <main className="min-h-screen pt-32 pb-20 relative">
       <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-[var(--primary-gold)]/10 blur-[100px] rounded-full mix-blend-screen pointer-events-none"></div>
       
-      <div className="max-w-xl mx-auto px-6 relative z-10">
-        <div className="text-center mb-10">
+      <div className="max-w-5xl mx-auto px-6 relative z-10">
+        <div className="text-center mb-10 max-w-xl mx-auto">
            <h1 className="serif-font text-4xl md:text-5xl mb-4 text-white">Biletimi Bul</h1>
            <p className="text-white/50 text-sm md:text-base">Adınızı ve soyadınızı girerek biletinize ait QR kodu görüntüleyebilirsiniz. Lütfen kapı girişinde bu ekranı görevliye gösterin.</p>
         </div>
 
         {!ticket ? (
-          <div className="glass-card p-6 md:p-10 shadow-2xl animate-fade-in">
-            <form onSubmit={handleSubmit} className="space-y-6">
+          <div className="space-y-16">
+            <div className="glass-card p-6 md:p-10 shadow-2xl animate-fade-in max-w-xl mx-auto">
+              <form onSubmit={handleSubmit} className="space-y-6">
               {error && (
                 <div className="bg-red-500/10 border border-red-500/50 text-red-100 p-4 rounded-xl text-sm font-medium">
                   {error}
@@ -87,8 +100,14 @@ export default function BiletimiBulPage() {
               </button>
             </form>
           </div>
+          
+          <div className="animate-fade-in">
+            <h2 className="text-2xl font-black text-[var(--primary-gold)] text-center mb-6">Salon Koltuk Durumu</h2>
+            <SeatMap occupiedSeats={occupiedSeats} readonly />
+          </div>
+        </div>
         ) : (
-          <div className="space-y-8">
+          <div className="space-y-8 max-w-xl mx-auto">
             <button 
                onClick={() => setTicket(null)}
                className="text-white/40 hover:text-white text-sm font-bold flex items-center gap-2 transition-colors mx-auto"

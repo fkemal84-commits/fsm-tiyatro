@@ -1,8 +1,9 @@
 'use client';
 
-import { useState } from 'react';
-import { addTicket, deleteTicket } from '@/app/actions';
+import { useState, useEffect } from 'react';
+import { addTicket, deleteTicket, getOccupiedSeats } from '@/app/actions';
 import DeleteButton from '@/components/DeleteButton';
+import SeatMap, { OccupiedSeat } from '@/components/SeatMap';
 
 interface Ticket {
   id: string;
@@ -23,6 +24,19 @@ export default function TicketClientView({ initialTickets }: Props) {
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState({ type: '', text: '' });
   const [searchTerm, setSearchTerm] = useState('');
+  const [occupiedSeats, setOccupiedSeats] = useState<OccupiedSeat[]>([]);
+  const [selectedSeat, setSelectedSeat] = useState<{ row: string; seatNumber: string } | null>(null);
+
+  useEffect(() => {
+    loadOccupiedSeats();
+  }, [initialTickets]);
+
+  const loadOccupiedSeats = async () => {
+    const res = await getOccupiedSeats();
+    if (res.success && res.seats) {
+      setOccupiedSeats(res.seats);
+    }
+  };
 
   const filteredTickets = initialTickets.filter(ticket => {
     const term = searchTerm.toLowerCase();
@@ -39,6 +53,11 @@ export default function TicketClientView({ initialTickets }: Props) {
     setMessage({ type: '', text: '' });
 
     const formData = new FormData(e.currentTarget);
+    if (selectedSeat) {
+      formData.set('row', selectedSeat.row);
+      formData.set('seatNumber', selectedSeat.seatNumber);
+    }
+    
     try {
       const res = await addTicket(formData);
       if (res.error) {
@@ -46,6 +65,8 @@ export default function TicketClientView({ initialTickets }: Props) {
       } else if (res.success) {
         setMessage({ type: 'success', text: 'Bilet başarıyla oluşturuldu ve sisteme eklendi!' });
         (e.target as HTMLFormElement).reset();
+        setSelectedSeat(null);
+        loadOccupiedSeats();
       }
     } catch (err) {
       setMessage({ type: 'error', text: 'Beklenmeyen bir hata oluştu.' });
@@ -126,8 +147,10 @@ export default function TicketClientView({ initialTickets }: Props) {
                     <input 
                       name="row" 
                       type="text" 
+                      readOnly
+                      value={selectedSeat?.row || ''}
                       className="w-full bg-black/50 border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-[var(--primary-gold)] placeholder:text-white/20"
-                      placeholder="Örn: C"
+                      placeholder="Haritadan seçin"
                     />
                   </div>
                   <div>
@@ -135,10 +158,21 @@ export default function TicketClientView({ initialTickets }: Props) {
                     <input 
                       name="seatNumber" 
                       type="text" 
+                      readOnly
+                      value={selectedSeat?.seatNumber || ''}
                       className="w-full bg-black/50 border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-[var(--primary-gold)] placeholder:text-white/20"
-                      placeholder="Örn: 14"
+                      placeholder="Haritadan seçin"
                     />
                   </div>
+                </div>
+
+                <div className="mt-4 mb-4">
+                  <label className="block text-xs font-bold text-white/50 uppercase mb-2">KOLTUK SEÇİMİ</label>
+                  <SeatMap 
+                    occupiedSeats={occupiedSeats} 
+                    selectedSeat={selectedSeat} 
+                    onSeatSelect={(row, seatNumber) => setSelectedSeat({ row, seatNumber })} 
+                  />
                 </div>
 
                 <button 
