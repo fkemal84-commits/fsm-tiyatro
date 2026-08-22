@@ -94,23 +94,42 @@ export default function Navbar({ session: initialSession, initialTicketQueryActi
   }, [pathname]);
 
   const role = currentSession?.user?.role;
-  const rawName = currentSession?.user?.name || '';
-  const cleanName = rawName.replace(/undefined/g, '').trim() || currentSession?.user?.email || 'Kulüp Üyesi';
+  // İsim düzeltmesi: undefined/null parçalarını temizle, surname yoksa email göster
+  const userName = currentSession?.user?.name || '';
+  const userSurname = (currentSession?.user as any)?.surname || '';
+  const cleanName = [userName, userSurname]
+    .map(s => (s || '').replace(/undefined/gi, '').trim())
+    .filter(Boolean)
+    .join(' ') || currentSession?.user?.email?.split('@')[0] || 'Üye';
+
+  // Rol etiketi (makine dilinden okunabilir Türkçeye)
+  const roleLabels: Record<string, string> = {
+    SUPERADMIN: 'Süper Admin',
+    ADMIN: 'Admin',
+    EDITOR: 'Editör',
+    SALES: 'Satış',
+    DIRECTOR: 'Yönetmen',
+    ASST_DIRECTOR: 'Yrd. Yönetmen',
+    AKTOR: 'Aktör',
+    MEMBER: 'Üye',
+    PENDING: 'Onay Bekliyor',
+  };
+  const roleLabel = roleLabels[role || ''] || role || '';
 
   return (
     <nav className={`navbar ${scrolled ? 'scrolled' : ''}`}>
       <div className="nav-container">
-        <Link href="/" className="flex items-center gap-3 group">
-          <div className="relative w-10 h-10 overflow-hidden rounded-lg border border-[var(--border-medium)] group-hover:border-[var(--primary-gold)] transition-all">
+        <Link href="/" style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', textDecoration: 'none' }}>
+          <div style={{ position: 'relative', width: '40px', height: '40px', overflow: 'hidden', borderRadius: '8px', border: '1px solid var(--border-medium)', flexShrink: 0 }}>
             <Image 
               src="/brand-logo-v1.jpg" 
               alt="FSM Tiyatro Logo" 
               fill 
-              className="object-cover"
+              style={{ objectFit: 'cover' }}
             />
           </div>
-          <span className="serif-font text-2xl tracking-widest text-[var(--text-main)] group-hover:text-[var(--primary-gold)] transition-all">
-            FSM <span className="text-[var(--primary-gold)]">TİYATRO</span>
+          <span className="serif-font" style={{ fontSize: '1.5rem', letterSpacing: '0.1em', color: 'var(--text-main)' }}>
+            FSM <span style={{ color: 'var(--primary-gold)' }}>TİYATRO</span>
           </span>
         </Link>
         
@@ -119,7 +138,6 @@ export default function Navbar({ session: initialSession, initialTicketQueryActi
           <ul className="nav-links">
             <li><Link href="/" className={pathname === '/' ? 'active' : ''}>Ana Sayfa</Link></li>
             
-            {/* Biletimi Bul Butonu (Admin tarafından açılıp kapatılabilir) */}
             {isTicketQueryActive && (
               <li>
                 <Link href="/biletimi-bul" className={pathname === '/biletimi-bul' ? 'active' : ''} style={{ display: 'flex', alignItems: 'center', gap: '0.3rem', color: 'var(--primary-gold)', fontWeight: 600 }}>
@@ -160,13 +178,18 @@ export default function Navbar({ session: initialSession, initialTicketQueryActi
         </div>
 
         {/* ACTIONS & THEME TOGGLE */}
-        <div className="flex items-center gap-3">
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
           
           {/* Tema Değiştirici Buton */}
           <button 
             onClick={toggleTheme}
             title={`Tema: ${theme === 'light' ? 'Matine Modu (Açık)' : 'Sahne Modu (Koyu)'}`}
-            className="w-9 h-9 rounded-lg border border-[var(--border-subtle)] bg-[var(--bg-surface)] text-[var(--text-muted)] hover:text-[var(--primary-gold)] hover:border-[var(--primary-gold-border)] flex items-center justify-center text-lg transition-all"
+            style={{
+              width: '36px', height: '36px', borderRadius: '8px',
+              border: '1px solid var(--border-subtle)', background: 'var(--bg-surface)',
+              color: 'var(--text-muted)', display: 'flex', alignItems: 'center', justifyContent: 'center',
+              fontSize: '1.1rem', cursor: 'pointer', transition: 'all 0.2s',
+            }}
             aria-label="Tema Seçimi"
           >
             {theme === 'light' ? (
@@ -191,7 +214,7 @@ export default function Navbar({ session: initialSession, initialTicketQueryActi
             ) : (
               <>
                 <Link href="/login" className="login-link">Üye Girişi</Link>
-                <Link href="/register" className="btn btn-primary nav-reg-btn text-xs py-2 px-5">Kayıt Ol</Link>
+                <Link href="/register" className="btn btn-primary" style={{ fontSize: '0.75rem', padding: '0.5rem 1.25rem' }}>Kayıt Ol</Link>
               </>
             )}
           </div>
@@ -202,22 +225,18 @@ export default function Navbar({ session: initialSession, initialTicketQueryActi
           </button>
         </div>
 
-        {/* MOBILE DRAWER */}
+        {/* MOBILE DRAWER — Sadece 1024px altında CSS ile görünür, masaüstünde kesinlikle gizli */}
         <div 
+          style={{ display: 'none' }}
           className={`mobile-drawer ${isMenuOpen ? 'open' : ''}`}
           onTouchStart={(e) => setTouchStart(e.targetTouches[0].clientX)}
           onTouchMove={(e) => setTouchEnd(e.targetTouches[0].clientX)}
           onTouchEnd={() => {
             if (!touchStart || !touchEnd) return;
             const distance = touchEnd - touchStart;
-            const isLeftToRight = distance > 70; 
-            
-            if (isLeftToRight) {
-              if (activeDropdown) {
-                setActiveDropdown(null);
-              } else {
-                setIsMenuOpen(false);
-              }
+            if (distance > 70) {
+              if (activeDropdown) { setActiveDropdown(null); }
+              else { setIsMenuOpen(false); }
             }
             setTouchStart(null);
             setTouchEnd(null);
@@ -272,13 +291,13 @@ export default function Navbar({ session: initialSession, initialTicketQueryActi
               </li>
             </ul>
 
-            {/* MOBILE FOOTER ACTIONS */}
+            {/* MOBILE FOOTER */}
             <div className="mobile-drawer-footer">
               {currentSession ? (
                 <>
                   <div className="mobile-user-info">
                     <span className="user-name">{cleanName}</span>
-                    <span className="user-role">{currentSession.user?.role}</span>
+                    <span className="user-role">{roleLabel}</span>
                   </div>
                   <Link href="/profile" className="btn btn-outline" onClick={() => setIsMenuOpen(false)}>Profilim</Link>
                   <button onClick={() => signOut({ callbackUrl: '/' })} className="btn btn-logout">Çıkış Yap</button>

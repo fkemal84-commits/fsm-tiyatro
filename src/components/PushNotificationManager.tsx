@@ -107,65 +107,79 @@ export default function PushNotificationManager({ session: initialSession }: { s
     }
   };
 
-  // Eğer her şey tamamsa ve kayıt yapıldıysa (veya reddedildiyse) bileşeni gizle
-  // Ama hata varsa veya register bekliyorsak uyaralım
   if (!isSupported || !currentSession || !showDelayed || isDismissed) return null;
   
   if (permission === 'granted' && regStatus === 'done') return null;
-  if (permission === 'denied' && regStatus !== 'error') return null;
+  if (permission === 'denied' && !regStatus.startsWith('error')) return null;
 
   return (
-    <div className="fixed bottom-24 left-[5%] right-[5%] z-[1001] sm:left-auto sm:right-10 sm:w-[420px]">
-      <div className="glass-card p-8 border-[var(--primary-gold)]/30 border bg-[rgba(5,5,5,0.98)] shadow-[0_15px_35px_rgba(0,0,0,0.8)] backdrop-blur-xl rounded-2xl overflow-hidden relative group">
-        <div className="absolute -top-10 -right-10 w-32 h-32 bg-[var(--primary-gold)]/10 rounded-full blur-3xl group-hover:bg-[var(--primary-gold)]/20 transition-all duration-700"></div>
+    <div style={{
+      position: 'fixed', bottom: '1.5rem', right: '1.5rem', left: 'auto',
+      zIndex: 1001, width: '380px', maxWidth: 'calc(100vw - 2rem)',
+    }}>
+      <div style={{
+        background: 'var(--bg-surface)', border: '1px solid var(--primary-gold-border)',
+        borderRadius: '16px', padding: '1.5rem', boxShadow: 'var(--shadow-stage)',
+        position: 'relative', overflow: 'hidden',
+      }}>
         
-        <div className="relative flex flex-col gap-6">
-          <div className="flex items-center gap-4">
-            <div className="w-14 h-14 rounded-xl bg-gradient-to-br from-[var(--primary-gold)] to-[#b8860b] flex items-center justify-center text-2xl shadow-lg shadow-[var(--primary-gold)]/20">
-              <ion-icon name="notifications-outline" className="text-black"></ion-icon>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+            <div style={{
+              width: '44px', height: '44px', borderRadius: '10px', flexShrink: 0,
+              background: 'var(--primary-gold)', display: 'flex', alignItems: 'center', justifyContent: 'center',
+              fontSize: '1.3rem', color: '#000',
+            }}>
+              <ion-icon name="notifications-outline"></ion-icon>
             </div>
             <div>
-              <h4 className="serif-font text-white text-xl tracking-tight">Dijital Sahneye Bağlanın</h4>
-              <div className="w-12 h-1 bg-[var(--primary-gold)] rounded-full mt-1"></div>
+              <h4 className="serif-font" style={{ color: 'var(--text-main)', fontSize: '1.05rem', margin: 0, lineHeight: 1.3 }}>Bildirimleri Açın</h4>
+              <p style={{ color: 'var(--text-dim)', fontSize: '0.7rem', margin: 0, marginTop: '0.15rem' }}>Prova ve duyurulardan haberdar olun</p>
             </div>
           </div>
 
-          <div className="space-y-4">
-            <p className="text-white/70 text-sm leading-relaxed">
-              {regStatus.startsWith('error') 
-                ? 'Bildirim kaydı yapılırken bir sorun oluştu. Lütfen sayfayı yenileyip tekrar deneyin.'
-                : 'Prova saatleri ve kritik duyuruları anlık olarak almak için bildirimleri etkinleştirin.'}
-            </p>
+          <p style={{ color: 'var(--text-muted)', fontSize: '0.8rem', lineHeight: 1.6, margin: 0 }}>
+            {regStatus.startsWith('error') 
+              ? 'Bildirim kaydı sırasında bir sorun oluştu. Sayfayı yenileyip tekrar deneyebilirsiniz.'
+              : 'Prova saatleri ve önemli duyuruları anında almak için bildirimleri etkinleştirin.'}
+          </p>
 
-            {regStatus && (
-              <div className="text-[10px] text-[var(--primary-gold)] uppercase tracking-[1px] bg-white/5 p-2 rounded border border-white/10">
-                SİSTEM DURUMU: {
-                  regStatus === 'wait_sw' ? 'Hizmet İşçisi Bekleniyor...' :
-                  regStatus === 'get_token' ? 'Cihaz Kimliği Alınıyor...' :
-                  regStatus === 'saving' ? 'Veritabanına Kaydediliyor...' :
-                  regStatus === 'done' ? 'Bağlantı Kuruldu ✅' :
-                  regStatus === 'no_token' ? 'Kimlik Alınamadı ❌' :
-                  regStatus
-                }
-              </div>
-            )}
-          </div>
+          {regStatus && regStatus !== 'done' && (
+            <div style={{
+              fontSize: '0.65rem', color: 'var(--text-dim)', padding: '0.4rem 0.6rem',
+              background: 'var(--bg-surface-elevated)', borderRadius: '6px',
+              border: '1px solid var(--border-subtle)',
+            }}>
+              {regStatus === 'wait_sw' ? 'Hazırlanıyor...' :
+               regStatus === 'get_token' ? 'Cihaz tanımlanıyor...' :
+               regStatus === 'saving' ? 'Kaydediliyor...' :
+               regStatus === 'no_token' ? 'Cihaz tanımlanamadı.' :
+               regStatus.startsWith('error') ? 'Hata oluştu.' : regStatus}
+            </div>
+          )}
           
           {isIOS && !isStandalone ? (
-            <div className="p-4 bg-[rgba(212,175,55,0.05)] border border-[var(--primary-gold)]/20 rounded-xl space-y-3">
-              <p className="text-[11px] text-[var(--primary-gold)] uppercase font-bold tracking-widest flex items-center gap-2">
-                <ion-icon name="information-circle-outline"></ion-icon> iPhone Kullanıcıları İçin
+            <div style={{
+              padding: '0.75rem', background: 'var(--primary-gold-dim)',
+              border: '1px solid var(--primary-gold-border)', borderRadius: '10px',
+            }}>
+              <p style={{ fontSize: '0.7rem', color: 'var(--primary-gold)', fontWeight: 'bold', margin: '0 0 0.3rem 0' }}>
+                iPhone Kullanıcıları İçin
               </p>
-              <p className="text-[13px] text-white/90 leading-normal">
-                Bildirimler için önce tarayıcıdaki <strong>Paylaş</strong> simgesine basıp <strong>"Ana Ekrana Ekle"</strong> yapmalısınız. Ardından uygulamayı ana ekrandan açın.
+              <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)', margin: 0, lineHeight: 1.5 }}>
+                Bildirimler için önce tarayıcıdaki <strong>Paylaş</strong> simgesine basıp <strong>&quot;Ana Ekrana Ekle&quot;</strong> yapmalısınız. Ardından uygulamayı ana ekrandan açın.
               </p>
             </div>
           ) : (
-            <div className="space-y-3">
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
               {permission !== 'granted' && (
                 <button 
                   onClick={handleRequestPermission}
-                  className="w-full bg-[var(--primary-gold)] hover:bg-[#b8860b] text-black font-bold py-3.5 rounded-xl transition-all shadow-lg flex items-center justify-center gap-2 text-sm uppercase tracking-wider"
+                  style={{
+                    width: '100%', padding: '0.75rem', borderRadius: '10px', border: 'none',
+                    background: 'var(--primary-gold)', color: '#000', fontWeight: 'bold',
+                    fontSize: '0.8rem', cursor: 'pointer',
+                  }}
                 >
                   Bildirimleri Etkinleştir
                 </button>
@@ -174,17 +188,25 @@ export default function PushNotificationManager({ session: initialSession }: { s
               {permission === 'granted' && regStatus !== 'done' && (
                 <button 
                   onClick={() => registerToken('granted')}
-                  className="w-full bg-white/10 hover:bg-white/20 text-white font-bold py-3 rounded-xl transition-all flex items-center justify-center gap-2 text-[12px] uppercase"
+                  style={{
+                    width: '100%', padding: '0.65rem', borderRadius: '10px',
+                    background: 'var(--bg-surface-elevated)', border: '1px solid var(--border-medium)',
+                    color: 'var(--text-muted)', fontWeight: 'bold', fontSize: '0.75rem', cursor: 'pointer',
+                  }}
                 >
-                  Yeniden Bağlanmayı Dene
+                  Tekrar Dene
                 </button>
               )}
             </div>
           )}
           
           <button 
-            onClick={() => setPermission('denied')}
-            className="text-white/30 hover:text-white/60 text-[11px] uppercase tracking-widest transition-colors font-medium text-center"
+            onClick={handleDismiss}
+            style={{
+              background: 'none', border: 'none', color: 'var(--text-dim)',
+              fontSize: '0.7rem', cursor: 'pointer', padding: '0.25rem',
+              textAlign: 'center',
+            }}
           >
             Daha Sonra
           </button>
