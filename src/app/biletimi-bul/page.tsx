@@ -4,6 +4,9 @@ import { useState, useEffect } from 'react';
 import { findTicket, getOccupiedSeats } from '@/app/actions';
 import TicketQR from '@/components/TicketQR';
 import SeatMap, { OccupiedSeat } from '@/components/SeatMap';
+import { db } from '@/lib/firebase';
+import { doc, onSnapshot } from 'firebase/firestore';
+import Link from 'next/link';
 
 export const dynamic = "force-dynamic";
 
@@ -12,8 +15,24 @@ export default function BiletimiBulPage() {
   const [error, setError] = useState('');
   const [tickets, setTickets] = useState<any[]>([]);
   const [occupiedSeats, setOccupiedSeats] = useState<OccupiedSeat[]>([]);
+  const [isTicketQueryActive, setIsTicketQueryActive] = useState<boolean>(true);
+  const [configLoaded, setConfigLoaded] = useState<boolean>(false);
 
   useEffect(() => {
+    const unsub = onSnapshot(doc(db, "settings", "site_config"), (snapshot) => {
+      if (snapshot.exists()) {
+        const data = snapshot.data();
+        if (typeof data.isTicketQueryActive === 'boolean') {
+          setIsTicketQueryActive(data.isTicketQueryActive);
+        }
+      }
+      setConfigLoaded(true);
+    });
+    return () => unsub();
+  }, []);
+
+  useEffect(() => {
+    if (!isTicketQueryActive) return;
     const loadSeats = async () => {
       const res = await getOccupiedSeats();
       if (res.success && res.seats) {
@@ -21,7 +40,7 @@ export default function BiletimiBulPage() {
       }
     };
     loadSeats();
-  }, []);
+  }, [isTicketQueryActive]);
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -44,6 +63,36 @@ export default function BiletimiBulPage() {
       setLoading(false);
     }
   };
+
+  // Gişe Kapalı Ekranı
+  if (configLoaded && !isTicketQueryActive) {
+    return (
+      <main className="min-h-screen pt-36 pb-24 bg-[var(--bg-dark)] flex items-center justify-center">
+        <div className="max-w-xl mx-auto px-6 text-center">
+          <div className="editorial-card p-10 bg-[var(--bg-surface)] space-y-6">
+            <div className="w-16 h-16 rounded-full bg-[var(--bg-surface-elevated)] border border-[var(--border-medium)] flex items-center justify-center mx-auto text-3xl text-[var(--primary-gold)]">
+              <ion-icon name="ticket-outline"></ion-icon>
+            </div>
+
+            <span className="editorial-tag text-[var(--primary-gold)] block">DİJİTAL GİŞE BİLGİSİ</span>
+            <h1 className="serif-font text-3xl sm:text-4xl text-[var(--text-main)]">Gişe Şu Anda Kapalıdır</h1>
+            <p className="text-[var(--text-muted)] text-sm leading-relaxed">
+              Şu anda aktif olarak sahnelenen bir oyun bilet satışımız veya aktif seyirci giriş kontrolümüz bulunmamaktadır. Sezon oyunları ve etkinlik günlerinde bilet sorgulama ekranı yeniden aktifleşecektir.
+            </p>
+
+            <div className="pt-4 flex flex-wrap items-center justify-center gap-4">
+              <Link href="/plays" className="btn btn-primary text-xs font-bold tracking-wider">
+                Sezon Repertuvarını İncele
+              </Link>
+              <Link href="/" className="btn btn-outline text-xs tracking-wider">
+                Ana Sayfaya Dön
+              </Link>
+            </div>
+          </div>
+        </div>
+      </main>
+    );
+  }
 
   return (
     <main className="min-h-screen pt-36 pb-24 bg-[var(--bg-dark)]">

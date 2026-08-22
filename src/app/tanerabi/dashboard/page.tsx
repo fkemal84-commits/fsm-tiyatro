@@ -444,6 +444,58 @@ export default async function Dashboard({ searchParams }: { searchParams: Promis
             {/* --- SİTE GÖRÜNÜMÜ --- */}
             {activeTab === 'site' && (role === 'SUPERADMIN' || role === 'ADMIN') && (
               <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+
+                {/* Gişe & Biletimi Bul Açma/Kapatma Paneli */}
+                <div style={{ background: 'var(--bg-surface)', border: `1px solid ${siteConfig?.isTicketQueryActive !== false ? 'rgba(34, 197, 94, 0.3)' : 'rgba(239, 68, 68, 0.3)'}`, borderRadius: '12px', padding: '1.5rem' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem' }}>
+                    <div>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', marginBottom: '0.4rem' }}>
+                        <ion-icon name="qr-code-outline" style={{ fontSize: '1.3rem', color: siteConfig?.isTicketQueryActive !== false ? '#4ade80' : '#f87171' }} />
+                        <h2 style={{ color: 'var(--text-main)', fontSize: '1.1rem', fontWeight: 'bold', margin: 0 }}>
+                          Biletimi Bul / Gişe Durumu
+                        </h2>
+                        <span style={{
+                          padding: '0.2rem 0.6rem',
+                          borderRadius: '999px',
+                          fontSize: '0.7rem',
+                          fontWeight: 'bold',
+                          background: siteConfig?.isTicketQueryActive !== false ? 'rgba(34, 197, 94, 0.15)' : 'rgba(239, 68, 68, 0.15)',
+                          color: siteConfig?.isTicketQueryActive !== false ? '#4ade80' : '#f87171',
+                          border: `1px solid ${siteConfig?.isTicketQueryActive !== false ? 'rgba(34, 197, 94, 0.3)' : 'rgba(239, 68, 68, 0.3)'}`
+                        }}>
+                          {siteConfig?.isTicketQueryActive !== false ? '● AÇIK (Canlıda Görünür)' : '○ KAPALI (Gizlendi)'}
+                        </span>
+                      </div>
+                      <p style={{ color: 'var(--text-muted)', fontSize: '0.8rem', maxWidth: '650px', margin: 0 }}>
+                        Oyun sezonunda seyircilerin bilet sorgulayabilmesi için bu özelliği açık tutun. Aktif oyun olmadığında kapatarak menüden ve ana sayfadan otomatik olarak kaldırabilirsiniz.
+                      </p>
+                    </div>
+
+                    <form action={updateSiteConfig as any}>
+                      <input type="hidden" name="isTicketQueryActive" value={siteConfig?.isTicketQueryActive !== false ? 'false' : 'true'} />
+                      <button
+                        type="submit"
+                        style={{
+                          padding: '0.75rem 1.5rem',
+                          borderRadius: '8px',
+                          border: siteConfig?.isTicketQueryActive !== false ? '1px solid rgba(239, 68, 68, 0.4)' : 'none',
+                          fontWeight: 'bold',
+                          fontSize: '0.85rem',
+                          cursor: 'pointer',
+                          background: siteConfig?.isTicketQueryActive !== false ? 'rgba(239, 68, 68, 0.15)' : 'var(--primary-gold)',
+                          color: siteConfig?.isTicketQueryActive !== false ? '#f87171' : '#000',
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '0.5rem'
+                        }}
+                      >
+                        <ion-icon name={siteConfig?.isTicketQueryActive !== false ? 'power-outline' : 'checkmark-circle-outline'} />
+                        {siteConfig?.isTicketQueryActive !== false ? 'Gişeyi Kapat (Gizle)' : 'Gişeyi Aç (Yayınla)'}
+                      </button>
+                    </form>
+                  </div>
+                </div>
+
                 <div style={{ background: 'var(--bg-surface)', border: '1px solid rgba(255,255,255,0.07)', borderRadius: '12px', padding: '1.5rem' }}>
                   <h2 style={{ color: 'var(--text-main)', marginBottom: '0.5rem', fontSize: '1.1rem', fontWeight: 'bold' }}>Site Yapılandırması</h2>
                   <p style={{ color: 'var(--text-muted)', fontSize: '0.8rem', marginBottom: '1.5rem' }}>Ana sayfa hero görseli, pinli slaytlar ve iletişim bilgilerini buradan güncelleyin. Değişiklikler anında canlıya yansır.</p>

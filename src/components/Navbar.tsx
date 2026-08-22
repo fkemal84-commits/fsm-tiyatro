@@ -5,6 +5,8 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { usePathname } from 'next/navigation';
 import { useSession, signOut } from 'next-auth/react';
+import { db } from '@/lib/firebase';
+import { doc, onSnapshot } from 'firebase/firestore';
 
 export default function Navbar({ session: initialSession }: { session?: any }) {
   const { data: session } = useSession();
@@ -16,6 +18,7 @@ export default function Navbar({ session: initialSession }: { session?: any }) {
   const [touchStart, setTouchStart] = useState<number | null>(null);
   const [touchEnd, setTouchEnd] = useState<number | null>(null);
   const [theme, setTheme] = useState<'system' | 'light' | 'dark'>('system');
+  const [isTicketQueryActive, setIsTicketQueryActive] = useState<boolean>(true);
   const pathname = usePathname();
 
   useEffect(() => {
@@ -33,6 +36,19 @@ export default function Navbar({ session: initialSession }: { session?: any }) {
     
     window.addEventListener('scroll', handleScroll, { passive: true });
     return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
+
+  // Site yapılandırması (Biletimi Bul açık/kapalı durumu)
+  useEffect(() => {
+    const unsub = onSnapshot(doc(db, "settings", "site_config"), (snapshot) => {
+      if (snapshot.exists()) {
+        const data = snapshot.data();
+        if (typeof data.isTicketQueryActive === 'boolean') {
+          setIsTicketQueryActive(data.isTicketQueryActive);
+        }
+      }
+    });
+    return () => unsub();
   }, []);
 
   // Tema yükleme ve takip
@@ -105,11 +121,15 @@ export default function Navbar({ session: initialSession }: { session?: any }) {
         <div className="desktop-nav">
           <ul className="nav-links">
             <li><Link href="/" className={pathname === '/' ? 'active' : ''}>Ana Sayfa</Link></li>
-            <li>
-              <Link href="/biletimi-bul" className={pathname === '/biletimi-bul' ? 'active' : ''} style={{ display: 'flex', alignItems: 'center', gap: '0.3rem', color: 'var(--primary-gold)', fontWeight: 600 }}>
-                 <ion-icon name="qr-code-outline"></ion-icon> Biletimi Bul
-              </Link>
-            </li>
+            
+            {/* Biletimi Bul Butonu (Admin tarafından açılıp kapatılabilir) */}
+            {isTicketQueryActive && (
+              <li>
+                <Link href="/biletimi-bul" className={pathname === '/biletimi-bul' ? 'active' : ''} style={{ display: 'flex', alignItems: 'center', gap: '0.3rem', color: 'var(--primary-gold)', fontWeight: 600 }}>
+                   <ion-icon name="qr-code-outline"></ion-icon> Biletimi Bul
+                </Link>
+              </li>
+            )}
             
             <li className="nav-dropdown">
               <span className="dropdown-trigger">
@@ -213,9 +233,13 @@ export default function Navbar({ session: initialSession }: { session?: any }) {
               {/* LEVEL 1 */}
               <li className="mobile-nav-level">
                 <Link href="/" onClick={() => setIsMenuOpen(false)}>Ana Sayfa</Link>
-                <Link href="/biletimi-bul" onClick={() => setIsMenuOpen(false)} style={{ color: 'var(--primary-gold)', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                  <ion-icon name="qr-code-outline"></ion-icon> Biletimi Bul
-                </Link>
+                
+                {isTicketQueryActive && (
+                  <Link href="/biletimi-bul" onClick={() => setIsMenuOpen(false)} style={{ color: 'var(--primary-gold)', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                    <ion-icon name="qr-code-outline"></ion-icon> Biletimi Bul
+                  </Link>
+                )}
+
                 <div className="mobile-dropdown-trigger" onClick={() => setActiveDropdown('klub')}>
                   Kulüp <ion-icon name="chevron-forward-outline"></ion-icon>
                 </div>
@@ -239,31 +263,35 @@ export default function Navbar({ session: initialSession }: { session?: any }) {
                     <Link href="/members" onClick={() => setIsMenuOpen(false)}>Üye Panosu</Link>
                   </div>
                 )}
+
                 {activeDropdown === 'stage' && (
                   <div className="mobile-sub-menu">
                     <Link href="/members/rehearsals" onClick={() => setIsMenuOpen(false)}>Prova Takvimi</Link>
                     <Link href="/members/team" onClick={() => setIsMenuOpen(false)}>Ekip Rehberi</Link>
                     <Link href="/members/scripts" onClick={() => setIsMenuOpen(false)}>Senaryo Kasası</Link>
                     {(role === 'SUPERADMIN' || role === 'ADMIN' || role === 'SALES') && (
-                       <Link href="/members/tickets" onClick={() => setIsMenuOpen(false)} style={{ color: 'var(--primary-gold)' }}>🎫 Bilet Gişesi</Link>
+                      <Link href="/members/tickets" onClick={() => setIsMenuOpen(false)} style={{ color: 'var(--primary-gold)' }}>🎫 Bilet Gişesi</Link>
                     )}
                   </div>
                 )}
               </li>
             </ul>
 
-            <div className="mobile-nav-footer mt-auto pt-8 border-t border-[var(--border-subtle)]">
+            {/* MOBILE FOOTER ACTIONS */}
+            <div className="mobile-drawer-footer">
               {currentSession ? (
-                <div className="flex flex-col gap-3 w-full">
-                  <Link href="/profile" className="mobile-footer-link" onClick={() => setIsMenuOpen(false)}>
-                    <ion-icon name="person-circle-outline"></ion-icon> Profilim
-                  </Link>
-                  <button onClick={() => signOut({ callbackUrl: '/' })} className="btn btn-logout w-full py-3">Çıkış Yap</button>
-                </div>
+                <>
+                  <div className="mobile-user-info">
+                    <span className="user-name">{currentSession.user.name}</span>
+                    <span className="user-role">{currentSession.user.role}</span>
+                  </div>
+                  <Link href="/profile" className="btn btn-outline" onClick={() => setIsMenuOpen(false)}>Profilim</Link>
+                  <button onClick={() => signOut({ callbackUrl: '/' })} className="btn btn-logout">Çıkış Yap</button>
+                </>
               ) : (
-                <div className="mobile-auth-grid">
-                  <Link href="/login" className="mobile-auth-btn secondary" onClick={() => setIsMenuOpen(false)}>Giriş</Link>
-                  <Link href="/register" className="mobile-auth-btn primary" onClick={() => setIsMenuOpen(false)}>Kayıt Ol</Link>
+                <div className="mobile-auth-btns">
+                  <Link href="/login" className="btn btn-outline" onClick={() => setIsMenuOpen(false)}>Üye Girişi</Link>
+                  <Link href="/register" className="btn btn-primary" onClick={() => setIsMenuOpen(false)}>Kayıt Ol</Link>
                 </div>
               )}
             </div>

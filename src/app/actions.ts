@@ -1389,6 +1389,7 @@ export async function updateSiteConfig(formData: FormData) {
     const heroImageUrl = formData.get('heroImageUrl') as string | null;
     const pinnedSlidesRaw = formData.get('pinnedSlides') as string | null;
     const contactEmail = formData.get('contactEmail') as string | null;
+    const isTicketQueryActiveRaw = formData.get('isTicketQueryActive') as string | null;
 
     const update: Record<string, any> = {
       updatedAt: new Date().toISOString(),
@@ -1403,12 +1404,18 @@ export async function updateSiteConfig(formData: FormData) {
       }
     }
     if (contactEmail !== null) update.contactEmail = contactEmail;
+    if (isTicketQueryActiveRaw !== null) {
+      update.isTicketQueryActive = isTicketQueryActiveRaw === 'true' || isTicketQueryActiveRaw === 'on';
+    }
 
     await adminDb.collection('settings').doc('site_config').set(update, { merge: true });
     revalidatePath('/');
+    revalidatePath('/biletimi-bul');
+    revalidatePath('/tanerabi/dashboard');
     return { success: true };
   } catch (error: any) {
     console.error("[UPDATE_SITE_CONFIG] Hata:", error);
     return { error: error.message };
   }
 }
+

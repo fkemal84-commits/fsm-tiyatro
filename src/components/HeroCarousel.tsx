@@ -17,9 +17,10 @@ export type HeroSlide = {
 
 interface HeroCarouselProps {
   slides: HeroSlide[];
+  showTicketQuery?: boolean;
 }
 
-export default function HeroCarousel({ slides }: HeroCarouselProps) {
+export default function HeroCarousel({ slides, showTicketQuery = true }: HeroCarouselProps) {
   const [current, setCurrent] = useState(0);
   const [paused, setPaused] = useState(false);
 
@@ -95,9 +96,15 @@ export default function HeroCarousel({ slides }: HeroCarouselProps) {
             >
               {slide.type === 'post' ? 'Yazıyı Oku' : slide.type === 'play' ? 'Oyun Detayları' : 'Daha Fazla'}
             </Link>
-            <Link href="/biletimi-bul" className="btn btn-outline px-7 py-3.5 text-sm tracking-wider">
-              Biletimi Sorgula
-            </Link>
+            {showTicketQuery ? (
+              <Link href="/biletimi-bul" className="btn btn-outline px-7 py-3.5 text-sm tracking-wider">
+                Biletimi Sorgula
+              </Link>
+            ) : (
+              <Link href="/plays" className="btn btn-outline px-7 py-3.5 text-sm tracking-wider">
+                Repertuvarı İncele
+              </Link>
+            )}
           </div>
         </div>
 
