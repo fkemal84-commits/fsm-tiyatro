@@ -6,6 +6,9 @@ import Link from 'next/link';
 import { deleteUserRecord } from '@/app/actions';
 import UserPlaysManager from '@/components/UserPlaysManager';
 
+export const dynamic = "force-dynamic";
+
+
 export default async function AdminUserProfile({ params }: { params: Promise<{ id: string }> }) {
   const resolvedParams = await params;
   const session = await getServerSession(authOptions);

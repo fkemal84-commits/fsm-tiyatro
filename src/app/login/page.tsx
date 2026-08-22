@@ -4,6 +4,9 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { signIn } from 'next-auth/react';
 
+export const dynamic = "force-dynamic";
+
+
 export default function Login() {
   const router = useRouter();
   const [email, setEmail] = useState('');

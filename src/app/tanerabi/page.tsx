@@ -3,6 +3,9 @@
 import { useState } from 'react';
 import { signIn } from 'next-auth/react';
 
+export const dynamic = "force-dynamic";
+
+
 export default function AdminSecretLogin() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');

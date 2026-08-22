@@ -4,6 +4,9 @@ import { authOptions } from "@/lib/auth";
 import { Metadata } from "next";
 import Link from "next/link";
 
+export const dynamic = "force-dynamic";
+
+
 export const metadata: Metadata = {
   title: "Ekip Rehberimiz | FSM Tiyatro",
   description: "FSM Tiyatro kulübünün yetenekli aktörleri ve teknik ekibi.",

@@ -6,6 +6,9 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import BlogInteractions from '@/components/BlogInteractions';
 
+export const dynamic = "force-dynamic";
+
+
 export async function generateMetadata({ params }: { params: Promise<{ id: string }> }): Promise<Metadata> {
   const resolvedParams = await params;
   const docSnap = await adminDb.collection('posts').doc(resolvedParams.id).get();

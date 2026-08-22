@@ -6,6 +6,9 @@ import AttendanceManager from "@/components/AttendanceManager";
 import { startInstantAttendance } from "@/app/actions";
 import Link from "next/link";
 
+export const dynamic = "force-dynamic";
+
+
 export default async function AttendanceDashboard() {
   const session = await getServerSession(authOptions);
   const role = (session?.user as any)?.role;

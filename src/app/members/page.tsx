@@ -8,6 +8,9 @@ import JoinEventButton from "../../components/JoinEventButton";
 import ScriptVault from "@/components/ScriptVault";
 import ScrollReveal from "@/components/ScrollReveal";
 
+export const dynamic = "force-dynamic";
+
+
 export const metadata: Metadata = {
   title: "Üye Panosu",
   description: "FSM Tiyatro üyelerine özel prova takvimi ve ekip duyuruları.",

@@ -4,6 +4,9 @@ import { useState } from 'react';
 import { requestPasswordReset } from '@/app/actions';
 import Link from 'next/link';
 
+export const dynamic = "force-dynamic";
+
+
 export default function ForgotPassword() {
   const [email, setEmail] = useState('');
   const [loading, setLoading] = useState(false);

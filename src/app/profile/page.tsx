@@ -4,6 +4,9 @@ import { redirect } from "next/navigation";
 import ProfileClient from "./ProfileClient";
 import { adminDb } from "@/lib/firebase-admin";
 
+export const dynamic = "force-dynamic";
+
+
 export default async function Profile() {
   const session = await getServerSession(authOptions);
   

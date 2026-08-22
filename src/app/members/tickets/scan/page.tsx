@@ -4,6 +4,9 @@ import { useEffect, useState, useRef } from 'react';
 import { Html5QrcodeScanner, Html5QrcodeSupportedFormats } from 'html5-qrcode';
 import { verifyTicket } from '@/app/actions';
 
+export const dynamic = "force-dynamic";
+
+
 export default function TicketScannerPage() {
   const [scanResult, setScanResult] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);

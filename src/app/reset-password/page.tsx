@@ -5,6 +5,9 @@ import { useSearchParams, useRouter } from 'next/navigation';
 import { completePasswordReset } from '@/app/actions';
 import Link from 'next/link';
 
+export const dynamic = "force-dynamic";
+
+
 function ResetPasswordForm() {
   const searchParams = useSearchParams();
   const router = useRouter();

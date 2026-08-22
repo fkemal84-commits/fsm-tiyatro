@@ -3,9 +3,7 @@ import "./globals.css";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import PushNotificationManager from "@/components/PushNotificationManager";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/auth";
-
+// Auth importları Client Componentlere bırakıldı
 export const metadata: Metadata = {
   title: {
     default: "FSM Tiyatro | Sahnenin Büyüsü",
@@ -52,12 +50,11 @@ import SessionWatcher from "@/components/SessionWatcher";
 import FlashAttendanceOverlay from "@/components/FlashAttendanceOverlay";
 import PullToRefresh from "@/components/PullToRefresh";
 
-export default async function RootLayout({
+export default function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  const session = await getServerSession(authOptions);
 
   return (
     <html lang="tr">
@@ -75,12 +72,12 @@ export default async function RootLayout({
         }} />
       </head>
       <body className="antialiased">
-        <Providers session={session}>
-          {session && <SessionWatcher />}
+        <Providers session={null}>
+          <SessionWatcher />
           <PullToRefresh />
-          {session && <PushNotificationManager session={session} />}
-          {session && <FlashAttendanceOverlay />}
-          <Navbar session={session} />
+          <PushNotificationManager session={null} />
+          <FlashAttendanceOverlay />
+          <Navbar session={null} />
           {children}
           <Footer />
         </Providers>
