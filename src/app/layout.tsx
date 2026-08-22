@@ -62,13 +62,13 @@ export const metadata: Metadata = {
   manifest: "/manifest.json",
   icons: {
     icon: [
-      { url: "/brand-logo-v1.jpg" },
       { url: "/favicon.ico" },
-      { url: "/icon.png" }
+      { url: "/icon-32x32.png", sizes: "32x32", type: "image/png" },
+      { url: "/icon-192x192.png", sizes: "192x192", type: "image/png" },
+      { url: "/icon-512x512.png", sizes: "512x512", type: "image/png" },
     ],
-    shortcut: "/brand-logo-v1.jpg",
+    shortcut: "/favicon.ico",
     apple: [
-      { url: "/brand-logo-v1.jpg" },
       { url: "/apple-touch-icon.png", sizes: "180x180", type: "image/png" }
     ],
   },
@@ -114,10 +114,11 @@ export default async function RootLayout({
   return (
     <html lang="tr" className={`${outfit.variable} ${playfair.variable} ${cormorant.variable}`}>
       <head>
-        <link rel="icon" type="image/jpeg" href="/brand-logo-v1.jpg" />
-        <link rel="shortcut icon" href="/brand-logo-v1.jpg" />
-        <link rel="apple-touch-icon" href="/brand-logo-v1.jpg" />
-        <link rel="apple-touch-icon-precomposed" href="/brand-logo-v1.jpg" />
+        <link rel="icon" type="image/x-icon" href="/favicon.ico" />
+        <link rel="icon" type="image/png" sizes="32x32" href="/icon-32x32.png" />
+        <link rel="icon" type="image/png" sizes="192x192" href="/icon-192x192.png" />
+        <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
+        <link rel="apple-touch-icon-precomposed" sizes="180x180" href="/apple-touch-icon.png" />
         <script type="module" src="https://unpkg.com/ionicons@7.1.0/dist/ionicons/ionicons.esm.js" async></script>
         <script noModule={true} src="https://unpkg.com/ionicons@7.1.0/dist/ionicons/ionicons.js" async></script>
         <script dangerouslySetInnerHTML={{
