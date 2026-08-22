@@ -18,7 +18,7 @@ export default function Footer() {
                   className="object-cover"
                 />
               </div>
-              <span className="serif-font text-2xl tracking-wider text-white font-bold">
+              <span className="serif-font text-2xl tracking-wider text-[var(--text-main)] font-bold">
                 FSM <span className="text-[var(--primary-gold)]">TİYATRO</span>
               </span>
             </div>
@@ -32,7 +32,7 @@ export default function Footer() {
 
           {/* Hızlı Bağlantılar */}
           <div className="space-y-3">
-            <span className="editorial-tag text-white block text-xs">REPERTUVAR & BİLET</span>
+            <span className="editorial-tag text-[var(--text-main)] block text-xs">REPERTUVAR & BİLET</span>
             <ul className="space-y-2 text-xs">
               <li><Link href="/plays" className="hover:text-[var(--primary-gold)] transition-colors">Sezon Oyunları</Link></li>
               <li><Link href="/biletimi-bul" className="text-[var(--primary-gold)] hover:underline flex items-center gap-1.5 font-bold">🎫 Biletimi Sorgula</Link></li>
@@ -43,7 +43,7 @@ export default function Footer() {
 
           {/* Dijital Portal */}
           <div className="space-y-3">
-            <span className="editorial-tag text-white block text-xs">SAHNE ARKASI</span>
+            <span className="editorial-tag text-[var(--text-main)] block text-xs">SAHNE ARKASI</span>
             <ul className="space-y-2 text-xs">
               <li><Link href="/members" className="hover:text-[var(--primary-gold)] transition-colors">Üye Panosu</Link></li>
               <li><Link href="/members/rehearsals" className="hover:text-[var(--primary-gold)] transition-colors">Prova Takvimi</Link></li>

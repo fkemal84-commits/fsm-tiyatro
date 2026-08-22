@@ -1,8 +1,8 @@
 @import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,600;0,700;1,400;1,600&family=Outfit:wght@300;400;500;600;700;800&family=Playfair+Display:ital,wght@0,600;0,700;0,800;1,600;1,700&display=swap');
 @import "tailwindcss";
 
+/* 1. VARSAYILAN: GECE / SAHNE MODU (DARK THEME) */
 :root {
-  /* Renk Paleti - Prestijli Tiyatro & Editoryal Sahne */
   --bg-dark: #08080a;
   --bg-surface: #101014;
   --bg-surface-elevated: #16161c;
@@ -27,7 +27,75 @@
   --shadow-subtle: 0 4px 20px rgba(0, 0, 0, 0.4);
   --shadow-stage: 0 20px 50px -10px rgba(0, 0, 0, 0.7);
 
+  --ticket-bg: #14141a;
+  --navbar-bg: rgba(8, 8, 10, 0.94);
+  --input-bg: #0d0d11;
+
   --transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+/* 2. SİSTEME GÖRE SABAH / MATİNE MODU (LIGHT THEME) */
+@media (prefers-color-scheme: light) {
+  :root:not([data-theme="dark"]) {
+    --bg-dark: #f9f7f2;
+    --bg-surface: #ffffff;
+    --bg-surface-elevated: #f2eee5;
+    --bg-card: rgba(255, 255, 255, 0.95);
+
+    --primary-gold: #9e7938;
+    --primary-gold-light: #b8914b;
+    --primary-gold-dim: rgba(158, 121, 56, 0.1);
+    --primary-gold-border: rgba(158, 121, 56, 0.25);
+
+    --accent-crimson: #851620;
+    --accent-crimson-bright: #a11f2c;
+    --accent-crimson-dim: rgba(133, 22, 32, 0.08);
+
+    --text-main: #1c1b18;
+    --text-muted: #59564f;
+    --text-dim: #8a877e;
+
+    --border-subtle: rgba(0, 0, 0, 0.08);
+    --border-medium: rgba(0, 0, 0, 0.15);
+    
+    --shadow-subtle: 0 4px 20px rgba(0, 0, 0, 0.06);
+    --shadow-stage: 0 15px 40px -10px rgba(0, 0, 0, 0.12);
+
+    --ticket-bg: #ffffff;
+    --navbar-bg: rgba(249, 247, 242, 0.94);
+    --input-bg: #f5f2ea;
+  }
+}
+
+/* 3. MANUEL AÇIK TEMA SINIFI (data-theme="light" veya .light) */
+html[data-theme="light"], .light {
+  --bg-dark: #f9f7f2;
+  --bg-surface: #ffffff;
+  --bg-surface-elevated: #f2eee5;
+  --bg-card: rgba(255, 255, 255, 0.95);
+
+  --primary-gold: #9e7938;
+  --primary-gold-light: #b8914b;
+  --primary-gold-dim: rgba(158, 121, 56, 0.1);
+  --primary-gold-border: rgba(158, 121, 56, 0.25);
+
+  --accent-crimson: #851620;
+  --accent-crimson-bright: #a11f2c;
+  --accent-crimson-dim: rgba(133, 22, 32, 0.08);
+
+  --text-main: #1c1b18;
+  --text-muted: #59564f;
+  --text-dim: #8a877e;
+
+  --border-subtle: rgba(0, 0, 0, 0.08);
+  --border-medium: rgba(0, 0, 0, 0.15);
+  
+  --shadow-subtle: 0 4px 20px rgba(0, 0, 0, 0.06);
+  --shadow-stage: 0 15px 40px -10px rgba(0, 0, 0, 0.12);
+
+  --ticket-bg: #ffffff;
+  --navbar-bg: rgba(249, 247, 242, 0.94);
+  --input-bg: #f5f2ea;
 }
 
 * {
@@ -45,9 +113,10 @@ body {
   position: relative;
   overscroll-behavior-y: contain;
   overscroll-behavior-x: auto;
+  transition: background-color 0.3s ease, color 0.3s ease;
 }
 
-/* Doğal Sahne Derinliği & Tiyatro Karartması */
+/* Doğal Sahne Derinliği & Arka Plan Parşömen Işığı */
 body::before {
   content: "";
   position: fixed;
@@ -56,11 +125,20 @@ body::before {
   width: 100%;
   height: 100%;
   background: 
-    radial-gradient(ellipse at 50% 0%, rgba(112, 20, 29, 0.1) 0%, transparent 60%),
+    radial-gradient(ellipse at 50% 0%, rgba(112, 20, 29, 0.08) 0%, transparent 60%),
     radial-gradient(ellipse at 80% 100%, rgba(200, 162, 97, 0.04) 0%, transparent 50%),
     linear-gradient(to bottom, transparent, var(--bg-dark));
   pointer-events: none;
   z-index: -1;
+}
+
+@media (prefers-color-scheme: light) {
+  body::before {
+    background: 
+      radial-gradient(ellipse at 50% 0%, rgba(133, 22, 32, 0.03) 0%, transparent 60%),
+      radial-gradient(ellipse at 80% 100%, rgba(158, 121, 56, 0.04) 0%, transparent 50%),
+      linear-gradient(to bottom, transparent, var(--bg-dark));
+  }
 }
 
 /* Tipografi Kuralları */
@@ -68,6 +146,7 @@ h1, h2, h3, h4, .serif-font {
   font-family: 'Playfair Display', 'Cormorant Garamond', Georgia, serif;
   letter-spacing: -0.02em;
   font-weight: 700;
+  color: var(--text-main);
 }
 
 .serif-sub {
@@ -106,7 +185,7 @@ h1, h2, h3, h4, .serif-font {
 }
 
 .navbar.scrolled {
-  background: rgba(8, 8, 10, 0.94);
+  background: var(--navbar-bg);
   backdrop-filter: blur(16px);
   -webkit-backdrop-filter: blur(16px);
   padding: 0.85rem 0;
@@ -234,7 +313,7 @@ h1, h2, h3, h4, .serif-font {
     right: -100%;
     width: 100%;
     height: 100vh;
-    background: #08080a;
+    background: var(--bg-dark);
     z-index: 1000;
     transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1);
     overflow-y: auto;
@@ -291,7 +370,7 @@ h1, h2, h3, h4, .serif-font {
   .mobile-nav-level a, .mobile-dropdown-trigger {
     font-size: 1.75rem;
     font-weight: 400;
-    color: #fff;
+    color: var(--text-main);
     text-decoration: none;
     padding: 1rem 0;
     border-bottom: 1px solid var(--border-subtle);
@@ -338,12 +417,12 @@ h1, h2, h3, h4, .serif-font {
 
   .mobile-auth-btn.primary {
     background: var(--primary-gold);
-    color: #000;
+    color: #fff;
   }
 
   .mobile-auth-btn.secondary {
-    background: rgba(255, 255, 255, 0.04);
-    color: #fff;
+    background: var(--bg-surface-elevated);
+    color: var(--text-main);
     border: 1px solid var(--border-subtle);
   }
 
@@ -427,11 +506,11 @@ h1, h2, h3, h4, .serif-font {
 }
 
 .dropdown-menu li a:hover {
-  color: #fff;
-  background: rgba(255, 255, 255, 0.05);
+  color: var(--text-main);
+  background: var(--primary-gold-dim);
 }
 
-/* Buttons - Dokunsal & Editoryal */
+/* Buttons */
 .btn {
   display: inline-flex;
   align-items: center;
@@ -451,14 +530,14 @@ h1, h2, h3, h4, .serif-font {
 
 .btn-primary {
   background: var(--primary-gold);
-  color: #000;
+  color: #fff;
   font-weight: 700;
 }
 
 .btn-primary:hover {
   background: var(--primary-gold-light);
   transform: translateY(-1px);
-  box-shadow: 0 4px 15px rgba(200, 162, 97, 0.25);
+  box-shadow: 0 4px 15px rgba(200, 162, 97, 0.3);
 }
 
 .btn-outline {
@@ -536,7 +615,7 @@ h1, h2, h3, h4, .serif-font {
   white-space: nowrap;
   border-top: 1px solid var(--border-subtle);
   border-bottom: 1px solid var(--border-subtle);
-  background: rgba(16, 16, 20, 0.5);
+  background: var(--bg-surface);
   padding: 0.85rem 0;
 }
 
@@ -554,7 +633,8 @@ h1, h2, h3, h4, .serif-font {
 /* Bilet Koçanı (Ticket Stub) Efekti */
 .ticket-stub {
   position: relative;
-  background: #14141a;
+  background: var(--ticket-bg);
+  color: var(--text-main);
   border: 1px solid var(--border-medium);
   border-radius: 12px;
 }
@@ -583,7 +663,7 @@ h1, h2, h3, h4, .serif-font {
 }
 
 .perforated-divider {
-  border-top: 2px dashed rgba(255, 255, 255, 0.15);
+  border-top: 2px dashed var(--border-medium);
   margin: 1.5rem 0;
   position: relative;
 }

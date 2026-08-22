@@ -15,6 +15,7 @@ export default function Navbar({ session: initialSession }: { session?: any }) {
   const [activeDropdown, setActiveDropdown] = useState<string | null>(null);
   const [touchStart, setTouchStart] = useState<number | null>(null);
   const [touchEnd, setTouchEnd] = useState<number | null>(null);
+  const [theme, setTheme] = useState<'system' | 'light' | 'dark'>('system');
   const pathname = usePathname();
 
   useEffect(() => {
@@ -34,7 +35,35 @@ export default function Navbar({ session: initialSession }: { session?: any }) {
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
-  // Sayfa kilitlenmesi: Menü açıkken arka plan kaymasın
+  // Tema yükleme ve takip
+  useEffect(() => {
+    const saved = localStorage.getItem('fsm_theme') as 'system' | 'light' | 'dark' | null;
+    if (saved) {
+      setTheme(saved);
+      if (saved === 'system') {
+        document.documentElement.removeAttribute('data-theme');
+      } else {
+        document.documentElement.setAttribute('data-theme', saved);
+      }
+    }
+  }, []);
+
+  const toggleTheme = () => {
+    let nextTheme: 'system' | 'light' | 'dark';
+    if (theme === 'system') nextTheme = 'light';
+    else if (theme === 'light') nextTheme = 'dark';
+    else nextTheme = 'system';
+
+    setTheme(nextTheme);
+    localStorage.setItem('fsm_theme', nextTheme);
+    if (nextTheme === 'system') {
+      document.documentElement.removeAttribute('data-theme');
+    } else {
+      document.documentElement.setAttribute('data-theme', nextTheme);
+    }
+  };
+
+  // Menü açıkken arka plan kaymasını engelle
   useEffect(() => {
     if (isMenuOpen) {
       document.body.style.overflow = 'hidden';
@@ -53,19 +82,13 @@ export default function Navbar({ session: initialSession }: { session?: any }) {
     document.body.style.overflow = 'unset';
   }, [pathname]);
 
-  const toggleDropdown = (name: string) => {
-    if (window.innerWidth <= 1024) {
-      setActiveDropdown(activeDropdown === name ? null : name);
-    }
-  };
-
   const role = currentSession?.user?.role;
 
   return (
     <nav className={`navbar ${scrolled ? 'scrolled' : ''}`}>
       <div className="nav-container">
         <Link href="/" className="flex items-center gap-3 group">
-          <div className="relative w-10 h-10 overflow-hidden rounded-lg border border-[var(--primary-gold)]/20 group-hover:border-[var(--primary-gold)] transition-all">
+          <div className="relative w-10 h-10 overflow-hidden rounded-lg border border-[var(--border-medium)] group-hover:border-[var(--primary-gold)] transition-all">
             <Image 
               src="/brand-logo-v1.jpg" 
               alt="FSM Tiyatro Logo" 
@@ -73,17 +96,17 @@ export default function Navbar({ session: initialSession }: { session?: any }) {
               className="object-cover"
             />
           </div>
-          <span className="serif-font text-2xl tracking-widest text-white group-hover:text-[var(--primary-gold)] transition-all">
+          <span className="serif-font text-2xl tracking-widest text-[var(--text-main)] group-hover:text-[var(--primary-gold)] transition-all">
             FSM <span className="text-[var(--primary-gold)]">TİYATRO</span>
           </span>
         </Link>
         
-        {/* DESKTOP LINKS (Visible only on Desktop) */}
+        {/* DESKTOP LINKS */}
         <div className="desktop-nav">
           <ul className="nav-links">
             <li><Link href="/" className={pathname === '/' ? 'active' : ''}>Ana Sayfa</Link></li>
             <li>
-              <Link href="/biletimi-bul" className={pathname === '/biletimi-bul' ? 'active' : ''} style={{ display: 'flex', alignItems: 'center', gap: '0.3rem', color: 'var(--primary-gold)' }}>
+              <Link href="/biletimi-bul" className={pathname === '/biletimi-bul' ? 'active' : ''} style={{ display: 'flex', alignItems: 'center', gap: '0.3rem', color: 'var(--primary-gold)', fontWeight: 600 }}>
                  <ion-icon name="qr-code-outline"></ion-icon> Biletimi Bul
               </Link>
             </li>
@@ -94,7 +117,7 @@ export default function Navbar({ session: initialSession }: { session?: any }) {
               </span>
               <ul className="dropdown-menu">
                 <li><Link href="/plays">Oyunlarımız</Link></li>
-                <li><Link href="/#about">Hakkımızda</Link></li>
+                <li><Link href="/#manifesto">Hakkımızda & Manifesto</Link></li>
                 <li><Link href="/members">Üye Panosu</Link></li>
               </ul>
             </li>
@@ -119,12 +142,52 @@ export default function Navbar({ session: initialSession }: { session?: any }) {
           </ul>
         </div>
 
-        {/* MOBILE TOGGLE (Visible only on Mobile) */}
-        <button className="mobile-toggle" onClick={() => setIsMenuOpen(!isMenuOpen)}>
-          <ion-icon name={isMenuOpen ? "close-outline" : "menu-outline"}></ion-icon>
-        </button>
+        {/* ACTIONS & THEME TOGGLE */}
+        <div className="flex items-center gap-3">
+          
+          {/* Tema Değiştirici Buton */}
+          <button 
+            onClick={toggleTheme}
+            title={`Tema: ${theme === 'system' ? 'Otomatik (Sistem)' : theme === 'light' ? 'Sabah / Matine (Açık)' : 'Gece / Sahne (Koyu)'}`}
+            className="w-9 h-9 rounded-lg border border-[var(--border-subtle)] bg-[var(--bg-surface)] text-[var(--text-muted)] hover:text-[var(--primary-gold)] hover:border-[var(--primary-gold-border)] flex items-center justify-center text-lg transition-all"
+            aria-label="Tema Seçimi"
+          >
+            {theme === 'system' ? (
+              <ion-icon name="contrast-outline"></ion-icon>
+            ) : theme === 'light' ? (
+              <ion-icon name="sunny-outline" style={{ color: '#d97706' }}></ion-icon>
+            ) : (
+              <ion-icon name="moon-outline" style={{ color: 'var(--primary-gold)' }}></ion-icon>
+            )}
+          </button>
 
-        {/* MOBILE DRAWER (Visible only on Mobile) */}
+          {/* DESKTOP ACTIONS */}
+          <div className="desktop-actions">
+            {currentSession ? (
+              <>
+                {currentSession.user.isAdminMode && (
+                  <span className="admin-badge">
+                    <ion-icon name="shield-checkmark-outline"></ion-icon> Yönetici
+                  </span>
+                )}
+                <Link href="/profile" className="profile-link">Profilim</Link>
+                <button onClick={() => signOut({ callbackUrl: '/' })} className="btn btn-logout">Çıkış</button>
+              </>
+            ) : (
+              <>
+                <Link href="/login" className="login-link">Üye Girişi</Link>
+                <Link href="/register" className="btn btn-primary nav-reg-btn text-xs py-2 px-5">Kayıt Ol</Link>
+              </>
+            )}
+          </div>
+
+          {/* MOBILE TOGGLE */}
+          <button className="mobile-toggle" onClick={() => setIsMenuOpen(!isMenuOpen)}>
+            <ion-icon name={isMenuOpen ? "close-outline" : "menu-outline"}></ion-icon>
+          </button>
+        </div>
+
+        {/* MOBILE DRAWER */}
         <div 
           className={`mobile-drawer ${isMenuOpen ? 'open' : ''}`}
           onTouchStart={(e) => setTouchStart(e.targetTouches[0].clientX)}
@@ -136,10 +199,8 @@ export default function Navbar({ session: initialSession }: { session?: any }) {
             
             if (isLeftToRight) {
               if (activeDropdown) {
-                // Eğer alt menüdeysek önce ana menüye dön
                 setActiveDropdown(null);
               } else {
-                // Eğer zaten ana menüdeysek menüyü kapat
                 setIsMenuOpen(false);
               }
             }
@@ -174,7 +235,7 @@ export default function Navbar({ session: initialSession }: { session?: any }) {
                 {activeDropdown === 'klub' && (
                   <div className="mobile-sub-menu">
                     <Link href="/plays" onClick={() => setIsMenuOpen(false)}>Oyunlarımız</Link>
-                    <Link href="/#about" onClick={() => setIsMenuOpen(false)}>Hakkımızda</Link>
+                    <Link href="/#manifesto" onClick={() => setIsMenuOpen(false)}>Hakkımızda & Manifesto</Link>
                     <Link href="/members" onClick={() => setIsMenuOpen(false)}>Üye Panosu</Link>
                   </div>
                 )}
@@ -191,13 +252,13 @@ export default function Navbar({ session: initialSession }: { session?: any }) {
               </li>
             </ul>
 
-            <div className="mobile-nav-footer">
+            <div className="mobile-nav-footer mt-auto pt-8 border-t border-[var(--border-subtle)]">
               {currentSession ? (
                 <div className="flex flex-col gap-3 w-full">
                   <Link href="/profile" className="mobile-footer-link" onClick={() => setIsMenuOpen(false)}>
                     <ion-icon name="person-circle-outline"></ion-icon> Profilim
                   </Link>
-                  <button onClick={() => signOut({ callbackUrl: '/' })} className="btn-logout-mobile">Çıkış Yap</button>
+                  <button onClick={() => signOut({ callbackUrl: '/' })} className="btn btn-logout w-full py-3">Çıkış Yap</button>
                 </div>
               ) : (
                 <div className="mobile-auth-grid">
@@ -207,26 +268,6 @@ export default function Navbar({ session: initialSession }: { session?: any }) {
               )}
             </div>
           </div>
-        </div>
-
-        {/* DESKTOP ACTIONS */}
-        <div className="desktop-actions">
-          {currentSession ? (
-            <>
-              {currentSession.user.isAdminMode && (
-                <span className="admin-badge">
-                  <ion-icon name="shield-checkmark-outline"></ion-icon> Yönetici Modu
-                </span>
-              )}
-              <Link href="/profile" className="profile-link">Profilim</Link>
-              <button onClick={() => signOut({ callbackUrl: '/' })} className="btn btn-logout">Çıkış Yap</button>
-            </>
-          ) : (
-            <>
-              <Link href="/login" className="login-link">Üye Girişi</Link>
-              <Link href="/register" className="btn btn-primary nav-reg-btn">Yeni Kayıt Ol</Link>
-            </>
-          )}
         </div>
       </div>
     </nav>

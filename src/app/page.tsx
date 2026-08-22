@@ -57,7 +57,7 @@ export default async function Home() {
 
             <Link 
               href="#manifesto" 
-              className="px-6 py-4 text-sm text-[var(--text-muted)] hover:text-white transition-colors"
+              className="px-6 py-4 text-sm text-[var(--text-muted)] hover:text-[var(--text-main)] transition-colors"
             >
               Kulüp Hakkında →
             </Link>
@@ -81,7 +81,7 @@ export default async function Home() {
           <div>
             <span className="block text-[11px] text-[var(--text-dim)] uppercase font-bold tracking-widest">DURUM</span>
             <span className="text-sm font-semibold text-[var(--primary-gold)] flex items-center gap-1.5">
-              <span className="w-2 h-2 rounded-full bg-green-500"></span> Provalar Aktif
+              <span className="w-2 h-2 rounded-full bg-emerald-500"></span> Provalar Aktif
             </span>
           </div>
         </div>
@@ -114,7 +114,7 @@ export default async function Home() {
         <ScrollReveal className="flex flex-col md:flex-row md:items-end justify-between mb-12 gap-6 border-b border-[var(--border-subtle)] pb-8">
           <div>
             <span className="editorial-tag text-[var(--primary-gold)] block mb-2">REPERTUVAR</span>
-            <h2 className="serif-font text-4xl sm:text-5xl text-white">Sahnede Hayat Bulanlar</h2>
+            <h2 className="serif-font text-4xl sm:text-5xl text-[var(--text-main)]">Sahnede Hayat Bulanlar</h2>
           </div>
           <Link href="/plays" className="text-sm font-semibold text-[var(--primary-gold)] hover:underline flex items-center gap-2">
             Tüm Oyunları İncele →
@@ -125,7 +125,7 @@ export default async function Home() {
           {plays.length > 0 ? (
             plays.map((play) => (
               <ScrollReveal key={play.id} className="editorial-card group flex flex-col p-0 overflow-hidden">
-                <div className="relative w-full aspect-[3/4] bg-[#121216] overflow-hidden border-b border-[var(--border-subtle)]">
+                <div className="relative w-full aspect-[3/4] bg-[var(--bg-surface-elevated)] overflow-hidden border-b border-[var(--border-subtle)]">
                   <Image 
                     src={play.imageUrl || '/default-cover.svg'} 
                     alt={play.title || 'Oyun Afişi'}
@@ -133,13 +133,13 @@ export default async function Home() {
                     className="object-cover transition-transform duration-500 group-hover:scale-105"
                     sizes="(max-width: 768px) 100vw, 33vw"
                   />
-                  <div className="absolute top-4 left-4 bg-black/80 backdrop-blur-md px-3 py-1 rounded text-[11px] font-bold text-[var(--primary-gold)] tracking-widest border border-white/10 uppercase">
+                  <div className="absolute top-4 left-4 bg-[var(--bg-dark)]/85 backdrop-blur-md px-3 py-1 rounded text-[11px] font-bold text-[var(--primary-gold)] tracking-widest border border-[var(--border-subtle)] uppercase">
                     {play.year || 'SEZON'}
                   </div>
                 </div>
 
                 <div className="p-6 flex flex-col flex-1">
-                  <h3 className="serif-font text-2xl text-white mb-2 group-hover:text-[var(--primary-gold)] transition-colors">
+                  <h3 className="serif-font text-2xl text-[var(--text-main)] mb-2 group-hover:text-[var(--primary-gold)] transition-colors">
                     {play.title}
                   </h3>
                   <p className="text-sm text-[var(--text-muted)] line-clamp-3 mb-6 font-light leading-relaxed">
@@ -150,7 +150,7 @@ export default async function Home() {
                     <span className="text-xs text-[var(--text-dim)] uppercase font-bold tracking-wider">FSM Tiyatro</span>
                     <Link 
                       href={`/plays/${play.id}`}
-                      className="text-xs font-bold text-[var(--primary-gold)] uppercase tracking-wider hover:text-white transition-colors"
+                      className="text-xs font-bold text-[var(--primary-gold)] uppercase tracking-wider hover:text-[var(--text-main)] transition-colors"
                     >
                       Oyun Detayları & Afiş →
                     </Link>
@@ -173,7 +173,7 @@ export default async function Home() {
           
           <ScrollReveal className="lg:col-span-6 space-y-6">
             <span className="editorial-tag text-[var(--primary-gold)] block">SANAT MANİFESTOSU</span>
-            <h2 className="serif-font text-3xl sm:text-4xl md:text-5xl text-white leading-tight">
+            <h2 className="serif-font text-3xl sm:text-4xl md:text-5xl text-[var(--text-main)] leading-tight">
               "İnsanı, insana, insanla, insanca anlatma sanatı."
             </h2>
             <p className="text-base sm:text-lg text-[var(--text-muted)] font-light leading-relaxed">
@@ -196,25 +196,25 @@ export default async function Home() {
           <ScrollReveal className="lg:col-span-6 grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div className="p-6 rounded-lg bg-[var(--bg-surface-elevated)] border border-[var(--border-subtle)]">
               <span className="text-2xl text-[var(--primary-gold)] mb-3 block">🎭</span>
-              <h4 className="text-white text-lg font-bold mb-2">Tiyatro Prodüksiyonu</h4>
+              <h4 className="text-[var(--text-main)] text-lg font-bold mb-2">Tiyatro Prodüksiyonu</h4>
               <p className="text-xs text-[var(--text-muted)] leading-relaxed">Dünya klasiklerinden yerli yazarların çağdaş metinlerine uzanan kapsamlı sahne prodüksiyonları.</p>
             </div>
 
             <div className="p-6 rounded-lg bg-[var(--bg-surface-elevated)] border border-[var(--border-subtle)]">
               <span className="text-2xl text-[var(--primary-gold)] mb-3 block">🎬</span>
-              <h4 className="text-white text-lg font-bold mb-2">Sinema & Senaryo</h4>
+              <h4 className="text-[var(--text-main)] text-lg font-bold mb-2">Sinema & Senaryo</h4>
               <p className="text-xs text-[var(--text-muted)] leading-relaxed">Kısa film çalışmaları, kamera önü oyunculuk pratikleri ve kolektif senaryo atölyeleri.</p>
             </div>
 
             <div className="p-6 rounded-lg bg-[var(--bg-surface-elevated)] border border-[var(--border-subtle)]">
               <span className="text-2xl text-[var(--primary-gold)] mb-3 block">📖</span>
-              <h4 className="text-white text-lg font-bold mb-2">Metin & Dramaturji</h4>
+              <h4 className="text-[var(--text-main)] text-lg font-bold mb-2">Metin & Dramaturji</h4>
               <p className="text-xs text-[var(--text-muted)] leading-relaxed">Karakter analizleri, rol çözümlemeleri ve dijital senaryo kütüphanesiyle derinlikli hazırlık süreci.</p>
             </div>
 
             <div className="p-6 rounded-lg bg-[var(--bg-surface-elevated)] border border-[var(--border-subtle)]">
               <span className="text-2xl text-[var(--primary-gold)] mb-3 block">🎫</span>
-              <h4 className="text-white text-lg font-bold mb-2">Dijital Gişe & Salon</h4>
+              <h4 className="text-[var(--text-main)] text-lg font-bold mb-2">Dijital Gişe & Salon</h4>
               <p className="text-xs text-[var(--text-muted)] leading-relaxed">Kendi geliştirdiğimiz QR bilet sistemi ve anlık koltuk haritasıyla kusursuz seyirci deneyimi.</p>
             </div>
           </ScrollReveal>
@@ -226,7 +226,7 @@ export default async function Home() {
       <section className="section max-w-[1380px] mx-auto text-center" id="sponsorluk">
         <ScrollReveal className="max-w-3xl mx-auto mb-12">
           <span className="editorial-tag text-[var(--primary-gold)] block mb-2">KURUMSAL & SANAT DESTEĞİ</span>
-          <h2 className="serif-font text-3xl sm:text-4xl text-white mb-4">Geleceğin Sanatçılarına Destek Olun</h2>
+          <h2 className="serif-font text-3xl sm:text-4xl text-[var(--text-main)] mb-4">Geleceğin Sanatçılarına Destek Olun</h2>
           <p className="text-[var(--text-muted)] text-sm sm:text-base leading-relaxed">
             Üniversitemizde sahne sanatlarının sürdürülebilirliği ve öğrencilerimizin daha geniş kitlelere ulaşması için kurumsal ve bireysel destekçilerimizle güçlü ortaklıklar kuruyoruz.
           </p>
@@ -237,7 +237,7 @@ export default async function Home() {
           <div className="editorial-card p-8 border-t-2 border-t-[#a89078] flex flex-col justify-between">
             <div>
               <span className="text-xs font-bold text-[#a89078] uppercase tracking-widest block mb-2">ETKİNLİK DESTEĞİ</span>
-              <h3 className="serif-font text-xl text-white mb-3">Tanıtım & İletişim</h3>
+              <h3 className="serif-font text-xl text-[var(--text-main)] mb-3">Tanıtım & İletişim</h3>
               <p className="text-xs text-[var(--text-muted)] leading-relaxed mb-6">
                 Oyun broşürleri, afişler ve dijital yayınlarımızda logonuzla gençlik ve kültür sanat kitlelerine ulaşın.
               </p>
@@ -248,7 +248,7 @@ export default async function Home() {
           <div className="editorial-card p-8 border-t-2 border-t-[var(--primary-gold)] flex flex-col justify-between bg-[var(--bg-surface-elevated)]">
             <div>
               <span className="text-xs font-bold text-[var(--primary-gold)] uppercase tracking-widest block mb-2">PRODÜKSİYON ORTAKLIĞI</span>
-              <h3 className="serif-font text-xl text-white mb-3">Sezon Partnerliği</h3>
+              <h3 className="serif-font text-xl text-[var(--text-main)] mb-3">Sezon Partnerliği</h3>
               <p className="text-xs text-[var(--text-muted)] leading-relaxed mb-6">
                 Sezon boyunca sahnelenen ana oyunların sahne, kostüm ve dekor prodüksiyonlarına doğrudan katkı sağlayın.
               </p>
@@ -259,7 +259,7 @@ export default async function Home() {
           <div className="editorial-card p-8 border-t-2 border-t-[var(--accent-crimson-bright)] flex flex-col justify-between">
             <div>
               <span className="text-xs font-bold text-[var(--accent-crimson-bright)] uppercase tracking-widest block mb-2">ÖZEL KATKI</span>
-              <h3 className="serif-font text-xl text-white mb-3">Kültür & Mekan Destekçisi</h3>
+              <h3 className="serif-font text-xl text-[var(--text-main)] mb-3">Kültür & Mekan Destekçisi</h3>
               <p className="text-xs text-[var(--text-muted)] leading-relaxed mb-6">
                 Turne, festival ve atölye organizasyonlarımızda genç tiyatrocuların yolunu açan stratejik hamimiz olun.
               </p>

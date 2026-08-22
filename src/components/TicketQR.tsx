@@ -14,7 +14,7 @@ export default function TicketQR({ ticket }: { ticket: any }) {
         <span className="editorial-tag text-[var(--primary-gold)] block text-[10px] mb-1">
           FATİH SULTAN MEHMET VAKIF ÜNİVERSİTESİ
         </span>
-        <h3 className="serif-font text-2xl text-white tracking-widest uppercase">
+        <h3 className="serif-font text-2xl text-[var(--text-main)] tracking-widest uppercase">
           FSM TİYATRO
         </h3>
         <span className="text-[9px] text-[var(--text-dim)] uppercase font-mono tracking-[0.2em] block mt-0.5">
@@ -47,7 +47,7 @@ export default function TicketQR({ ticket }: { ticket: any }) {
           <span className="text-[10px] text-[var(--text-dim)] uppercase font-bold tracking-wider block mb-1">
             SEYİRCİ
           </span>
-          <p className="text-xl font-bold text-white uppercase tracking-wide">
+          <p className="text-xl font-bold text-[var(--text-main)] uppercase tracking-wide">
             {ticket.name} {ticket.surname}
           </p>
         </div>
@@ -73,11 +73,11 @@ export default function TicketQR({ ticket }: { ticket: any }) {
         <div className="pt-2 flex justify-between items-center text-xs">
           <span className="text-[11px] text-[var(--text-dim)] uppercase font-bold tracking-wider">Durum</span>
           {isValid ? (
-            <span className="bg-emerald-500/10 text-emerald-400 px-3 py-1 rounded text-[10px] font-black tracking-widest border border-emerald-500/30 uppercase flex items-center gap-1.5">
-              <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span> GEÇERLİ
+            <span className="bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 px-3 py-1 rounded text-[10px] font-black tracking-widest border border-emerald-500/30 uppercase flex items-center gap-1.5">
+              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span> GEÇERLİ
             </span>
           ) : (
-            <span className="bg-rose-500/10 text-rose-400 px-3 py-1 rounded text-[10px] font-black tracking-widest border border-rose-500/30 uppercase">
+            <span className="bg-rose-500/10 text-rose-600 dark:text-rose-400 px-3 py-1 rounded text-[10px] font-black tracking-widest border border-rose-500/30 uppercase">
               KULLANILDI
             </span>
           )}
