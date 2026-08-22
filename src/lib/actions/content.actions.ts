@@ -61,14 +61,13 @@ export async function addPost(formData: FormData) {
     });
 
     revalidatePath('/');
-    revalidatePath('/blog');
-    revalidatePath('/yayin');
+    revalidatePath('/kulis');
     revalidatePath('/sitemap.xml');
   } catch (error: any) {
     console.error("[ADD_POST] Hata:", error);
     return { error: error.message || "Yazı eklenirken hata oluştu." };
   }
-  redirect('/yayin');
+  redirect('/kulis');
 }
 
 export async function deletePost(formData: FormData) {
@@ -95,8 +94,7 @@ export async function deletePost(formData: FormData) {
 
     await postDoc.ref.delete();
     revalidatePath('/');
-    revalidatePath('/blog');
-    revalidatePath('/yayin');
+    revalidatePath('/kulis');
     revalidatePath('/sitemap.xml');
   } catch (error: any) {
     console.error("[DELETE_POST] Hata:", error);
@@ -190,15 +188,13 @@ export async function addPlay(formData: FormData) {
     });
 
     revalidatePath('/');
-    revalidatePath('/plays');
-    revalidatePath('/sahne');
-    revalidatePath('/arsiv');
+    revalidatePath('/oyunlar');
     revalidatePath('/sitemap.xml');
   } catch (error: any) {
     console.error("[ADD_PLAY] Hata:", error);
     return { error: error.message || "Oyun eklenirken bir hata oluştu." };
   }
-  redirect('/sahne');
+  redirect('/oyunlar');
 }
 
 export async function deletePlay(formData: FormData) {
@@ -226,9 +222,7 @@ export async function deletePlay(formData: FormData) {
 
     await playDoc.ref.delete();
     revalidatePath('/');
-    revalidatePath('/plays');
-    revalidatePath('/sahne');
-    revalidatePath('/arsiv');
+    revalidatePath('/oyunlar');
     revalidatePath('/sitemap.xml');
   } catch (error: any) {
     console.error("[DELETE_PLAY] Hata:", error);

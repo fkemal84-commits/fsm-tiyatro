@@ -1,14 +1,41 @@
+import { adminDb } from '@/lib/firebase-admin';
 import { Metadata } from 'next';
 import Image from 'next/image';
 import Link from 'next/link';
 import { BreadcrumbsJsonLd } from '@/components/JsonLd';
 
+export const dynamic = "force-dynamic";
+
 export const metadata: Metadata = {
-  title: 'Manifestomuz & Tarihçe | FSM Tiyatro',
-  description: 'Fatih Sultan Mehmet Vakıf Üniversitesi Sinema ve Tiyatro Kulübü vizyonu, sanat ilkeleri, sahne geleneği ve manifestosu.',
+  title: 'Kulüp & Ekip | FSM Tiyatro',
+  description: 'Fatih Sultan Mehmet Vakıf Üniversitesi Tiyatro Kulübü kimliği, sahne geleneği ve aktif topluluk ekibi.',
 };
 
-export default function KulupPage() {
+export default async function KulupPage() {
+  let users: any[] = [];
+
+  try {
+    const snap = await adminDb.collection('users')
+      .where('role', 'in', ['SUPERADMIN', 'ADMIN', 'DIRECTOR', 'ASST_DIRECTOR', 'AKTOR', 'PLAYER', 'EDITOR', 'SALES', 'MEMBER'])
+      .get();
+
+    users = snap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+  } catch (error) {
+    console.error("[KULUP] Veri çekme hatası:", error);
+  }
+
+  const roleLabels: Record<string, string> = {
+    SUPERADMIN: 'Süper Admin',
+    ADMIN: 'Yönetici & Reji 👑',
+    DIRECTOR: 'Yönetmen 🎬',
+    ASST_DIRECTOR: 'Yrd. Yönetmen',
+    AKTOR: 'Oyuncu 🎭',
+    PLAYER: 'Oyuncu 🎭',
+    EDITOR: 'Editör 🖋️',
+    SALES: 'Gişe 🎟️',
+    MEMBER: 'Üye',
+  };
+
   const baseUrl = process.env.NEXTAUTH_URL || 'https://fsmtiyatro.com';
 
   return (
@@ -16,100 +43,96 @@ export default function KulupPage() {
       <BreadcrumbsJsonLd 
         items={[
           { name: 'Ana Sayfa', url: baseUrl },
-          { name: 'Kulüp & Manifesto', url: `${baseUrl}/kulup` }
+          { name: 'Kulüp & Ekip', url: `${baseUrl}/kulup` }
         ]} 
       />
 
-      {/* Hero */}
-      <div className="max-w-[1380px] mx-auto px-[5%] mb-16">
+      <div className="max-w-[1380px] mx-auto px-[5%] space-y-16">
+        
+        {/* 1. BİZ KİMİZ? (SAMİMİ KİMLİK) */}
         <div className="max-w-3xl">
-          <span className="editorial-tag text-[var(--primary-gold)] block mb-3">KULÜP KİMLİĞİ & MANİFESTO</span>
+          <span className="editorial-tag text-[var(--primary-gold)] block mb-2">BİZ KİMİZ?</span>
           <h1 className="serif-font text-4xl sm:text-5xl md:text-6xl text-[var(--text-main)] mb-6 leading-tight">
-            "Sahnede İnsanı, Perdede Hakikati Aramak."
+            Üniversitede Tiyatro Yapıyoruz.
           </h1>
-          <p className="text-base sm:text-lg text-[var(--text-muted)] font-light leading-relaxed">
-            FSM Tiyatro, Fatih Sultan Mehmet Vakıf Üniversitesi Sağlık, Kültür ve Spor Daire Başkanlığı çatısı altında; tiyatroyu yalnızca bir sahneleme faaliyeti değil, kolektif bir insan ve düşünce mektebi olarak gören bağımsız bir öğrenci topluluğudur.
+          <p className="text-base sm:text-lg text-[var(--text-muted)] font-light leading-relaxed mb-4">
+            FSM Tiyatro; Fatih Sultan Mehmet Vakıf Üniversitesi bünyesinde faaliyet gösteren bağımsız bir öğrenci tiyatro kulübüdür. Klasik metinlerden çağdaş sahnelemelere; provalardan seyirci alkışına kadar tüm süreci öğrenciler olarak kolektif bir emekle inşa ediyoruz.
+          </p>
+          <p className="text-sm text-[var(--text-muted)] font-light leading-relaxed">
+            Haliç Yerleşkesi sahnemizde her yıl yeni oyunlar sahneliyor, atölyeler düzenliyor ve festivallerde üniversitemizi temsil ediyoruz.
           </p>
         </div>
-      </div>
 
-      {/* Navigasyon Kartları (Ekip & Alumni) */}
-      <div className="max-w-[1380px] mx-auto px-[5%] mb-16">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <Link href="/kulup/ekip" className="editorial-card p-8 bg-[var(--bg-surface)] hover:border-[var(--primary-gold-border)] transition-all group">
-            <div className="flex items-center justify-between mb-4">
-              <span className="text-2xl">🎭</span>
-              <span className="text-xs font-bold text-[var(--primary-gold)] uppercase tracking-wider group-hover:translate-x-1 transition-transform">
-                Kadro Rehberi →
-              </span>
-            </div>
-            <h3 className="serif-font text-2xl text-[var(--text-main)] mb-2">Aktif Topluluk & Kadro</h3>
-            <p className="text-xs text-[var(--text-muted)] leading-relaxed">
-              Yönetmenlerimiz, aktif oyuncularımız, sahne arkası teknisyenlerimiz ve departman sorumlularımız.
-            </p>
-          </Link>
-
-          <Link href="/kulup/alumni" className="editorial-card p-8 bg-[var(--bg-surface)] hover:border-[var(--primary-gold-border)] transition-all group">
-            <div className="flex items-center justify-between mb-4">
-              <span className="text-2xl">🎓</span>
-              <span className="text-xs font-bold text-[var(--primary-gold)] uppercase tracking-wider group-hover:translate-x-1 transition-transform">
-                Mezunlar Ağı →
-              </span>
-            </div>
-            <h3 className="serif-font text-2xl text-[var(--text-main)] mb-2">Mezunlar & Alumni Hafızası</h3>
-            <p className="text-xs text-[var(--text-muted)] leading-relaxed">
-              Kulübümüzün kuruluşundan bu yana sahneye emek vermiş, gelenek bırakmış kıymetli mezunlarımız.
-            </p>
-          </Link>
-        </div>
-      </div>
-
-      {/* MANİFESTO METNİ */}
-      <div className="max-w-[1380px] mx-auto px-[5%]">
-        <div className="editorial-card p-8 md:p-14 bg-[var(--bg-surface)] border border-[var(--border-subtle)] space-y-10">
-          
-          <div>
-            <span className="editorial-tag text-[var(--primary-gold)] block mb-2">SANAT İLKELERİMİZ</span>
-            <h2 className="serif-font text-3xl sm:text-4xl text-[var(--text-main)] mb-4">Neye İnanıyoruz?</h2>
-            <p className="text-base text-[var(--text-muted)] leading-relaxed font-light">
-              Bizler sahneye adım attığımızda; metnin lafzını ezberlemekten öte, insanın varoluşsal sancılarını, çelişkilerini, sevincini ve adalet arayışını görünür kılmayı hedefleriz. Muhsin Ertuğrul'un, Haldun Dormen'in ve dünya tiyatro ustalarının izinde; klasik disiplinle çağdaş sahneleme cesaretini harmanlarız.
-            </p>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8 pt-8 border-t border-[var(--border-subtle)]">
+        {/* 2. EKİBİMİZ & KADRO */}
+        <div className="pt-10 border-t border-[var(--border-subtle)]">
+          <div className="flex items-center justify-between mb-8 flex-wrap gap-4">
             <div>
-              <h4 className="serif-font text-xl text-[var(--text-main)] mb-2">1. Kolektif Emek</h4>
-              <p className="text-xs text-[var(--text-muted)] leading-relaxed">
-                Sahnenin başrolü oyuncu olduğu kadar, ışığı yönlendiren kondüvit ve dekoru çakan emekçidir. Hiyerarşisiz bir sahne yoldaşlığı esastır.
-              </p>
+              <h2 className="serif-font text-2xl sm:text-3xl text-[var(--text-main)]">Topluluk & Ekip</h2>
+              <p className="text-xs text-[var(--text-muted)] mt-1 font-light">Sahnede ve perde arkasında emek veren ekip arkadaşlarımız</p>
             </div>
-
-            <div>
-              <h4 className="serif-font text-xl text-[var(--text-main)] mb-2">2. Dramaturgik Derinlik</h4>
-              <p className="text-xs text-[var(--text-muted)] leading-relaxed">
-                Sahnelenecek her oyun, aylar süren metin analizleri, tarihi arka plan araştırmaları ve alt metin çözümlemeleriyle inşa edilir.
-              </p>
-            </div>
-
-            <div>
-              <h4 className="serif-font text-xl text-[var(--text-main)] mb-2">3. Açık Sahne Okulu</h4>
-              <p className="text-xs text-[var(--text-muted)] leading-relaxed">
-                Her fakülteden öğrencinin oyunculuk, reji, ışık, ses veya tasarım alanında kendini geliştirebileceği özgür bir gelişim alanıyız.
-              </p>
-            </div>
-          </div>
-
-          <div className="pt-8 border-t border-[var(--border-subtle)] flex flex-col sm:flex-row items-center justify-between gap-6 bg-[var(--bg-surface-elevated)] p-6 rounded-xl">
-            <div>
-              <h4 className="font-bold text-sm text-[var(--text-main)]">Sahnemizin Bir Parçası Olmak İster misiniz?</h4>
-              <p className="text-xs text-[var(--text-muted)]">Yeni sezon seçmeleri ve departman başvuruları hakkında bilgi alın.</p>
-            </div>
-            <Link href="/katil" className="btn btn-primary text-xs tracking-wider flex-shrink-0">
-              Kulübe Katılın
+            <Link href="/katil" className="btn btn-primary !py-2 !px-4 text-xs font-bold">
+              Ekibe Katıl
             </Link>
           </div>
 
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+            {users.map((user) => {
+              const cleanFirstName = (user.name || '').replace(/undefined/gi, '').trim();
+              const cleanLastName = (user.surname || '').replace(/undefined/gi, '').trim();
+              const fullName = [cleanFirstName, cleanLastName].filter(Boolean).join(' ') || 'Kulüp Üyesi';
+              const roleName = roleLabels[user.role] || user.role || 'Üye';
+
+              return (
+                <div key={user.id} className="editorial-card p-5 bg-[var(--bg-surface)] flex flex-col justify-between">
+                  <div>
+                    <div className="flex items-center gap-3.5 mb-3">
+                      <div className="relative w-14 h-14 rounded-full overflow-hidden border border-[var(--primary-gold)] flex-shrink-0">
+                        <Image
+                          src={user.photoUrl || '/default-avatar.svg'}
+                          alt={fullName}
+                          fill
+                          className="object-cover"
+                        />
+                      </div>
+                      <div>
+                        <h3 className="serif-font text-base text-[var(--text-main)] leading-snug">{fullName}</h3>
+                        <span className="text-[10px] font-bold text-[var(--primary-gold)] block">
+                          {roleName}
+                        </span>
+                      </div>
+                    </div>
+
+                    {user.department && (
+                      <p className="text-[11px] text-[var(--text-dim)] mb-2">
+                        {user.department}
+                      </p>
+                    )}
+
+                    {user.bio && (
+                      <p className="text-xs text-[var(--text-muted)] line-clamp-2 leading-relaxed italic font-light">
+                        "{user.bio}"
+                      </p>
+                    )}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
         </div>
+
+        {/* 3. DESTEK OLMAK İSTER MİSİNİZ? (ZARİF & SADE BLOK) */}
+        <div id="destek" className="p-8 rounded-2xl bg-[var(--bg-surface)] border border-[var(--border-subtle)] flex flex-col sm:flex-row items-start sm:items-center justify-between gap-6">
+          <div className="space-y-1 max-w-xl">
+            <h3 className="serif-font text-xl text-[var(--text-main)]">FSM Tiyatro'ya Destek Olun</h3>
+            <p className="text-xs text-[var(--text-muted)] font-light leading-relaxed">
+              Öğrenci prodüksiyonlarımıza, dekor/kostüm çalışmalarımıza veya festival katılımlarımıza ayni ya da kurumsal destek sağlamak için bizimle iletişime geçebilirsiniz.
+            </p>
+          </div>
+          <a href="mailto:tiyatro@fsm.edu.tr" className="btn btn-outline text-xs font-bold flex-shrink-0">
+            tiyatro@fsm.edu.tr
+          </a>
+        </div>
+
       </div>
     </div>
   );

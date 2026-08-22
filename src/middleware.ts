@@ -24,10 +24,10 @@ export function middleware(request: NextRequest) {
     }
   }
 
-  // 2. AKADEMİ & KULİS SUBDOMAINİ (akademi.fsmtiyatro.com, kulis.fsmtiyatro.com)
-  if (currentHost.startsWith('akademi.') || currentHost.startsWith('kulis.')) {
+  // 2. KULİS SUBDOMAINİ (kulis.fsmtiyatro.com, akademi.fsmtiyatro.com)
+  if (currentHost.startsWith('kulis.') || currentHost.startsWith('akademi.')) {
     if (url.pathname === '/') {
-      return NextResponse.rewrite(new URL('/yayin', request.url));
+      return NextResponse.rewrite(new URL('/kulis', request.url));
     }
   }
 

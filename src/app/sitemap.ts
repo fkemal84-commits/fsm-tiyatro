@@ -14,16 +14,22 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       priority: 1.0,
     },
     {
-      url: `${baseUrl}/sahne`,
+      url: `${baseUrl}/oyunlar`,
       lastModified: new Date(),
       changeFrequency: 'weekly',
       priority: 0.9,
     },
     {
-      url: `${baseUrl}/arsiv`,
+      url: `${baseUrl}/etkinlikler`,
       lastModified: new Date(),
       changeFrequency: 'weekly',
       priority: 0.8,
+    },
+    {
+      url: `${baseUrl}/kulis`,
+      lastModified: new Date(),
+      changeFrequency: 'daily',
+      priority: 0.9,
     },
     {
       url: `${baseUrl}/kulup`,
@@ -32,46 +38,10 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       priority: 0.8,
     },
     {
-      url: `${baseUrl}/kulup/ekip`,
-      lastModified: new Date(),
-      changeFrequency: 'weekly',
-      priority: 0.8,
-    },
-    {
-      url: `${baseUrl}/kulup/alumni`,
-      lastModified: new Date(),
-      changeFrequency: 'monthly',
-      priority: 0.7,
-    },
-    {
-      url: `${baseUrl}/uretim`,
-      lastModified: new Date(),
-      changeFrequency: 'weekly',
-      priority: 0.8,
-    },
-    {
-      url: `${baseUrl}/yayin`,
-      lastModified: new Date(),
-      changeFrequency: 'daily',
-      priority: 0.9,
-    },
-    {
-      url: `${baseUrl}/medya`,
-      lastModified: new Date(),
-      changeFrequency: 'weekly',
-      priority: 0.8,
-    },
-    {
       url: `${baseUrl}/katil`,
       lastModified: new Date(),
       changeFrequency: 'monthly',
-      priority: 0.9,
-    },
-    {
-      url: `${baseUrl}/destek`,
-      lastModified: new Date(),
-      changeFrequency: 'monthly',
-      priority: 0.7,
+      priority: 0.8,
     },
     {
       url: `${baseUrl}/biletimi-bul`,
@@ -90,7 +60,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     const playPages: MetadataRoute.Sitemap = playsSnap.docs.map((doc) => {
       const data = doc.data();
       return {
-        url: `${baseUrl}/sahne/${doc.id}`,
+        url: `${baseUrl}/oyunlar/${doc.id}`,
         lastModified: data.createdAt ? new Date(data.createdAt) : new Date(),
         changeFrequency: 'monthly',
         priority: 0.8,
@@ -100,7 +70,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     const postPages: MetadataRoute.Sitemap = postsSnap.docs.map((doc) => {
       const data = doc.data();
       return {
-        url: `${baseUrl}/yayin/${doc.id}`,
+        url: `${baseUrl}/kulis/${doc.id}`,
         lastModified: data.createdAt ? new Date(data.createdAt) : new Date(),
         changeFrequency: 'weekly',
         priority: 0.8,
