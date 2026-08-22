@@ -2,13 +2,14 @@ import ScrollReveal from "@/components/ScrollReveal";
 import { adminDb } from "@/lib/firebase-admin";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
-import { addPost, deletePost } from "@/app/actions";
+import { deletePost } from "@/app/actions";
 import DeleteButton from "@/components/DeleteButton";
 import { Metadata } from "next";
 import Image from "next/image";
+import Link from "next/link";
 
 export const metadata: Metadata = {
-  title: "Blog",
+  title: "Blog & Kulis Güncesi",
   description: "FSM Tiyatro kulisinden haberler, makaleler ve en güncel duyurular.",
 };
 
@@ -18,144 +19,126 @@ export default async function Blog() {
   const session = await getServerSession(authOptions);
   let userRole = (session?.user as any)?.role;
 
-  // Güvenlik ve Güncellik Katmanı: Eğer session var ama rol gelmediyse veya 
-  // kullanıcı yeni yetkilendirildiyse DB'den en güncel hali çekiyoruz.
   if (session?.user?.email) {
-      const uSnap = await adminDb.collection('users').where('email', '==', session.user.email).limit(1).get();
-      if (!uSnap.empty) {
-          userRole = uSnap.docs[0].data().role;
-      }
+    const uSnap = await adminDb.collection('users').where('email', '==', session.user.email).limit(1).get();
+    if (!uSnap.empty) {
+      userRole = uSnap.docs[0].data().role;
+    }
   }
 
-  const canPost = userRole === 'SUPERADMIN' || userRole === 'ADMIN' || userRole === 'EDITOR';
-
+  const canManage = userRole === 'SUPERADMIN' || userRole === 'ADMIN' || userRole === 'EDITOR';
   const categories = ['Kulis', 'Makale', 'Blog', 'Haber'];
 
   const snapshot = await adminDb.collection('posts').orderBy('createdAt', 'desc').get();
   const allPosts = snapshot.docs.map(doc => {
-      const data = doc.data();
-      return {
-          id: doc.id,
-          ...data,
-          category: data.category || 'Blog',
-          createdAt: data.createdAt ? new Date(data.createdAt) : new Date()
-      } as any;
+    const data = doc.data();
+    return {
+      id: doc.id,
+      ...data,
+      category: data.category || 'Blog',
+      createdAt: data.createdAt ? new Date(data.createdAt) : new Date()
+    } as any;
   });
 
   return (
-    <main>
-      <header style={{ padding: '12rem 5% 4rem', textAlign: 'center', background: 'radial-gradient(circle at center top, rgba(212, 175, 55, 0.15) 0%, var(--bg-dark) 80%)', borderBottom: 'var(--glass-border)' }}>
-        <h1 className="serif-font" style={{ fontSize: '4rem', color: '#fff', marginBottom: '1rem' }}>Sahnemizin Güncesi</h1>
-        <p style={{ color: 'var(--text-muted)', maxWidth: '600px', margin: '0 auto', fontSize: '1.1rem' }}>FSM Tiyatro'dan haberler, makaleler ve kulis notları.</p>
-        
-        {/* EDİTÖR HIZLI YAZI PANELİ */}
-        {canPost && (
-          <div className="glass-card" style={{ maxWidth: '800px', margin: '3rem auto 0', textAlign: 'left', padding: '2rem' }}>
-            <h2 style={{ color: 'var(--primary-gold)', fontSize: '1.5rem', marginBottom: '1.5rem', display: 'flex', alignItems: 'center', gap: '0.8rem' }}>
-              <ion-icon name="create-outline"></ion-icon> Yeni Yazı Paylaş
-            </h2>
-            <form action={addPost as any} encType="multipart/form-data" className="flex flex-col gap-4">
-              <div className="flex flex-col md:flex-row gap-4">
-                <input 
-                  type="text" 
-                  name="title"
-                  placeholder="Yazı Başlığı" 
-                  className="flex-1 p-4 rounded-lg border border-white/10 bg-black/40 text-white text-lg"
-                  required
-                />
-                <select 
-                  name="category"
-                  className="p-4 rounded-lg border border-white/10 bg-black/40 text-white text-lg appearance-none cursor-pointer hover:border-[#D4AF3744] transition-all"
-                  required
-                >
-                  {categories.map(cat => (
-                    <option key={cat} value={cat.toUpperCase()} style={{ background: '#0a0a0c' }}>{cat}</option>
-                  ))}
-                </select>
-              </div>
-              <textarea 
-                name="content"
-                placeholder="Yazının içeriğini buraya dökün..." 
-                rows={6}
-                className="p-4 rounded-lg border border-white/10 bg-black/40 text-white text-base leading-relaxed"
-                required
-              ></textarea>
-              <div className="flex justify-between items-center flex-wrap gap-4">
-                <div className="flex flex-col gap-2">
-                  <label className="text-xs text-[#a0a0b0] font-semibold">Kapak Fotoğrafı (Maks 2MB):</label>
-                  <input 
-                    type="file" 
-                    name="image" 
-                    accept="image/jpeg,image/png,image/webp" 
-                    className="text-xs text-[#a0a0b0]" 
-                  />
-                </div>
-                <button type="submit" className="btn btn-primary px-10 py-3">Hemen Yayınla</button>
-              </div>
-            </form>
+    <main className="min-h-screen bg-[var(--bg-dark)] pt-36 pb-24">
+      {/* Header */}
+      <header className="max-w-[1380px] mx-auto px-[5%] text-center mb-16">
+        <span className="editorial-tag text-[var(--primary-gold)] block mb-3">KULİS VE SANAT YAZILARI</span>
+        <h1 className="serif-font text-5xl sm:text-6xl md:text-7xl text-[var(--text-main)] mb-4">
+          Sahnemizin Güncesi
+        </h1>
+        <p className="text-[var(--text-muted)] max-w-xl mx-auto text-base sm:text-lg font-light leading-relaxed">
+          FSM Tiyatro kulisinden haberler, sahne arkası notları, oyun incelemeleri ve sanat yazıları.
+        </p>
+
+        {/* Yetkili Panel Erişimi Butonu (Sadece Admin / Editörler Görür) */}
+        {canManage && (
+          <div className="mt-8 flex justify-center">
+            <Link 
+              href="/tanerabi/dashboard?tab=blog" 
+              className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full border border-[var(--primary-gold-border)] bg-[var(--primary-gold-dim)] text-[var(--primary-gold)] text-xs font-bold tracking-wider uppercase hover:scale-105 transition-all"
+            >
+              <ion-icon name="create-outline" style={{ fontSize: '1rem' }}></ion-icon>
+              Yazı Ekle / Yönetim Paneli →
+            </Link>
           </div>
         )}
       </header>
 
-      <section className="section">
+      {/* Blog İçerik Listesi */}
+      <section className="max-w-[1200px] mx-auto px-[5%]">
         <ScrollReveal>
-          <div className="max-w-[1000px] mx-auto flex flex-col gap-16">
-            
+          <div className="flex flex-col gap-20">
             {categories.map(category => {
               const categoryPosts = allPosts.filter(p => p.category?.toUpperCase() === category.toUpperCase());
               if (categoryPosts.length === 0) return null;
 
               return (
                 <div key={category} className="flex flex-col gap-8">
-                  <div className="flex items-center gap-4">
-                    <h2 className="serif-font text-3xl text-[#D4AF37]">{category}</h2>
-                    <div className="h-[1px] flex-1 bg-gradient-to-r from-[#D4AF3744] to-transparent"></div>
+                  <div className="flex items-center gap-4 pb-4 border-b border-[var(--border-subtle)]">
+                    <span className="editorial-tag text-[var(--primary-gold)] text-xs">{category}</span>
+                    <h2 className="serif-font text-2xl sm:text-3xl text-[var(--text-main)]">{category} Yazıları</h2>
+                    <div className="h-[1px] flex-1 bg-gradient-to-r from-[var(--border-medium)] to-transparent"></div>
                   </div>
 
-                  <div className="flex flex-col gap-8">
+                  <div className="grid grid-cols-1 gap-8">
                     {categoryPosts.map(post => (
                       <ScrollReveal key={post.id}>
-                        <article className="flex flex-col md:flex-row bg-[rgba(20,20,24,0.6)] backdrop-blur-md border border-white/10 rounded-2xl overflow-hidden transition-all duration-300 hover:-translate-y-2 hover:border-[#D4AF3744] h-full">
-                            {post.imageUrl && (
-                              <div className="relative w-full md:w-[420px] md:min-w-[420px] h-[300px] md:h-auto overflow-hidden">
-                                <Image 
-                                  src={post.imageUrl} 
-                                  alt={post.title} 
-                                  fill
-                                  className="object-cover"
-                                  sizes="(max-width: 768px) 100vw, 420px"
-                                />
-                              </div>
-                            )}
-                            <div className="p-6 md:p-10 flex flex-col justify-center flex-1">
-                                <div className="flex flex-wrap gap-4 mb-4 text-[0.85rem] text-[#D4AF37] font-semibold tracking-wider uppercase">
-                                    <span>{post.category}</span><span>&bull;</span><span>{post.createdAt.toLocaleDateString('tr-TR')}</span>
-                                    {post.author && (
-                                      <>
-                                        <span>&bull;</span>
-                                        <span className="text-white/90 normal-case font-normal">🖋️ {post.author} yazdı</span>
-                                      </>
-                                    )}
-                                </div>
-                                <h2 className="serif-font text-[1.8rem] text-white mb-4 leading-tight">{post.title}</h2>
-                                
-                                <p className="text-[#a0a0b0] mb-8 text-[1.05rem] leading-relaxed line-clamp-5 md:line-clamp-[12]">
-                                  {post.content.length > 1200 ? `${post.content.substring(0, 1200)}...` : post.content}
-                                </p>
-                                
-                                <div className="flex justify-between items-center mt-auto">
-                                  <a href={`/blog/${post.id}`} className="text-[#D4AF37] font-semibold inline-flex items-center gap-2 no-underline hover:brightness-125 transition-all text-[1.1rem]">Devamını Oku</a>
-                                  {(userRole === 'SUPERADMIN' || userRole === 'ADMIN' || (userRole === 'EDITOR' && post.authorEmail === session?.user?.email)) && (
-                                    <DeleteButton 
-                                      action={deletePost} 
-                                      id={post.id} 
-                                      name={post.title} 
-                                      idFieldName="postId" 
-                                      confirmMessage="Bu yazıyı silmek istediğine emin misin?"
-                                    />
-                                  )}
-                                </div>
+                        <article className="editorial-card group p-0 overflow-hidden flex flex-col md:flex-row transition-all duration-300 hover:border-[var(--primary-gold-border)]">
+                          {post.imageUrl && (
+                            <div className="relative w-full md:w-[380px] md:min-w-[380px] aspect-video md:aspect-auto overflow-hidden bg-[var(--bg-surface-elevated)] border-b md:border-b-0 md:border-r border-[var(--border-subtle)]">
+                              <Image 
+                                src={post.imageUrl} 
+                                alt={post.title} 
+                                fill
+                                className="object-cover transition-transform duration-500 group-hover:scale-105"
+                                sizes="(max-width: 768px) 100vw, 380px"
+                              />
                             </div>
+                          )}
+                          <div className="p-6 md:p-8 flex flex-col justify-between flex-1">
+                            <div>
+                              <div className="flex flex-wrap items-center gap-3 mb-3 text-xs font-semibold text-[var(--primary-gold)] uppercase tracking-wider">
+                                <span>{post.category}</span>
+                                <span>&bull;</span>
+                                <span className="text-[var(--text-dim)] font-mono">{post.createdAt.toLocaleDateString('tr-TR', { day: 'numeric', month: 'long', year: 'numeric' })}</span>
+                                {post.author && (
+                                  <>
+                                    <span>&bull;</span>
+                                    <span className="text-[var(--text-muted)] normal-case font-normal">🖋️ {post.author}</span>
+                                  </>
+                                )}
+                              </div>
+                              <h3 className="serif-font text-2xl md:text-3xl text-[var(--text-main)] mb-4 leading-snug group-hover:text-[var(--primary-gold)] transition-colors">
+                                <Link href={`/blog/${post.id}`}>
+                                  {post.title}
+                                </Link>
+                              </h3>
+                              
+                              <p className="text-[var(--text-muted)] text-sm sm:text-base leading-relaxed line-clamp-3 md:line-clamp-4 font-light mb-6">
+                                {post.content}
+                              </p>
+                            </div>
+                            
+                            <div className="flex justify-between items-center pt-4 border-t border-[var(--border-subtle)] mt-auto">
+                              <Link 
+                                href={`/blog/${post.id}`} 
+                                className="text-xs font-bold text-[var(--primary-gold)] uppercase tracking-wider hover:underline flex items-center gap-1.5"
+                              >
+                                Devamını Oku →
+                              </Link>
+                              {(userRole === 'SUPERADMIN' || userRole === 'ADMIN' || (userRole === 'EDITOR' && post.authorEmail === session?.user?.email)) && (
+                                <DeleteButton 
+                                  action={deletePost} 
+                                  id={post.id} 
+                                  name={post.title} 
+                                  idFieldName="postId" 
+                                  confirmMessage="Bu yazıyı silmek istediğinize emin misiniz?"
+                                />
+                              )}
+                            </div>
+                          </div>
                         </article>
                       </ScrollReveal>
                     ))}
@@ -165,7 +148,14 @@ export default async function Blog() {
             })}
 
             {allPosts.length === 0 && (
-              <p className="text-center text-[#a0a0b0] py-10 italic">Henüz bir blog yazısı eklenmemiş.</p>
+              <div className="editorial-card text-center py-16">
+                <p className="text-[var(--text-muted)] text-sm mb-4">Henüz yayınlanmış bir blog yazısı bulunmuyor.</p>
+                {canManage && (
+                  <Link href="/tanerabi/dashboard?tab=blog" className="btn btn-primary text-xs">
+                    İlk Yazıyı Yayınla
+                  </Link>
+                )}
+              </div>
             )}
 
           </div>
