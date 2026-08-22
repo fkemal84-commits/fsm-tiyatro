@@ -17,16 +17,9 @@ export const dynamic = 'force-dynamic';
 
 export default async function Blog() {
   const session = await getServerSession(authOptions);
-  let userRole = (session?.user as any)?.role;
+  const userRole = (session?.user as any)?.role;
+  const isAdminMode = (session?.user as any)?.isAdminMode === true;
 
-  if (session?.user?.email) {
-    const uSnap = await adminDb.collection('users').where('email', '==', session.user.email).limit(1).get();
-    if (!uSnap.empty) {
-      userRole = uSnap.docs[0].data().role;
-    }
-  }
-
-  const canManage = userRole === 'SUPERADMIN' || userRole === 'ADMIN' || userRole === 'EDITOR';
   const categories = ['Kulis', 'Makale', 'Blog', 'Haber'];
 
   const snapshot = await adminDb.collection('posts').orderBy('createdAt', 'desc').get();
@@ -51,19 +44,6 @@ export default async function Blog() {
         <p className="text-[var(--text-muted)] max-w-xl mx-auto text-base sm:text-lg font-light leading-relaxed">
           FSM Tiyatro kulisinden haberler, sahne arkası notları, oyun incelemeleri ve sanat yazıları.
         </p>
-
-        {/* Yetkili Panel Erişimi Butonu (Sadece Admin / Editörler Görür) */}
-        {canManage && (
-          <div className="mt-8 flex justify-center">
-            <Link 
-              href="/tanerabi/dashboard?tab=blog" 
-              className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full border border-[var(--primary-gold-border)] bg-[var(--primary-gold-dim)] text-[var(--primary-gold)] text-xs font-bold tracking-wider uppercase hover:scale-105 transition-all"
-            >
-              <ion-icon name="create-outline" style={{ fontSize: '1rem' }}></ion-icon>
-              Yazı Ekle / Yönetim Paneli →
-            </Link>
-          </div>
-        )}
       </header>
 
       {/* Blog İçerik Listesi */}
@@ -128,7 +108,7 @@ export default async function Blog() {
                               >
                                 Devamını Oku →
                               </Link>
-                              {(userRole === 'SUPERADMIN' || userRole === 'ADMIN' || (userRole === 'EDITOR' && post.authorEmail === session?.user?.email)) && (
+                              {isAdminMode && (userRole === 'SUPERADMIN' || userRole === 'ADMIN' || (userRole === 'EDITOR' && post.authorEmail === session?.user?.email)) && (
                                 <DeleteButton 
                                   action={deletePost} 
                                   id={post.id} 
@@ -149,12 +129,7 @@ export default async function Blog() {
 
             {allPosts.length === 0 && (
               <div className="editorial-card text-center py-16">
-                <p className="text-[var(--text-muted)] text-sm mb-4">Henüz yayınlanmış bir blog yazısı bulunmuyor.</p>
-                {canManage && (
-                  <Link href="/tanerabi/dashboard?tab=blog" className="btn btn-primary text-xs">
-                    İlk Yazıyı Yayınla
-                  </Link>
-                )}
+                <p className="text-[var(--text-muted)] text-sm">Henüz yayınlanmış bir blog yazısı bulunmuyor.</p>
               </div>
             )}
 

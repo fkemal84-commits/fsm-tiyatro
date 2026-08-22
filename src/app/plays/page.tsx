@@ -3,8 +3,6 @@ import { Metadata } from "next";
 import Image from "next/image";
 import Link from "next/link";
 import { adminDb } from "@/lib/firebase-admin";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/auth";
 
 export const metadata: Metadata = {
   title: "Repertuvar & Sahnede İz Bırakanlar",
@@ -14,18 +12,6 @@ export const metadata: Metadata = {
 export const dynamic = 'force-dynamic';
 
 export default async function Plays() {
-  const session = await getServerSession(authOptions);
-  let userRole = (session?.user as any)?.role;
-
-  if (session?.user?.email) {
-    const uSnap = await adminDb.collection('users').where('email', '==', session.user.email).limit(1).get();
-    if (!uSnap.empty) {
-      userRole = uSnap.docs[0].data().role;
-    }
-  }
-
-  const canManage = userRole === 'SUPERADMIN' || userRole === 'ADMIN';
-
   const snapshot = await adminDb.collection('plays').orderBy('createdAt', 'desc').get();
   const plays = snapshot.docs.map(doc => ({
     id: doc.id,
@@ -44,19 +30,6 @@ export default async function Plays() {
         <p className="text-[var(--text-muted)] max-w-xl mx-auto text-base sm:text-lg font-light leading-relaxed">
           Kuruluşumuzdan bu yana sahnelediğimiz, üniversitemizde sanatın ve tiyatronun nabzını tutan seçkin eserlerimiz.
         </p>
-
-        {/* Yetkili Panel Erişimi Butonu (Sadece Adminler Görür) */}
-        {canManage && (
-          <div className="mt-8 flex justify-center">
-            <Link 
-              href="/tanerabi/dashboard?tab=plays" 
-              className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full border border-[var(--primary-gold-border)] bg-[var(--primary-gold-dim)] text-[var(--primary-gold)] text-xs font-bold tracking-wider uppercase hover:scale-105 transition-all"
-            >
-              <ion-icon name="film-outline" style={{ fontSize: '1rem' }}></ion-icon>
-              Oyun Ekle / Yönetim Paneli →
-            </Link>
-          </div>
-        )}
       </header>
 
       {/* Oyunlar Galerisi */}
@@ -65,12 +38,7 @@ export default async function Plays() {
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
             {plays.length === 0 ? (
               <div className="col-span-full editorial-card text-center py-16">
-                <p className="text-[var(--text-muted)] text-sm mb-4">Henüz kayıtlı bir oyun bulunmuyor.</p>
-                {canManage && (
-                  <Link href="/tanerabi/dashboard?tab=plays" className="btn btn-primary text-xs">
-                    İlk Oyunu Ekle
-                  </Link>
-                )}
+                <p className="text-[var(--text-muted)] text-sm">Henüz kayıtlı bir oyun bulunmuyor.</p>
               </div>
             ) : (
               plays.map(play => (
