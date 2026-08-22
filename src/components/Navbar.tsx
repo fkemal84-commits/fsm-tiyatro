@@ -8,7 +8,7 @@ import { useSession, signOut } from 'next-auth/react';
 import { db } from '@/lib/firebase';
 import { doc, onSnapshot } from 'firebase/firestore';
 
-export default function Navbar({ session: initialSession }: { session?: any }) {
+export default function Navbar({ session: initialSession, initialTicketQueryActive = true }: { session?: any; initialTicketQueryActive?: boolean }) {
   const { data: session } = useSession();
   const currentSession = session || initialSession;
 
@@ -18,7 +18,7 @@ export default function Navbar({ session: initialSession }: { session?: any }) {
   const [touchStart, setTouchStart] = useState<number | null>(null);
   const [touchEnd, setTouchEnd] = useState<number | null>(null);
   const [theme, setTheme] = useState<'system' | 'light' | 'dark'>('system');
-  const [isTicketQueryActive, setIsTicketQueryActive] = useState<boolean>(true);
+  const [isTicketQueryActive, setIsTicketQueryActive] = useState<boolean>(initialTicketQueryActive);
   const pathname = usePathname();
 
   useEffect(() => {

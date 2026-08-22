@@ -1,7 +1,7 @@
 import Image from 'next/image';
 import Link from 'next/link';
 
-export default function Footer() {
+export default function Footer({ showTicketQuery = true }: { showTicketQuery?: boolean }) {
   return (
     <footer className="border-t border-[var(--border-subtle)] bg-[var(--bg-surface)] mt-24 text-[var(--text-muted)] text-sm">
       <div className="max-w-[1380px] mx-auto px-[5%] py-16">
@@ -35,7 +35,9 @@ export default function Footer() {
             <span className="editorial-tag text-[var(--text-main)] block text-xs">REPERTUVAR & BİLET</span>
             <ul className="space-y-2 text-xs">
               <li><Link href="/plays" className="hover:text-[var(--primary-gold)] transition-colors">Sezon Oyunları</Link></li>
-              <li><Link href="/biletimi-bul" className="text-[var(--primary-gold)] hover:underline flex items-center gap-1.5 font-bold">🎫 Biletimi Sorgula</Link></li>
+              {showTicketQuery && (
+                <li><Link href="/biletimi-bul" className="text-[var(--primary-gold)] hover:underline flex items-center gap-1.5 font-bold">🎫 Biletimi Sorgula</Link></li>
+              )}
               <li><Link href="/blog" className="hover:text-[var(--primary-gold)] transition-colors">Kulis Blogu & Yazılar</Link></li>
               <li><Link href="/#manifesto" className="hover:text-[var(--primary-gold)] transition-colors">Sanat Manifestosu</Link></li>
             </ul>

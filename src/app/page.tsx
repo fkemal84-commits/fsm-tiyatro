@@ -77,7 +77,7 @@ export default async function Home() {
     <main className="min-h-screen bg-[var(--bg-dark)]">
 
       {/* 1. HERO — Dinamik Carousel */}
-      <HeroCarousel slides={slides} showTicketQuery={siteConfig?.isTicketQueryActive ?? true} />
+      <HeroCarousel slides={slides} showTicketQuery={siteConfig?.isTicketQueryActive !== false} />
 
       {/* 2. SEZON OYUNLARI VİTRİNİ */}
       <section className="section max-w-[1380px] mx-auto" id="repertuvar">

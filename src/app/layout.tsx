@@ -3,6 +3,13 @@ import "./globals.css";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import PushNotificationManager from "@/components/PushNotificationManager";
+import Providers from "@/components/Providers";
+import SessionWatcher from "@/components/SessionWatcher";
+import FlashAttendanceOverlay from "@/components/FlashAttendanceOverlay";
+import PullToRefresh from "@/components/PullToRefresh";
+import { getServerSession } from "next-auth";
+import { authOptions } from "@/lib/auth";
+import { adminDb } from "@/lib/firebase-admin";
 
 export const dynamic = "force-dynamic";
 
@@ -22,7 +29,8 @@ export const metadata: Metadata = {
     siteName: "FSM Tiyatro",
     locale: "tr_TR",
     type: "website",
-  },
+    }
+  ,
   twitter: {
     card: "summary_large_image",
     title: "FSM Tiyatro | Sahnenin Büyüsü",
@@ -48,16 +56,29 @@ export const viewport: Viewport = {
   userScalable: false,
 };
 
-import Providers from "@/components/Providers";
-import SessionWatcher from "@/components/SessionWatcher";
-import FlashAttendanceOverlay from "@/components/FlashAttendanceOverlay";
-import PullToRefresh from "@/components/PullToRefresh";
-
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  let session = null;
+  let isTicketQueryActive = true;
+
+  try {
+    const [sess, configDoc] = await Promise.all([
+      getServerSession(authOptions),
+      adminDb.collection('settings').doc('site_config').get()
+    ]);
+    session = sess;
+    if (configDoc.exists) {
+      const data = configDoc.data();
+      if (typeof data?.isTicketQueryActive === 'boolean') {
+        isTicketQueryActive = data.isTicketQueryActive;
+      }
+    }
+  } catch (e) {
+    console.error("Layout data fetch error:", e);
+  }
 
   return (
     <html lang="tr">
@@ -75,14 +96,14 @@ export default function RootLayout({
         }} />
       </head>
       <body className="antialiased">
-        <Providers session={null}>
+        <Providers session={session}>
           <SessionWatcher />
           <PullToRefresh />
-          <PushNotificationManager session={null} />
+          <PushNotificationManager session={session} />
           <FlashAttendanceOverlay />
-          <Navbar session={null} />
+          <Navbar session={session} initialTicketQueryActive={isTicketQueryActive} />
           {children}
-          <Footer />
+          <Footer showTicketQuery={isTicketQueryActive} />
         </Providers>
       </body>
     </html>
