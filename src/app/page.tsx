@@ -3,6 +3,7 @@ import HeroCarousel, { HeroSlide } from "@/components/HeroCarousel";
 import { adminDb } from "@/lib/firebase-admin";
 import Image from "next/image";
 import Link from "next/link";
+import { OrganizationJsonLd } from "@/components/JsonLd";
 
 export const dynamic = "force-dynamic";
 
@@ -75,6 +76,7 @@ export default async function Home() {
 
   return (
     <main className="min-h-screen bg-[var(--bg-dark)]">
+      <OrganizationJsonLd />
 
       {/* 1. HERO — Dinamik Carousel */}
       <HeroCarousel slides={slides} showTicketQuery={siteConfig?.isTicketQueryActive !== false} />

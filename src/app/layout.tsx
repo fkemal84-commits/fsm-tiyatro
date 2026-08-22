@@ -1,4 +1,5 @@
 import type { Metadata, Viewport } from "next";
+import { Outfit, Playfair_Display, Cormorant_Garamond } from 'next/font/google';
 import "./globals.css";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
@@ -10,6 +11,25 @@ import PullToRefresh from "@/components/PullToRefresh";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { adminDb } from "@/lib/firebase-admin";
+
+const outfit = Outfit({
+  subsets: ['latin', 'latin-ext'],
+  variable: '--font-outfit',
+  display: 'swap',
+});
+
+const playfair = Playfair_Display({
+  subsets: ['latin', 'latin-ext'],
+  variable: '--font-playfair',
+  display: 'swap',
+});
+
+const cormorant = Cormorant_Garamond({
+  subsets: ['latin', 'latin-ext'],
+  weight: ['400', '500', '600', '700'],
+  variable: '--font-cormorant',
+  display: 'swap',
+});
 
 export const dynamic = "force-dynamic";
 
@@ -29,8 +49,7 @@ export const metadata: Metadata = {
     siteName: "FSM Tiyatro",
     locale: "tr_TR",
     type: "website",
-    }
-  ,
+  },
   twitter: {
     card: "summary_large_image",
     title: "FSM Tiyatro | Sahnenin Büyüsü",
@@ -81,7 +100,7 @@ export default async function RootLayout({
   }
 
   return (
-    <html lang="tr">
+    <html lang="tr" className={`${outfit.variable} ${playfair.variable} ${cormorant.variable}`}>
       <head>
         <script type="module" src="https://unpkg.com/ionicons@7.1.0/dist/ionicons/ionicons.esm.js" async></script>
         <script noModule={true} src="https://unpkg.com/ionicons@7.1.0/dist/ionicons/ionicons.js" async></script>

@@ -347,19 +347,45 @@ export default async function Dashboard({ searchParams }: { searchParams: Promis
                 <div style={{ background: 'var(--bg-surface)', border: '1px solid var(--border-subtle)', borderRadius: '12px', padding: '1.5rem' }}>
                   <h2 style={{ color: 'var(--text-main)', marginBottom: '1.25rem', fontSize: '1.1rem', fontWeight: 'bold' }}>Yeni Blog Yazısı Ekle</h2>
                   <form action={addPost as any} encType="multipart/form-data" style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-                    <div>
-                      <label style={labelStyle}>Yazı Başlığı</label>
-                      <input type="text" name="title" placeholder="Başlık" style={inputStyle} required />
+                    <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: '1rem' }}>
+                      <div>
+                        <label style={labelStyle}>Yazı Başlığı</label>
+                        <input type="text" name="title" placeholder="Başlık" style={inputStyle} required />
+                      </div>
+                      <div>
+                        <label style={labelStyle}>Kategori</label>
+                        <select name="category" style={inputStyle} defaultValue="Blog">
+                          <option value="Blog">Blog</option>
+                          <option value="Kulis">Kulis</option>
+                          <option value="Makale">Makale</option>
+                          <option value="Haber">Haber</option>
+                          <option value="Akademik Bildiri">Akademik Bildiri (Google Scholar)</option>
+                        </select>
+                      </div>
                     </div>
                     <div>
-                      <label style={labelStyle}>İçerik</label>
-                      <textarea name="content" placeholder="Yazının içeriği..." rows={6} style={inputStyle} required />
+                      <label style={labelStyle}>Kısa Özet (Excerpt / Abstract)</label>
+                      <input type="text" name="excerpt" placeholder="Arama motorları ve listeler için 1-2 cümlelik özet" style={inputStyle} />
                     </div>
                     <div>
-                      <label style={labelStyle}>Kapak Fotoğrafı (maks. 2MB)</label>
-                      <input type="file" name="image" accept="image/jpeg,image/png,image/webp" style={{ color: 'var(--text-muted)', fontSize: '0.875rem' }} />
+                      <label style={labelStyle}>İçerik Metni</label>
+                      <textarea name="content" placeholder="Yazının tam içeriği..." rows={7} style={inputStyle} required />
                     </div>
-                    <button type="submit" style={{ padding: '0.85rem 2rem', background: 'var(--primary-gold)', color: '#000', border: 'none', borderRadius: '8px', fontWeight: 'bold', fontSize: '0.875rem', cursor: 'pointer', alignSelf: 'flex-start' }}>Yayınla</button>
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+                      <div>
+                        <label style={labelStyle}>Kapak Fotoğrafı (JPG, PNG, WEBP)</label>
+                        <input type="file" name="image" accept="image/jpeg,image/png,image/webp" style={{ color: 'var(--text-muted)', fontSize: '0.875rem' }} />
+                      </div>
+                      <div>
+                        <label style={labelStyle}>Ek PDF Belgesi (Akademik / Makale için)</label>
+                        <input type="file" name="pdf" accept="application/pdf" style={{ color: 'var(--text-muted)', fontSize: '0.875rem' }} />
+                      </div>
+                    </div>
+                    <div>
+                      <label style={labelStyle}>Anahtar Kelimeler (Virgülle ayırın - Google Scholar)</label>
+                      <input type="text" name="keywords" placeholder="Örn: tiyatro, dramaturgi, sahne sanatları, hamlet" style={inputStyle} />
+                    </div>
+                    <button type="submit" style={{ padding: '0.85rem 2rem', background: 'var(--primary-gold)', color: '#000', border: 'none', borderRadius: '8px', fontWeight: 'bold', fontSize: '0.875rem', cursor: 'pointer', alignSelf: 'flex-start' }}>Yazıyı Yayınla</button>
                   </form>
                 </div>
 
