@@ -60,6 +60,18 @@ export const metadata: Metadata = {
     follow: true,
   },
   manifest: "/manifest.json",
+  icons: {
+    icon: [
+      { url: "/brand-logo-v1.jpg" },
+      { url: "/favicon.ico" },
+      { url: "/icon.png" }
+    ],
+    shortcut: "/brand-logo-v1.jpg",
+    apple: [
+      { url: "/brand-logo-v1.jpg" },
+      { url: "/apple-touch-icon.png", sizes: "180x180", type: "image/png" }
+    ],
+  },
   appleWebApp: {
     capable: true,
     statusBarStyle: "black-translucent",
@@ -102,6 +114,10 @@ export default async function RootLayout({
   return (
     <html lang="tr" className={`${outfit.variable} ${playfair.variable} ${cormorant.variable}`}>
       <head>
+        <link rel="icon" type="image/jpeg" href="/brand-logo-v1.jpg" />
+        <link rel="shortcut icon" href="/brand-logo-v1.jpg" />
+        <link rel="apple-touch-icon" href="/brand-logo-v1.jpg" />
+        <link rel="apple-touch-icon-precomposed" href="/brand-logo-v1.jpg" />
         <script type="module" src="https://unpkg.com/ionicons@7.1.0/dist/ionicons/ionicons.esm.js" async></script>
         <script noModule={true} src="https://unpkg.com/ionicons@7.1.0/dist/ionicons/ionicons.js" async></script>
         <script dangerouslySetInnerHTML={{
