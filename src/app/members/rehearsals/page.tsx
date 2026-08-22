@@ -3,13 +3,11 @@ import { authOptions } from "@/lib/auth";
 import { adminDb } from "@/lib/firebase-admin";
 import { addRehearsal, deleteRehearsal, startInstantAttendance, activateRehearsalPulse } from "@/app/actions";
 import NudgeButton from "@/components/NudgeButton";
-import { getWhatsAppRehearsalLink } from "@/lib/utils";
 import DeleteButton from "@/components/DeleteButton";
 import AttendanceManager from "@/components/AttendanceManager";
 import { redirect } from "next/navigation";
 import { Metadata } from "next";
 import Link from "next/link";
-import ArchiveWrapper from "@/components/ArchiveWrapper";
 import RehearsalCalendar from "@/components/RehearsalCalendar";
 
 export const metadata: Metadata = {
@@ -32,7 +30,6 @@ export default async function RehearsalsPage(props: { searchParams: Promise<{ vi
     redirect('/members');
   }
 
-  // Yönetim yetkisi sadece Admin Mode açıksa ve rölü uygunsa geçerli olsun
   const canManage = ['SUPERADMIN', 'ADMIN', 'DIRECTOR', 'ASST_DIRECTOR'].includes(role) && (session?.user as any)?.isAdminMode;
 
   const rehearsalsSnapshot = await adminDb.collection('rehearsals').get();
@@ -40,12 +37,10 @@ export default async function RehearsalsPage(props: { searchParams: Promise<{ vi
     .map(doc => ({ id: doc.id, ...doc.data() as any }))
     .sort((a, b) => new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime());
 
-  // İstanbul (UTC+3) Saat Dilimine Göre Bugünün Tarihi (YYYY-MM-DD)
   const todayStr = new Date().toLocaleDateString('en-CA', { timeZone: 'Europe/Istanbul' });
 
   const activeRehearsals = allRehearsals.filter(r => r.pulseActive === true);
   
-  // Gelecek ve Geçmiş ayrımı (String bazlı karşılaştırma en güvenlisi)
   const upcomingRehearsals = allRehearsals.filter(r => {
     if (r.pulseActive) return false;
     if (!r.date) return false;
@@ -60,14 +55,19 @@ export default async function RehearsalsPage(props: { searchParams: Promise<{ vi
     return rDate < todayStr;
   });
 
-  // Yoklama için kullanıcıları çek
   const usersSnap = await adminDb.collection('users').get();
   const allTeam = usersSnap.docs
-    .map(doc => ({ id: doc.id, name: doc.data().name, surname: doc.data().surname, role: doc.data().role }))
+    .map(doc => {
+      const d = doc.data();
+      const rawName = d.name || '';
+      const rawSurname = d.surname || '';
+      const cleanFirst = rawName.replace(/undefined/gi, '').trim();
+      const cleanLast = rawSurname.replace(/undefined/gi, '').trim();
+      return { id: doc.id, name: cleanFirst, surname: cleanLast, role: d.role };
+    })
     .filter(u => u.name && u.role !== 'USER')
     .sort((a, b) => a.name.localeCompare(b.name));
 
-  // Presetleri çek
   const presetsSnap = await adminDb.collection('presets').where('type', '==', 'rehearsal').get();
   const presets = presetsSnap.docs.map(doc => doc.data());
   
@@ -75,41 +75,48 @@ export default async function RehearsalsPage(props: { searchParams: Promise<{ vi
   const presetLocations = Array.from(new Set(presets.map(p => p.location).filter(Boolean)));
   const presetTimes = Array.from(new Set(presets.map(p => p.time).filter(Boolean)));
 
+  const inputStyle = {
+    padding: '0.85rem 1rem',
+    borderRadius: '10px',
+    border: '1px solid var(--border-medium)',
+    background: 'var(--input-bg)',
+    color: 'var(--text-main)',
+    width: '100%',
+    fontSize: '0.875rem',
+    outline: 'none',
+  };
+
   const renderRehearsalCard = (r: any, isUpcoming: boolean = false) => {
     const isInstant = r.date?.includes('(Anlık)');
     const isActive = r.pulseActive === true;
     
     return (
-      <div key={r.id} className={`p-6 rounded-[2rem] border transition-all group relative overflow-hidden ${
-        isActive 
-          ? 'bg-red-500/[0.03] border-red-500/30 shadow-[0_0_40px_rgba(239,68,68,0.05)]' 
-          : 'bg-white/5 border-white/10 hover:border-[var(--primary-gold)]/50'
-      }`}>
+      <div key={r.id} className="p-6 rounded-2xl border transition-all relative overflow-hidden bg-[var(--bg-surface)] border-[var(--border-subtle)] hover:border-[var(--primary-gold-border)]">
         {/* Durum Rozetleri */}
         <div className="absolute top-0 right-0 flex">
            {isActive && (
-             <div className="bg-red-500 text-white text-[9px] font-black px-4 py-1.5 rounded-bl-2xl uppercase tracking-widest animate-pulse shadow-lg">
-               CANLI YAYINDA
+             <div className="bg-red-500 text-white text-[9px] font-bold px-4 py-1.5 rounded-bl-2xl uppercase tracking-widest animate-pulse shadow-md">
+               CANLI YOKLAMA
              </div>
            )}
            {isInstant && !isActive && (
-             <div className="bg-white/10 text-white/40 text-[8px] font-bold px-3 py-1 rounded-bl-xl uppercase tracking-tighter">
-               ANLIK LOG
+             <div className="bg-[var(--bg-surface-elevated)] text-[var(--text-dim)] text-[8px] font-bold px-3 py-1 rounded-bl-xl uppercase tracking-wider">
+               ANLIK KAYIT
              </div>
            )}
         </div>
 
-        <div className="flex flex-col md:flex-row justify-between items-start gap-6 mb-8 mt-2">
-          <div className="space-y-2">
+        <div className="flex flex-col md:flex-row justify-between items-start gap-6 mb-6 mt-1">
+          <div className="space-y-1">
             <div className="flex items-center gap-3">
                <div className={`w-12 h-12 rounded-2xl flex items-center justify-center text-2xl transition-all ${
-                 isActive ? 'bg-red-500/20 text-red-500' : 'bg-[var(--primary-gold)]/10 text-[var(--primary-gold)] shadow-glow-sm'
+                 isActive ? 'bg-red-500/15 text-red-500' : 'bg-[var(--primary-gold-dim)] text-[var(--primary-gold)] border border-[var(--primary-gold-border)]'
                }`}>
                  <ion-icon name={isInstant ? "flash" : "calendar-number"}></ion-icon>
                </div>
                <div>
-                  <h3 className="text-white text-2xl font-black tracking-tighter leading-none mb-1">{r.title}</h3>
-                  <p className="text-[10px] text-white/30 uppercase font-bold tracking-widest">{r.id.slice(-6)} • LOG KAYDI</p>
+                  <h3 className="text-[var(--text-main)] text-xl font-bold tracking-tight leading-none mb-1">{r.title}</h3>
+                  <p className="text-[10px] text-[var(--text-dim)] uppercase font-bold tracking-widest">{r.id.slice(-6)} • PROVA KAYDI</p>
                </div>
             </div>
           </div>
@@ -121,14 +128,14 @@ export default async function RehearsalsPage(props: { searchParams: Promise<{ vi
                   action={deleteRehearsal as any} 
                   id={r.id} 
                   name={r.title} 
-                  confirmMessage="Bu yoklama kaydını ve bütün geçmişini kalıcı olarak silmek istediğine emin misin?" 
+                  confirmMessage="Bu prova kaydını silmek istediğinize emin misiniz?" 
                   idFieldName="rehearsalId"
                 />
                 {!isInstant && isUpcoming && !isActive && (
                    <form action={async () => { 'use server'; await activateRehearsalPulse(r.id); }}>
-                     <button type="submit" className="btn btn-primary py-3 px-6 rounded-2xl text-[10px] font-black tracking-widest uppercase shadow-glow bg-red-600 hover:bg-red-500 border-none flex items-center gap-2">
-                       <ion-icon name="play-circle-outline" style={{ fontSize: '1.2rem' }}></ion-icon>
-                       YOKLAMAYI BAŞLAT
+                     <button type="submit" className="btn btn-primary py-2.5 px-5 rounded-xl text-[11px] font-bold tracking-wider uppercase border-none flex items-center gap-2">
+                       <ion-icon name="play-circle-outline" style={{ fontSize: '1.1rem' }}></ion-icon>
+                       Yoklamayı Başlat
                      </button>
                    </form>
                 )}
@@ -137,38 +144,36 @@ export default async function RehearsalsPage(props: { searchParams: Promise<{ vi
           </div>
         </div>
         
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-8">
-          <div className="flex items-center gap-4 bg-black/40 p-4 rounded-[1.5rem] border border-white/5 group-hover:border-white/10 transition-all">
-            <div className="w-10 h-10 rounded-xl bg-white/5 flex items-center justify-center text-[var(--primary-gold)] text-lg">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6">
+          <div className="flex items-center gap-4 bg-[var(--bg-surface-elevated)] p-4 rounded-xl border border-[var(--border-subtle)]">
+            <div className="w-10 h-10 rounded-xl bg-[var(--bg-card)] flex items-center justify-center text-[var(--primary-gold)] text-lg border border-[var(--border-subtle)]">
               <ion-icon name="time-outline"></ion-icon>
             </div>
             <div className="flex flex-col">
-              <span className="text-[9px] text-white/20 uppercase font-black">Planlanan Vakit</span>
-              <span className="text-sm font-bold text-white/90">{r.date || 'Belirtilmedi'}</span>
+              <span className="text-[10px] text-[var(--text-dim)] uppercase font-bold">Planlanan Vakit</span>
+              <span className="text-sm font-bold text-[var(--text-main)]">{r.date || 'Belirtilmedi'}</span>
             </div>
           </div>
-          <div className="flex items-center gap-4 bg-black/40 p-4 rounded-[1.5rem] border border-white/5 group-hover:border-white/10 transition-all">
-            <div className="w-10 h-10 rounded-xl bg-white/5 flex items-center justify-center text-[var(--primary-gold)] text-lg">
+          <div className="flex items-center gap-4 bg-[var(--bg-surface-elevated)] p-4 rounded-xl border border-[var(--border-subtle)]">
+            <div className="w-10 h-10 rounded-xl bg-[var(--bg-card)] flex items-center justify-center text-[var(--primary-gold)] text-lg border border-[var(--border-subtle)]">
               <ion-icon name="map-outline"></ion-icon>
             </div>
             <div className="flex flex-col">
-              <span className="text-[9px] text-white/20 uppercase font-black">Prova Mekanı</span>
-              <span className="text-sm font-bold text-white/90">{r.location || 'Haliç Yerleşkesi'}</span>
+              <span className="text-[10px] text-[var(--text-dim)] uppercase font-bold">Prova Mekanı</span>
+              <span className="text-sm font-bold text-[var(--text-main)]">{r.location || 'Haliç Yerleşkesi'}</span>
             </div>
           </div>
         </div>
   
-        {r.notes ? (
-          <div className="mb-8 p-5 bg-white/[0.02] rounded-2xl border border-dashed border-white/10 relative">
-            <div className="absolute -top-3 left-6 px-3 bg-[#0a0a0a] text-[var(--primary-gold)] text-[9px] font-black tracking-widest border border-white/10 rounded-full">YÖNETMEN NOTU</div>
-            <p className="text-white/50 text-xs italic leading-relaxed">{r.notes}</p>
+        {r.notes && (
+          <div className="mb-6 p-4 bg-[var(--bg-surface-elevated)] rounded-xl border border-dashed border-[var(--border-medium)] relative">
+            <div className="text-[var(--primary-gold)] text-[10px] font-bold tracking-wider mb-1">YÖNETMEN NOTU:</div>
+            <p className="text-[var(--text-muted)] text-xs italic leading-relaxed">{r.notes}</p>
           </div>
-        ) : (
-          <div className="h-4"></div>
         )}
   
         {(canManage && (isActive || !isUpcoming)) && (
-          <div className="pt-8 border-t border-white/10 mt-2">
+          <div className="pt-6 border-t border-[var(--border-subtle)] mt-2">
             <AttendanceManager 
               rehearsalId={r.id} 
               allUsers={allTeam} 
@@ -184,38 +189,39 @@ export default async function RehearsalsPage(props: { searchParams: Promise<{ vi
 
   return (
     <div className="pt-32 pb-16 px-[5%] min-h-screen bg-[var(--bg-dark)]">
-      <header className="text-center mb-16">
-        <div className="flex justify-between items-center mb-10 flex-wrap gap-6">
+      <header className="text-center mb-12">
+        <div className="flex justify-between items-center mb-8 flex-wrap gap-6 max-w-4xl mx-auto">
           <div className="text-left">
-            <h1 className="serif-font text-5xl text-white mb-2">Prova <span className="text-[var(--primary-gold)]">Takvimi</span></h1>
-            <p className="text-white/60 mb-6">Disiplin, sahnenin ruhudur.</p>
+            <h1 className="serif-font text-4xl sm:text-5xl text-[var(--text-main)] mb-2">Prova <span className="text-[var(--primary-gold)]">Takvimi</span></h1>
+            <p className="text-[var(--text-muted)] text-sm mb-4">Disiplin, sahnenin ruhudur.</p>
             
-            {/* GÖRÜNÜM DEGISTIRICI */}
-            <div className="inline-flex p-1 bg-white/5 rounded-2xl border border-white/10 shadow-inner">
+            {/* GÖRÜNÜM DEĞİŞTİRİCİ */}
+            <div className="inline-flex p-1 bg-[var(--bg-surface-elevated)] rounded-xl border border-[var(--border-subtle)]">
               <Link 
                 href="/members/rehearsals?view=list" 
-                className={`px-8 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${view !== 'calendar' ? 'bg-[var(--primary-gold)] text-black shadow-glow-sm scale-105' : 'text-white/40 hover:text-white hover:bg-white/5 opacity-60'}`}
+                className={`px-6 py-2 rounded-lg text-[11px] font-bold uppercase tracking-wider transition-all ${view !== 'calendar' ? 'bg-[var(--primary-gold)] text-black shadow-sm' : 'text-[var(--text-muted)] hover:text-[var(--text-main)]'}`}
               >
                 LİSTE
               </Link>
               <Link 
                 href="/members/rehearsals?view=calendar" 
-                className={`px-8 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${view === 'calendar' ? 'bg-[var(--primary-gold)] text-black shadow-glow-sm scale-105' : 'text-white/40 hover:text-white hover:bg-white/5 opacity-60'}`}
+                className={`px-6 py-2 rounded-lg text-[11px] font-bold uppercase tracking-wider transition-all ${view === 'calendar' ? 'bg-[var(--primary-gold)] text-black shadow-sm' : 'text-[var(--text-muted)] hover:text-[var(--text-main)]'}`}
               >
                 TAKVİM 🗓️
               </Link>
             </div>
           </div>
+
           {canManage && (
              <div className="flex flex-col sm:flex-row gap-3">
-             <Link href="/members/attendance" className="btn btn-outline border-red-500 text-red-500 flex items-center gap-2 hover:bg-red-500 hover:text-white py-2 px-6 rounded-full text-xs font-bold transition-all whitespace-nowrap shadow-[0_0_15px_rgba(239,68,68,0.1)]">
-               <ion-icon name="clipboard-outline" style={{ fontSize: '1.2rem' }}></ion-icon>
-               YOKLAMA PANELİ 📋
+             <Link href="/members/attendance" className="btn btn-outline border-red-500 text-red-500 flex items-center gap-2 hover:bg-red-500 hover:text-white py-2 px-5 rounded-full text-xs font-bold transition-all whitespace-nowrap">
+               <ion-icon name="clipboard-outline" style={{ fontSize: '1.1rem' }}></ion-icon>
+               Yoklama Paneli
              </Link>
              <form action={startInstantAttendance as any}>
-               <button type="submit" className="btn btn-outline border-[var(--primary-gold)] text-[var(--primary-gold)] flex items-center gap-2 hover:bg-[var(--primary-gold)] hover:text-black py-2 px-6 rounded-full text-xs font-bold transition-all whitespace-nowrap">
+               <button type="submit" className="btn btn-primary flex items-center gap-2 py-2 px-5 rounded-full text-xs font-bold transition-all whitespace-nowrap">
                  <ion-icon name="flashlight-outline"></ion-icon>
-                 ANLIK YOKLAMA BAŞLAT
+                 Anlık Yoklama Başlat
                </button>
              </form>
              <NudgeButton users={allTeam} />
@@ -224,22 +230,22 @@ export default async function RehearsalsPage(props: { searchParams: Promise<{ vi
         </div>
       </header>
 
-      <div className="max-w-4xl mx-auto space-y-16">
+      <div className="max-w-4xl mx-auto space-y-12">
         {view === 'calendar' ? (
            <RehearsalCalendar rehearsals={allRehearsals} />
         ) : (
           <>
-            {/* CANLI YOKLAMA BÖLÜMÜ (Halıhazırda Aktifse) */}
+            {/* CANLI YOKLAMA BÖLÜMÜ */}
             {activeRehearsals.length > 0 && (
-              <section className="animate-pulse-slow">
-                <div className="flex items-center gap-4 mb-8">
-                  <h2 className="text-red-500 text-2xl font-bold serif-font flex items-center gap-3">
+              <section>
+                <div className="flex items-center gap-4 mb-6">
+                  <h2 className="text-red-500 text-xl font-bold serif-font flex items-center gap-2">
                     <span className="w-3 h-3 bg-red-500 rounded-full animate-ping"></span>
-                    Canlı Yoklama / Nabız Açık!
+                    Canlı Yoklama Açık!
                   </h2>
-                  <div className="h-[1px] flex-1 bg-gradient-to-r from-red-500/20 to-transparent"></div>
+                  <div className="h-[1px] flex-1 bg-red-500/20"></div>
                 </div>
-                <div className="space-y-8">
+                <div className="space-y-6">
                   {activeRehearsals.map(r => renderRehearsalCard(r, true))}
                 </div>
               </section>
@@ -247,20 +253,20 @@ export default async function RehearsalsPage(props: { searchParams: Promise<{ vi
 
             {/* YENİ PROVA EKLEME FORMU */}
             {canManage && (
-              <section className="glass-card border-dashed border-[var(--primary-gold)]/30">
-                <h2 className="text-[var(--primary-gold)] text-xl mb-8 flex items-center gap-3 font-bold uppercase tracking-widest text-sm">
-                  <ion-icon name="add-circle-outline" style={{ fontSize: '1.5rem' }}></ion-icon> 
+              <section className="glass-card bg-[var(--bg-surface)] border-dashed border-[var(--primary-gold-border)]">
+                <h2 className="text-[var(--primary-gold)] text-lg mb-6 flex items-center gap-2 font-bold uppercase tracking-wider">
+                  <ion-icon name="add-circle-outline" style={{ fontSize: '1.3rem' }}></ion-icon> 
                   Yeni Prova Takvimi Oluştur
                 </h2>
-                <form action={addRehearsal as any} className="grid grid-cols-1 md:grid-cols-2 gap-5">
-                  <div className="flex flex-col gap-2">
-                    <label className="text-[10px] font-bold text-white/40 uppercase ml-2">PROVA KONUSU / OYUN</label>
+                <form action={addRehearsal as any} className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="flex flex-col gap-1.5">
+                    <label className="text-[11px] font-bold text-[var(--text-dim)] uppercase">PROVA KONUSU / OYUN</label>
                     <input 
                       type="text" 
                       name="title" 
                       list="presetTitles"
                       placeholder="Örn: Hamlet 1. Perde" 
-                      className="p-4 rounded-2xl bg-black/50 text-white border border-white/10 focus:border-[var(--primary-gold)] transition-all outline-none" 
+                      style={inputStyle} 
                       required 
                     />
                     <datalist id="presetTitles">
@@ -268,14 +274,14 @@ export default async function RehearsalsPage(props: { searchParams: Promise<{ vi
                     </datalist>
                   </div>
 
-                  <div className="flex flex-col gap-2">
-                    <label className="text-[10px] font-bold text-white/40 uppercase ml-2">MEKAN / SAHNE</label>
+                  <div className="flex flex-col gap-1.5">
+                    <label className="text-[11px] font-bold text-[var(--text-dim)] uppercase">MEKAN / SAHNE</label>
                     <input 
                       type="text" 
                       name="location" 
                       list="presetLocations"
                       placeholder="Örn: Haliç Yerleşkesi" 
-                      className="p-4 rounded-2xl bg-black/50 text-white border border-white/10 focus:border-[var(--primary-gold)] transition-all outline-none" 
+                      style={inputStyle} 
                       required 
                     />
                     <datalist id="presetLocations">
@@ -283,18 +289,18 @@ export default async function RehearsalsPage(props: { searchParams: Promise<{ vi
                     </datalist>
                   </div>
                   
-                  <div className="flex flex-col md:flex-row gap-5 md:col-span-2">
-                    <div className="flex-1 flex flex-col gap-2">
-                      <label className="text-[10px] font-bold text-white/40 uppercase ml-2">TARİH</label>
-                      <input type="date" name="rehearsalDate" className="w-full p-4 rounded-2xl bg-black/50 text-white border border-white/10 focus:border-[var(--primary-gold)] transition-all outline-none" required />
+                  <div className="flex flex-col md:flex-row gap-4 md:col-span-2">
+                    <div className="flex-1 flex flex-col gap-1.5">
+                      <label className="text-[11px] font-bold text-[var(--text-dim)] uppercase">TARİH</label>
+                      <input type="date" name="rehearsalDate" style={inputStyle} required />
                     </div>
-                    <div className="flex-1 flex flex-col gap-2">
-                      <label className="text-[10px] font-bold text-white/40 uppercase ml-2">SAAT</label>
+                    <div className="flex-1 flex flex-col gap-1.5">
+                      <label className="text-[11px] font-bold text-[var(--text-dim)] uppercase">SAAT</label>
                       <input 
                         type="time" 
                         name="rehearsalTime" 
                         list="presetTimes"
-                        className="w-full p-4 rounded-2xl bg-black/50 text-white border border-white/10 focus:border-[var(--primary-gold)] transition-all outline-none" 
+                        style={inputStyle} 
                         required 
                       />
                       <datalist id="presetTimes">
@@ -303,47 +309,46 @@ export default async function RehearsalsPage(props: { searchParams: Promise<{ vi
                     </div>
                   </div>
 
-                  <textarea name="notes" placeholder="Yönetmen Notu (Opsiyonel)" className="md:col-span-2 p-4 rounded-2xl bg-black/50 text-white border border-white/10 focus:border-[var(--primary-gold)] transition-all outline-none min-h-[100px]" />
+                  <textarea name="notes" placeholder="Yönetmen Notu (Opsiyonel)" style={{ ...inputStyle, minHeight: '90px' }} className="md:col-span-2" />
                   
-                  <div className="md:col-span-2 flex items-center gap-3 px-2">
+                  <div className="md:col-span-2 flex items-center gap-2">
                     <input type="checkbox" name="saveAsPreset" id="saveAsPreset" className="accent-[var(--primary-gold)]" />
-                    <label htmlFor="saveAsPreset" className="text-xs text-white/60 cursor-pointer hover:text-white transition-colors">Bu bilgileri şablon (preset) olarak kaydet</label>
+                    <label htmlFor="saveAsPreset" className="text-xs text-[var(--text-muted)] cursor-pointer">Bu bilgileri şablon olarak kaydet</label>
                   </div>
 
-                  <button type="submit" className="md:col-span-2 btn btn-primary py-4 font-bold tracking-widest text-xs shadow-glow mt-2">
+                  <button type="submit" className="md:col-span-2 btn btn-primary py-3.5 font-bold tracking-wider text-xs mt-2">
                     Provayı Kaydet
                   </button>
                 </form>
               </section>
             )}
 
-            {/* GELECEK PROVA TAKVİM */}
+            {/* GELECEK PROVA TAKVİMİ */}
             <section>
-              <div className="flex items-center gap-4 mb-8">
-                <h2 className="text-white text-2xl font-bold serif-font underline decoration-[var(--primary-gold)] underline-offset-8">Gelecek Prova Takvimi</h2>
-                <div className="h-[1px] flex-1 bg-gradient-to-r from-white/20 to-transparent"></div>
+              <div className="flex items-center gap-4 mb-6">
+                <h2 className="text-[var(--text-main)] text-2xl font-bold serif-font">Gelecek Prova Takvimi</h2>
+                <div className="h-[1px] flex-1 bg-[var(--border-subtle)]"></div>
               </div>
               
               {upcomingRehearsals.length === 0 ? (
-                <div className="p-10 text-center glass-card border-white/5">
-                    <p className="text-[var(--text-muted)] italic text-sm">Şu an için aktif bir kayıt bulunmuyor.</p>
+                <div className="p-10 text-center glass-card bg-[var(--bg-surface)] border-[var(--border-subtle)]">
+                    <p className="text-[var(--text-muted)] italic text-sm">Şu an için planlanmış aktif bir prova bulunmuyor.</p>
                 </div>
               ) : (
-                <div className="space-y-8">
+                <div className="space-y-6">
                   {upcomingRehearsals.map(r => renderRehearsalCard(r, true))}
                 </div>
               )}
             </section>
 
             {/* GEÇMİŞ PROVA LOGLARI (ARŞİV) */}
-            {canManage && (
-              <section className="mt-20 pt-20 border-t border-white/10">
-                <div className="flex items-center gap-4 mb-10">
-                   <h2 className="text-white/30 text-xl font-bold serif-font uppercase tracking-widest">Geçmiş Prova Logları (Arşiv)</h2>
-                   <div className="h-[1px] flex-1 bg-white/5"></div>
-                   <span className="text-[10px] text-white/20 font-black">{pastRehearsals.length} KAYIT</span>
+            {canManage && pastRehearsals.length > 0 && (
+              <section className="mt-16 pt-12 border-t border-[var(--border-subtle)]">
+                <div className="flex items-center gap-4 mb-8">
+                   <h2 className="text-[var(--text-muted)] text-lg font-bold serif-font uppercase tracking-wider">Geçmiş Prova Kayıtları ({pastRehearsals.length})</h2>
+                   <div className="h-[1px] flex-1 bg-[var(--border-subtle)]"></div>
                 </div>
-                <div className="space-y-8 opacity-60 hover:opacity-100 transition-opacity">
+                <div className="space-y-6 opacity-75 hover:opacity-100 transition-opacity">
                   {pastRehearsals.map(r => renderRehearsalCard(r, false))}
                 </div>
               </section>

@@ -4,30 +4,45 @@ import { useState, useRef } from 'react';
 import { changePassword, updateProfile, uploadAvatar } from '@/app/actions';
 
 export default function ProfileClient({ user }: { user: any }) {
-  const [loading, setLoading] = useState(false);
-  const [message, setMessage] = useState('');
-  const [error, setError] = useState('');
-  
   const [profileLoading, setProfileLoading] = useState(false);
   const [profileMsg, setProfileMsg] = useState('');
+  
+  const [passwordLoading, setPasswordLoading] = useState(false);
+  const [message, setMessage] = useState('');
+  const [error, setError] = useState('');
 
-  const [dragActive, setDragActive] = useState(false);
-  const [uploadingAvatar, setUploadingAvatar] = useState(false);
+  const [avatarLoading, setAvatarLoading] = useState(false);
   const [avatarError, setAvatarError] = useState('');
+  const [avatarPreview, setAvatarPreview] = useState<string | null>(user?.photoUrl || null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const handlePasswordSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
-    setLoading(true);
-    setError('');
-    setMessage('');
-    
-    const formData = new FormData(e.currentTarget);
-    const res = await changePassword(formData);
-    
-    if (res?.error) setError(res.error);
-    else { setMessage("Şifreniz başarıyla güncellendi!"); (e.target as HTMLFormElement).reset(); }
-    setLoading(false);
+  const cleanFirstName = (user?.name || '').replace(/undefined/gi, '').trim();
+  const cleanLastName = (user?.surname || '').replace(/undefined/gi, '').trim();
+  const fullName = [cleanFirstName, cleanLastName].filter(Boolean).join(' ') || user?.email?.split('@')[0] || 'Kulüp Üyesi';
+
+  const roleLabels: Record<string, string> = {
+    SUPERADMIN: 'Süper Admin',
+    ADMIN: 'Yönetici 👑',
+    DIRECTOR: 'Yönetmen 🎬',
+    ASST_DIRECTOR: 'Yrd. Yönetmen',
+    AKTOR: 'Aktör 🎭',
+    PLAYER: 'Oyuncu 🎭',
+    EDITOR: 'İçerik Editörü',
+    SALES: 'Satış & Gişe',
+    MEMBER: 'Kulüp Üyesi',
+  };
+
+  const roleLabel = roleLabels[user?.role] || user?.role || 'Üye';
+
+  const inputStyle = {
+    padding: '0.85rem 1rem',
+    borderRadius: '10px',
+    border: '1px solid var(--border-medium)',
+    background: 'var(--input-bg)',
+    color: 'var(--text-main)',
+    width: '100%',
+    fontSize: '0.875rem',
+    outline: 'none',
   };
 
   const handleProfileSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
@@ -37,156 +52,208 @@ export default function ProfileClient({ user }: { user: any }) {
 
     const formData = new FormData(e.currentTarget);
     const res = await updateProfile(formData);
-    
-    if (res?.error) alert("Profil güncellenirken hata oluştu.");
-    else setProfileMsg("Profiliniz başarıyla kaydedildi!");
+    if (res?.success) {
+      setProfileMsg('Portfolyo bilgileriniz başarıyla güncellendi.');
+    }
     setProfileLoading(false);
+  };
+
+  const handlePasswordSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    setPasswordLoading(true);
+    setMessage('');
+    setError('');
+
+    const formData = new FormData(e.currentTarget);
+    const currentPassword = formData.get('currentPassword') as string;
+    const newPassword = formData.get('newPassword') as string;
+    const newPasswordConfirm = formData.get('newPasswordConfirm') as string;
+
+    if (newPassword !== newPasswordConfirm) {
+      setError('Yeni şifreler eşleşmiyor.');
+      setPasswordLoading(false);
+      return;
+    }
+
+    const hash = async (pwd: string) => {
+      const encoder = new TextEncoder();
+      const data = encoder.encode(pwd);
+      const h = await crypto.subtle.digest('SHA-256', data);
+      return Array.from(new Uint8Array(h)).map(b => b.toString(16).padStart(2, '0')).join('');
+    };
+
+    const hashedOld = await hash(currentPassword);
+    const hashedNew = await hash(newPassword);
+
+    const payload = new FormData();
+    payload.append('currentPassword', hashedOld);
+    payload.append('newPassword', hashedNew);
+
+    const res = await changePassword(payload);
+    if (res?.error) {
+      setError(res.error);
+    } else {
+      setMessage('Şifreniz başarıyla değiştirildi.');
+      (e.target as HTMLFormElement).reset();
+    }
+    setPasswordLoading(false);
   };
 
   const handleFileChange = async (file: File) => {
     if (!file) return;
-    if (!['image/jpeg', 'image/png', 'image/jpg', 'image/gif'].includes(file.type)) {
-      setAvatarError("Görsel desteklenmiyor. (PNG/JPG) yüklemeyi deneyin.");
+    if (file.size > 2 * 1024 * 1024) {
+      setAvatarError('Dosya boyutu 2MB üzerinde olamaz.');
       return;
     }
-    
-    setUploadingAvatar(true);
+
+    setAvatarLoading(true);
     setAvatarError('');
-    
-    const formData = new FormData();
-    formData.append('file', file);
-    
-    const res = await uploadAvatar(formData);
-    if (res?.error) {
-      setAvatarError(res.error);
-    } else {
-      window.location.reload(); 
+
+    try {
+      const reader = new FileReader();
+      reader.onload = (e) => setAvatarPreview(e.target?.result as string);
+      reader.readAsDataURL(file);
+
+      const formData = new FormData();
+      formData.append('photo', file);
+
+      const res = await uploadAvatar(formData);
+      if (res?.error) {
+        setAvatarError(res.error);
+        setAvatarPreview(user?.photoUrl || null);
+      }
+    } catch (err: any) {
+      setAvatarError(err.message || 'Yükleme başarısız.');
+      setAvatarPreview(user?.photoUrl || null);
+    } finally {
+      setAvatarLoading(false);
     }
-    setUploadingAvatar(false);
   };
-
-  const handleDrop = (e: React.DragEvent) => {
-    e.preventDefault();
-    setDragActive(false);
-    if (e.dataTransfer.files && e.dataTransfer.files[0]) handleFileChange(e.dataTransfer.files[0]);
-  };
-
-  const defaultAvatar = "/default-avatar.svg";
 
   return (
-    <div style={{ padding: '8rem 5% 4rem', minHeight: '100vh', background: 'var(--bg-dark)' }}>
-      <div style={{ maxWidth: '800px', margin: '0 auto', display: 'flex', flexDirection: 'column', gap: '2rem' }}>
+    <div style={{ minHeight: '100vh', padding: '8rem 5% 4rem', maxWidth: '800px', margin: '0 auto', display: 'flex', flexDirection: 'column', gap: '2rem' }}>
+      
+      {/* PROFİL VE PORTFOLYO ALANI */}
+      <div className="glass-card" style={{ padding: '2rem', borderRadius: '16px', border: '1px solid var(--border-subtle)', background: 'var(--bg-surface)' }}>
         
-        <div className="glass-card" style={{ padding: '2.5rem', borderRadius: '16px', border: 'var(--glass-border)' }}>
-          <div style={{ display: 'flex', gap: '2.5rem', alignItems: 'center', marginBottom: '2rem', flexWrap: 'wrap' }}>
-            
-            {/* DRAG AND DROP SENSÖRÜ */}
-            <div 
-              onDragOver={(e) => { e.preventDefault(); setDragActive(true); }}
-              onDragLeave={() => setDragActive(false)}
-              onDrop={handleDrop}
-              onClick={() => fileInputRef.current?.click()}
-              style={{
-                width: '140px', height: '140px', borderRadius: '50%', border: dragActive ? '3px dashed var(--primary-gold)' : '3px solid var(--primary-gold)', cursor: 'pointer',
-                position: 'relative', overflow: 'hidden', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(0,0,0,0.5)', transition: 'all 0.2s',
-                opacity: uploadingAvatar ? 0.5 : 1, flexShrink: 0
-              }}
-              title="Fotoğrafı Değiştirmek İçin Tıklayın veya Dosyayı Sürükleyin"
-            >
-              <img src={user?.photoUrl || defaultAvatar} alt="Profil" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-              <div style={{ position: 'absolute', inset: 0, background: dragActive ? 'rgba(0,0,0,0.6)' : 'rgba(0,0,0,0.35)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexDirection: 'column', color: '#fff', fontSize: '0.75rem', fontWeight: 'bold', textShadow: '0 2px 5px rgba(0,0,0,0.9)', transition: 'all 0.2s', pointerEvents: 'none' }}>
-                {uploadingAvatar ? 'YÜKLENİYOR...' : (
-                  <>
-                    <span style={{ fontSize: '1.5rem', marginBottom: '2px' }}>📷</span>
-                    <span style={{ textAlign: 'center', lineHeight: '1.2', letterSpacing: '0.5px' }}>SEÇ VEYA<br/>SÜRÜKLE</span>
-                  </>
-                )}
-              </div>
-              <input 
-                type="file" ref={fileInputRef} style={{ display: 'none' }} accept="image/png, image/jpeg, image/jpg, image/gif"
-                onChange={(e) => { if (e.target.files && e.target.files[0]) handleFileChange(e.target.files[0]); }}
-              />
+        <div style={{ display: 'flex', alignItems: 'center', gap: '1.5rem', marginBottom: '2rem', flexWrap: 'wrap' }}>
+          
+          {/* Avatar Yükleme */}
+          <div style={{ position: 'relative', width: '90px', height: '90px', borderRadius: '50%', overflow: 'hidden', border: '3px solid var(--primary-gold)', cursor: 'pointer', flexShrink: 0 }} onClick={() => fileInputRef.current?.click()}>
+            <img 
+              src={avatarPreview || "/default-avatar.svg"} 
+              alt="Profil Fotoğrafı" 
+              style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+            />
+            <div style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.5)', opacity: 0, transition: 'opacity 0.2s', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', fontSize: '0.7rem', fontWeight: 'bold' }} className="hover:!opacity-100">
+              {avatarLoading ? '...' : 'Değiştir'}
             </div>
+            <input 
+              type="file" ref={fileInputRef} style={{ display: 'none' }} accept="image/png, image/jpeg, image/jpg, image/webp"
+              onChange={(e) => { if (e.target.files && e.target.files[0]) handleFileChange(e.target.files[0]); }}
+            />
+          </div>
 
-            <div>
-              <h1 className="serif-font" style={{ fontSize: '2.2rem', color: 'var(--primary-gold)', marginBottom: '0.2rem', lineHeight: '1' }}>{user?.name} {user?.surname}</h1>
-              <p style={{ color: 'var(--text-muted)', marginBottom: '0.8rem' }}>{user?.email} • {user?.phone || 'Telefon Kayıtsız'}</p>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
-                <div style={{ fontSize: '0.6rem', color: 'var(--primary-gold)', fontWeight: 'bold', letterSpacing: '2px', textTransform: 'uppercase' }}>
-                  YETKİ SEVİYESİ
-                </div>
-                <div style={{ display: 'inline-block', padding: '0.3rem 1rem', background: 'rgba(212,175,55,0.15)', color: 'var(--primary-gold)', borderRadius: '20px', fontSize: '0.85rem', fontWeight: '800', letterSpacing: '1px', width: 'fit-content' }}>
-                  {user?.role === 'EDITOR' ? 'İÇERİK EDİTÖRÜ' : 
-                   user?.role === 'AKTOR' ? 'AKTÖR 🎭' : 
-                   user?.role === 'PLAYER' ? 'OYUNCU (AKTÖR) 🎭' : 
-                   user?.role === 'MEMBER' ? 'ÜYE' : 
-                   user?.role}
-                </div>
-              </div>
+          <div>
+            <h1 className="serif-font" style={{ fontSize: '2rem', color: 'var(--text-main)', margin: '0 0 0.25rem 0', lineHeight: '1.2' }}>{fullName}</h1>
+            <p style={{ color: 'var(--text-muted)', margin: '0 0 0.6rem 0', fontSize: '0.875rem' }}>{user?.email} • {user?.phone || 'Telefon Kayıtsız'}</p>
+            <div style={{ display: 'inline-block', padding: '0.25rem 0.75rem', background: 'var(--primary-gold-dim)', color: 'var(--primary-gold)', borderRadius: '999px', fontSize: '0.75rem', fontWeight: 'bold', border: '1px solid var(--primary-gold-border)' }}>
+              {roleLabel}
             </div>
           </div>
-          
-          {avatarError && <div style={{ color: 'var(--accent-red)', fontSize: '0.9rem', marginBottom: '1rem', textAlign: 'center', background: 'rgba(139,0,0,0.2)', padding: '0.5rem', borderRadius: '8px' }}>{avatarError}</div>}
-
-          <h3 style={{ fontSize: '1.2rem', color: '#fff', marginBottom: '1rem', borderBottom: '1px solid rgba(255,255,255,0.1)', paddingBottom: '0.5rem' }}>Kendinizi Ekibe Tanıtın (Portfolyo)</h3>
-          
-          {profileMsg && <div style={{ background: 'rgba(0,128,0,0.4)', border: '1px solid rgba(0,255,0,0.3)', color: '#fff', padding: '0.8rem', borderRadius: '8px', marginBottom: '1rem' }}>{profileMsg}</div>}
-
-          <form onSubmit={handleProfileSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-            <input 
-              type="text" name="department" placeholder="Okuduğunuz Bölüm (Örn: Hukuk Fakültesi)" defaultValue={user?.department || ''}
-              className="w-full p-4 rounded-xl bg-black/40 border border-white/10 text-white focus:ring-1 focus:ring-[var(--primary-gold)] transition-all"
-            />
-            <textarea 
-              name="pastPlays" placeholder="Daha Önce Oynadığınız Oyunlar (FSM Tiyatro veya Dışarısı)" rows={2} defaultValue={user?.pastPlays || ''}
-              className="w-full p-4 rounded-xl bg-black/40 border border-white/10 text-white focus:ring-1 focus:ring-[var(--primary-gold)] transition-all resize-none"
-            ></textarea>
-            <input 
-              type="text" name="skills" placeholder="Özel Yetenekler (Örn: Eskrim, Şan, Dans, Enstrüman)" defaultValue={user?.skills || ''}
-              className="w-full p-4 rounded-xl bg-black/40 border border-white/10 text-white focus:ring-1 focus:ring-[var(--primary-gold)] transition-all"
-            />
-            <textarea 
-              name="bio" placeholder="Kendiniz hakkında kısa bir biyografi... (Sahne tecrübesi, motivasyon vb.)" rows={3} defaultValue={user?.bio || ''}
-              className="w-full p-4 rounded-xl bg-black/40 border border-white/10 text-white focus:ring-1 focus:ring-[var(--primary-gold)] transition-all resize-none"
-            ></textarea>
-            <input 
-              type="text" name="hobbies" placeholder="İlgi alanlarınız / Hobileriniz" defaultValue={user?.hobbies || ''}
-              className="w-full p-4 rounded-xl bg-black/40 border border-white/10 text-white focus:ring-1 focus:ring-[var(--primary-gold)] transition-all"
-            />
-            
-            <button type="submit" className="btn btn-primary mt-2 w-full py-4 font-bold tracking-widest" disabled={profileLoading}>
-              {profileLoading ? 'GÜNCELLENİYOR...' : 'PORTFOLYO BİLGİLERİNİ KAYDET'}
-            </button>
-          </form>
         </div>
+        
+        {avatarError && <div style={{ color: '#ef4444', fontSize: '0.85rem', marginBottom: '1rem', background: 'rgba(239,68,68,0.1)', padding: '0.6rem 1rem', borderRadius: '8px', border: '1px solid rgba(239,68,68,0.2)' }}>{avatarError}</div>}
 
-        {/* ŞİFRE İŞLEMLERİ */}
-        <div className="glass-card" style={{ padding: '2.5rem', borderRadius: '16px', border: 'var(--glass-border)' }}>
-          <h3 style={{ fontSize: '1.2rem', color: '#fff', marginBottom: '1rem', borderBottom: '1px solid rgba(255,255,255,0.1)', paddingBottom: '0.5rem' }}>Gizlilik ve Şifre Güvenliği</h3>
+        <h3 style={{ fontSize: '1.1rem', color: 'var(--text-main)', margin: '0 0 1rem 0', borderBottom: '1px solid var(--border-subtle)', paddingBottom: '0.5rem', fontWeight: 'bold' }}>Portfolyo & Bilgiler</h3>
+        
+        {profileMsg && <div style={{ background: 'rgba(34,197,94,0.1)', border: '1px solid rgba(34,197,94,0.3)', color: '#10b981', padding: '0.75rem 1rem', borderRadius: '8px', marginBottom: '1rem', fontSize: '0.85rem', fontWeight: 'bold' }}>{profileMsg}</div>}
+
+        <form onSubmit={handleProfileSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+          <div>
+            <label style={{ fontSize: '0.75rem', color: 'var(--text-dim)', fontWeight: 'bold', display: 'block', marginBottom: '0.3rem', textTransform: 'uppercase' }}>Bölüm</label>
+            <input 
+              type="text" name="department" placeholder="Örn: Hukuk Fakültesi" defaultValue={user?.department || ''}
+              style={inputStyle}
+            />
+          </div>
+
+          <div>
+            <label style={{ fontSize: '0.75rem', color: 'var(--text-dim)', fontWeight: 'bold', display: 'block', marginBottom: '0.3rem', textTransform: 'uppercase' }}>Daha Önce Oynadığınız Oyunlar</label>
+            <textarea 
+              name="pastPlays" placeholder="Örn: Hamlet, Lüküs Hayat..." rows={2} defaultValue={user?.pastPlays || ''}
+              style={{ ...inputStyle, resize: 'none' }}
+            />
+          </div>
+
+          <div>
+            <label style={{ fontSize: '0.75rem', color: 'var(--text-dim)', fontWeight: 'bold', display: 'block', marginBottom: '0.3rem', textTransform: 'uppercase' }}>Özel Yetenekler</label>
+            <input 
+              type="text" name="skills" placeholder="Örn: Eskrim, Şan, Dans, Enstrüman" defaultValue={user?.skills || ''}
+              style={inputStyle}
+            />
+          </div>
+
+          <div>
+            <label style={{ fontSize: '0.75rem', color: 'var(--text-dim)', fontWeight: 'bold', display: 'block', marginBottom: '0.3rem', textTransform: 'uppercase' }}>Kısa Biyografi</label>
+            <textarea 
+              name="bio" placeholder="Sahne tecrübeniz ve motivasyonunuz..." rows={3} defaultValue={user?.bio || ''}
+              style={{ ...inputStyle, resize: 'none' }}
+            />
+          </div>
+
+          <div>
+            <label style={{ fontSize: '0.75rem', color: 'var(--text-dim)', fontWeight: 'bold', display: 'block', marginBottom: '0.3rem', textTransform: 'uppercase' }}>İlgi Alanları / Hobiler</label>
+            <input 
+              type="text" name="hobbies" placeholder="Fotoğrafçılık, seslendirme..." defaultValue={user?.hobbies || ''}
+              style={inputStyle}
+            />
+          </div>
           
-          {error && <div style={{ background: 'rgba(139,0,0,0.5)', border: '1px solid rgba(255,0,0,0.3)', color: '#fff', padding: '0.8rem', borderRadius: '8px', marginBottom: '1rem' }}>{error}</div>}
-          {message && <div style={{ background: 'rgba(0,128,0,0.4)', border: '1px solid rgba(0,255,0,0.3)', color: '#fff', padding: '0.8rem', borderRadius: '8px', marginBottom: '1rem' }}>{message}</div>}
-
-          <form onSubmit={handlePasswordSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-            <input 
-              type="password" name="currentPassword" placeholder="Mevcut Sistem Şifreniz" 
-              style={{ padding: '0.9rem', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.1)', background: 'rgba(0,0,0,0.5)', color: '#fff' }} required 
-            />
-            <input 
-              type="password" name="newPassword" placeholder="Yeni Şifre (En az 6 karakter)" 
-              style={{ padding: '0.9rem', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.1)', background: 'rgba(0,0,0,0.5)', color: '#fff' }} required minLength={6} 
-            />
-            <input 
-              type="password" name="newPasswordConfirm" placeholder="Yeni Şifrenizi Doğrulayın" 
-              style={{ padding: '0.9rem', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.1)', background: 'rgba(0,0,0,0.5)', color: '#fff' }} required minLength={6} 
-            />
-            <button type="submit" className="btn btn-outline" style={{ marginTop: '0.5rem', width: '100%', borderColor: 'var(--text-muted)' }} disabled={loading}>
-              {loading ? 'İşleniyor...' : 'Şifreyi Güvence Altına Al'}
-            </button>
-          </form>
-        </div>
-
+          <button type="submit" className="btn btn-primary" style={{ marginTop: '0.5rem', width: '100%', padding: '0.85rem' }} disabled={profileLoading}>
+            {profileLoading ? 'Kaydediliyor...' : 'Bilgileri Kaydet'}
+          </button>
+        </form>
       </div>
+
+      {/* ŞİFRE İŞLEMLERİ */}
+      <div className="glass-card" style={{ padding: '2rem', borderRadius: '16px', border: '1px solid var(--border-subtle)', background: 'var(--bg-surface)' }}>
+        <h3 style={{ fontSize: '1.1rem', color: 'var(--text-main)', margin: '0 0 1rem 0', borderBottom: '1px solid var(--border-subtle)', paddingBottom: '0.5rem', fontWeight: 'bold' }}>Şifre Güvenliği</h3>
+        
+        {error && <div style={{ background: 'rgba(239,68,68,0.1)', border: '1px solid rgba(239,68,68,0.3)', color: '#ef4444', padding: '0.75rem 1rem', borderRadius: '8px', marginBottom: '1rem', fontSize: '0.85rem' }}>{error}</div>}
+        {message && <div style={{ background: 'rgba(34,197,94,0.1)', border: '1px solid rgba(34,197,94,0.3)', color: '#10b981', padding: '0.75rem 1rem', borderRadius: '8px', marginBottom: '1rem', fontSize: '0.85rem', fontWeight: 'bold' }}>{message}</div>}
+
+        <form onSubmit={handlePasswordSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+          <div>
+            <label style={{ fontSize: '0.75rem', color: 'var(--text-dim)', fontWeight: 'bold', display: 'block', marginBottom: '0.3rem', textTransform: 'uppercase' }}>Mevcut Şifreniz</label>
+            <input 
+              type="password" name="currentPassword" placeholder="••••••••" 
+              style={inputStyle} required 
+            />
+          </div>
+
+          <div>
+            <label style={{ fontSize: '0.75rem', color: 'var(--text-dim)', fontWeight: 'bold', display: 'block', marginBottom: '0.3rem', textTransform: 'uppercase' }}>Yeni Şifre (En az 6 karakter)</label>
+            <input 
+              type="password" name="newPassword" placeholder="••••••••" 
+              style={inputStyle} required minLength={6} 
+            />
+          </div>
+
+          <div>
+            <label style={{ fontSize: '0.75rem', color: 'var(--text-dim)', fontWeight: 'bold', display: 'block', marginBottom: '0.3rem', textTransform: 'uppercase' }}>Yeni Şifre Tekrar</label>
+            <input 
+              type="password" name="newPasswordConfirm" placeholder="••••••••" 
+              style={inputStyle} required minLength={6} 
+            />
+          </div>
+          
+          <button type="submit" className="btn btn-outline" style={{ marginTop: '0.5rem', width: '100%', padding: '0.85rem' }} disabled={passwordLoading}>
+            {passwordLoading ? 'Güncelleniyor...' : 'Şifreyi Güncelle'}
+          </button>
+        </form>
+      </div>
+
     </div>
   );
 }

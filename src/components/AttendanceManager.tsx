@@ -54,7 +54,6 @@ export default function AttendanceManager({
 
     allUsers.forEach(u => {
       const status = attendance[u.id] || 'GELMEDİ';
-      // pulseResponses içindeki her öğenin tipi farklı olabilir (string veya object)
       const pulseInfo = pulseResponses.find((r: any) => {
         if (!r) return false;
         if (typeof r === 'string') return r === u.id;
@@ -82,7 +81,6 @@ export default function AttendanceManager({
     const unsubscribe = onSnapshot(doc(db, "rehearsals", rehearsalId), (doc) => {
       const data = doc.data();
       if (data) {
-        // Gelen veriyi güvenli bir şekilde state'e aktar
         setPulseResponses(data.pulseResponses || []);
         
         if (data.pulseActive) {
@@ -154,49 +152,49 @@ export default function AttendanceManager({
       <div className="flex flex-wrap gap-2">
         <button 
           onClick={() => setOpen(!open)}
-          className="flex items-center gap-2 text-xs font-bold text-[var(--primary-gold)] hover:text-white transition-all bg-white/5 py-3 px-6 rounded-full border border-[var(--primary-gold)]/20"
+          className="flex items-center gap-2 text-xs font-bold text-[var(--primary-gold)] hover:underline transition-all bg-[var(--primary-gold-dim)] py-2.5 px-5 rounded-full border border-[var(--primary-gold-border)]"
         >
           <ion-icon name={open ? 'chevron-up-outline' : 'people-outline'}></ion-icon>
-          {open ? 'YOKLAMA PANELİNİ KAPAT' : 'YOKLAMA VE NABIZ YÖNETİMİ'}
+          {open ? 'Yoklama Panelini Kapat' : 'Yoklama ve Katılım Yönetimi'}
         </button>
         {open && (
            <button 
             onClick={exportCSV}
-            className="flex items-center gap-2 text-xs font-bold text-[#22c55e] hover:bg-[#22c55e] hover:text-white transition-all bg-[#22c55e]/10 py-3 px-6 rounded-full border border-[#22c55e]/20"
+            className="flex items-center gap-2 text-xs font-bold text-[#10b981] hover:bg-[#10b981] hover:text-black transition-all bg-[#10b981]/10 py-2.5 px-5 rounded-full border border-[#10b981]/30"
           >
             <ion-icon name="download-outline"></ion-icon>
-            EXCEL / CSV OLARAK İNDİR
+            Excel / CSV Olarak İndir
           </button>
         )}
       </div>
 
       {open && (
-        <div className="mt-4 p-5 bg-black/80 rounded-3xl border border-[var(--primary-gold)]/30 animate-fadeIn space-y-6">
+        <div className="mt-4 p-5 bg-[var(--bg-surface-elevated)] rounded-2xl border border-[var(--border-subtle)] space-y-6">
           
           {/* Nabız Yoklama Kontrolü */}
-          <div className="p-4 bg-[var(--primary-gold-dim)]/20 rounded-2xl border border-[var(--primary-gold)]/20 flex flex-col sm:flex-row items-center justify-between gap-4">
+          <div className="p-4 bg-[var(--primary-gold-dim)] rounded-xl border border-[var(--primary-gold-border)] flex flex-col sm:flex-row items-center justify-between gap-4">
             <div className="text-center sm:text-left">
-              <h3 className="text-[var(--primary-gold)] font-bold text-sm uppercase tracking-widest flex items-center gap-2">
-                <span className={`w-2 h-2 rounded-full ${pulseActive ? 'bg-red-500 animate-pulse' : 'bg-gray-500'}`}></span>
-                Canlı Nabız Yoklaması
+              <h3 className="text-[var(--primary-gold)] font-bold text-sm uppercase tracking-wider flex items-center gap-2">
+                <span className={`w-2 h-2 rounded-full ${pulseActive ? 'bg-red-500 animate-pulse' : 'bg-gray-400'}`}></span>
+                Canlı Yoklama
               </h3>
-              <p className="text-white/40 text-[10px] mt-1">60 sn. içinde onay toplamaya yarar.</p>
+              <p className="text-[var(--text-dim)] text-xs mt-0.5">60 saniye içinde aktörlerden anlık onay toplar.</p>
             </div>
             
             {pulseActive ? (
               <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-full border-2 border-[var(--primary-gold)] flex items-center justify-center text-sm font-bold text-[var(--primary-gold)]">
+                <div className="w-10 h-10 rounded-full border-2 border-[var(--primary-gold)] flex items-center justify-center text-sm font-bold text-[var(--primary-gold)] bg-[var(--bg-surface)]">
                   {pulseTimeLeft}
                 </div>
-                <span className="text-[var(--primary-gold)] font-bold text-[10px] animate-pulse">SİNYAL AKTİF...</span>
+                <span className="text-[var(--primary-gold)] font-bold text-xs animate-pulse">SİNYAL AÇIK</span>
               </div>
             ) : (
               <button 
                 onClick={handleStartPulse}
                 disabled={loading}
-                className="btn btn-primary !py-2 !px-6 !rounded-full !text-[10px]"
+                className="btn btn-primary !py-2 !px-5 !rounded-lg !text-xs"
               >
-                YENİ NABIZ BAŞLAT
+                Yeni Yoklama Başlat
               </button>
             )}
           </div>
@@ -205,18 +203,18 @@ export default function AttendanceManager({
           <div className="space-y-3">
             <button 
               onClick={() => setShowExcuseForm(!showExcuseForm)}
-              className="w-full py-3 bg-white/5 hover:bg-white/10 text-white/60 text-[10px] font-bold uppercase tracking-widest rounded-xl border border-white/5 transition-all flex items-center justify-center gap-2"
+              className="w-full py-2.5 bg-[var(--bg-surface)] hover:border-[var(--primary-gold)] text-[var(--text-muted)] text-xs font-bold uppercase tracking-wider rounded-xl border border-[var(--border-subtle)] transition-all flex items-center justify-center gap-2"
             >
               <ion-icon name={showExcuseForm ? 'close-outline' : 'add-outline'}></ion-icon>
-              {showExcuseForm ? 'VAZGEÇ' : 'MANUEL MAZERETLİ EKLE'}
+              {showExcuseForm ? 'Vazgeç' : '+ Manuel Mazeretli Ekle'}
             </button>
 
             {showExcuseForm && (
-              <div className="p-4 bg-white/5 rounded-2xl border border-white/10 space-y-4 animate-fadeIn">
+              <div className="p-4 bg-[var(--bg-surface)] rounded-xl border border-[var(--border-subtle)] space-y-3">
                 <select 
                   value={selectedActorId}
                   onChange={(e) => setSelectedActorId(e.target.value)}
-                  className="w-full p-3 bg-black/60 rounded-xl border border-white/10 text-white text-xs outline-none focus:border-[var(--primary-gold)]"
+                  className="w-full p-3 bg-[var(--input-bg)] rounded-lg border border-[var(--border-medium)] text-[var(--text-main)] text-xs outline-none focus:border-[var(--primary-gold)]"
                 >
                   <option value="">Aktör Seçiniz...</option>
                   {actorsOnly.map(u => (
@@ -227,42 +225,42 @@ export default function AttendanceManager({
                   type="text" 
                   value={excuseNote}
                   onChange={(e) => setExcuseNote(e.target.value)}
-                  placeholder="Mazeret Sebebi... (Örn: Sınavı var, Hastalık)"
-                  className="w-full p-3 bg-black/60 rounded-xl border border-white/10 text-white text-xs outline-none focus:border-[var(--primary-gold)]"
+                  placeholder="Mazeret sebebi (Örn: Sınav, Hastalık)"
+                  className="w-full p-3 bg-[var(--input-bg)] rounded-lg border border-[var(--border-medium)] text-[var(--text-main)] text-xs outline-none focus:border-[var(--primary-gold)]"
                 />
                 <button 
                   onClick={handleAddExcuse}
                   disabled={loading || !selectedActorId || !excuseNote}
-                  className="w-full py-3 bg-[var(--primary-gold)] text-black font-bold text-[10px] uppercase rounded-xl hover:bg-[#b8860b] transition-all disabled:opacity-50"
+                  className="w-full py-2.5 bg-[var(--primary-gold)] text-black font-bold text-xs uppercase rounded-lg hover:bg-[var(--primary-gold-light)] transition-all disabled:opacity-50"
                 >
-                  SİSTEME İŞLE
+                  Mazereti Kaydet
                 </button>
               </div>
             )}
           </div>
 
           {/* GRUPLANDIRILMIŞ LİSTE */}
-          <div className="space-y-6 max-h-[500px] overflow-y-auto pr-2 custom-scrollbar">
+          <div className="space-y-6 max-h-[400px] overflow-y-auto pr-2 custom-scrollbar">
             
             {/* 1. KATILANLAR */}
-            <div className="space-y-3">
-              <h4 className="text-[10px] font-bold text-[#22c55e] uppercase tracking-widest flex items-center gap-2 px-1">
+            <div className="space-y-2">
+              <h4 className="text-xs font-bold text-[#10b981] uppercase tracking-wider flex items-center gap-1.5 px-1">
                 <ion-icon name="checkmark-circle"></ion-icon>
                 Katılanlar ({groups.participants.length})
               </h4>
               {groups.participants.map(u => (
-                <div key={u.id} className="p-3 bg-[#22c55e]/5 rounded-2xl border border-[#22c55e]/20 flex items-center justify-between">
+                <div key={u.id} className="p-3 bg-[var(--bg-surface)] rounded-xl border border-[#10b981]/30 flex items-center justify-between">
                   <div className="flex items-center gap-3">
-                    <div className="w-8 h-8 rounded-full bg-[#22c55e] text-white flex items-center justify-center text-[10px] font-bold">
+                    <div className="w-8 h-8 rounded-full bg-[#10b981] text-black flex items-center justify-center text-xs font-bold">
                       {u.name[0]}{u.surname[0]}
                     </div>
                     <div>
-                      <p className="text-white text-xs font-bold">{u.name} {u.surname}</p>
-                      <p className="text-[9px] text-white/40 uppercase">{u.role}</p>
+                      <p className="text-[var(--text-main)] text-xs font-bold">{u.name} {u.surname}</p>
+                      <p className="text-[10px] text-[var(--text-dim)] uppercase">{u.role}</p>
                     </div>
                   </div>
                   {u.time && (
-                    <span className="text-[9px] font-mono text-[#22c55e] bg-[#22c55e]/10 px-2 py-1 rounded border border-[#22c55e]/10">
+                    <span className="text-[10px] font-mono text-[#10b981] bg-[#10b981]/10 px-2 py-1 rounded border border-[#10b981]/20">
                       ONAY: {u.time}
                     </span>
                   )}
@@ -272,50 +270,48 @@ export default function AttendanceManager({
 
             {/* 2. MAZERETLİLER */}
             {groups.excused.length > 0 && (
-              <div className="space-y-3">
-                <h4 className="text-[10px] font-bold text-[#3b82f6] uppercase tracking-widest flex items-center gap-2 px-1">
+              <div className="space-y-2">
+                <h4 className="text-xs font-bold text-[#3b82f6] uppercase tracking-wider flex items-center gap-1.5 px-1">
                   <ion-icon name="information-circle"></ion-icon>
                   Mazeretliler ({groups.excused.length})
                 </h4>
                 {groups.excused.map(u => (
-                  <div key={u.id} className="p-3 bg-[#3b82f6]/5 rounded-2xl border border-[#3b82f6]/20">
-                    <div className="flex items-center justify-between mb-2">
-                      <div className="flex items-center gap-3">
-                        <div className="w-8 h-8 rounded-full bg-[#3b82f6] text-white flex items-center justify-center text-[10px] font-bold">
-                          {u.name[0]}{u.surname[0]}
-                        </div>
-                        <p className="text-white text-xs font-bold">{u.name} {u.surname}</p>
+                  <div key={u.id} className="p-3 bg-[var(--bg-surface)] rounded-xl border border-[#3b82f6]/30 flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      <div className="w-8 h-8 rounded-full bg-[#3b82f6] text-white flex items-center justify-center text-xs font-bold">
+                        {u.name[0]}{u.surname[0]}
                       </div>
-                      <button onClick={() => setAttendance(prev => ({ ...prev, [u.id]: 'GELMEDİ' }))} className="text-white/20 hover:text-red-500 transition-colors">
-                        <ion-icon name="trash-outline"></ion-icon>
-                      </button>
+                      <p className="text-[var(--text-main)] text-xs font-bold">{u.name} {u.surname}</p>
                     </div>
+                    <button onClick={() => setAttendance(prev => ({ ...prev, [u.id]: 'GELMEDİ' }))} className="text-[var(--text-dim)] hover:text-[#ef4444] transition-colors p-1">
+                      <ion-icon name="trash-outline"></ion-icon>
+                    </button>
                   </div>
                 ))}
               </div>
             )}
 
             {/* 3. KATILMAYANLAR */}
-            <div className="space-y-3">
-              <h4 className="text-[10px] font-bold text-white/30 uppercase tracking-widest flex items-center gap-2 px-1">
+            <div className="space-y-2">
+              <h4 className="text-xs font-bold text-[var(--text-dim)] uppercase tracking-wider flex items-center gap-1.5 px-1">
                 <ion-icon name="close-circle"></ion-icon>
-                Gelmeyenler / Yanıt Yok ({groups.missing.length})
+                Gelmeyenler / Henüz Yanıt Yok ({groups.missing.length})
               </h4>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                 {groups.missing.map(u => (
-                  <div key={u.id} className="p-3 bg-white/5 rounded-2xl border border-white/5 flex items-center justify-between group">
+                  <div key={u.id} className="p-3 bg-[var(--bg-surface)] rounded-xl border border-[var(--border-subtle)] flex items-center justify-between group">
                     <div className="flex items-center gap-3">
-                      <div className="w-8 h-8 rounded-full bg-white/10 text-white/40 flex items-center justify-center text-[10px] font-bold">
+                      <div className="w-8 h-8 rounded-full bg-[var(--bg-surface-elevated)] text-[var(--text-dim)] flex items-center justify-center text-xs font-bold">
                         {u.name[0]}{u.surname[0]}
                       </div>
-                      <p className="text-white/40 text-[11px] font-medium">{u.name} {u.surname}</p>
+                      <p className="text-[var(--text-muted)] text-xs font-medium">{u.name} {u.surname}</p>
                     </div>
                     <button 
                       onClick={() => setAttendance(prev => ({ ...prev, [u.id]: 'GELDİ' }))}
-                      className="opacity-0 group-hover:opacity-100 bg-[#22c55e] text-white p-1.5 rounded-lg text-xs transition-all"
+                      className="opacity-0 group-hover:opacity-100 bg-[#10b981] text-black px-2 py-1 rounded text-[10px] font-bold transition-all"
                       title="Manuel Geldi İşaretle"
                     >
-                      <ion-icon name="checkmark-outline"></ion-icon>
+                      Geldi ✓
                     </button>
                   </div>
                 ))}
@@ -326,22 +322,22 @@ export default function AttendanceManager({
 
           {/* Yönetmen Notu */}
           <div className="space-y-2">
-            <label className="text-[10px] font-bold text-[var(--primary-gold)] uppercase tracking-widest px-2 flex items-center gap-2">
+            <label className="text-xs font-bold text-[var(--primary-gold)] uppercase tracking-wider px-1 flex items-center gap-1.5">
               <ion-icon name="create-outline"></ion-icon>
-              YÖNETMENİN PROVA NOTU
+              Yönetmen Prova Notu
             </label>
             <textarea
               value={notes}
               onChange={(e) => setNotes(e.target.value)}
-              placeholder="Bugünkü prova disciplini veya performans hakkında notunuz..."
-              className="w-full p-4 bg-black/40 rounded-2xl border border-white/10 text-white text-xs focus:border-[var(--primary-gold)] transition-all outline-none min-h-[80px]"
+              placeholder="Prova disiplini veya sahneleme hakkında notunuz..."
+              className="w-full p-3 bg-[var(--input-bg)] rounded-xl border border-[var(--border-medium)] text-[var(--text-main)] text-xs focus:border-[var(--primary-gold)] transition-all outline-none min-h-[70px]"
             />
           </div>
 
           <button 
             onClick={save}
             disabled={loading}
-            className="w-full btn btn-primary py-4 rounded-2xl font-bold tracking-widest text-xs shadow-glow"
+            className="w-full btn btn-primary py-3 rounded-xl font-bold tracking-wider text-xs"
           >
             {loading ? 'Kaydediliyor...' : 'Yoklamayı Kaydet'}
           </button>

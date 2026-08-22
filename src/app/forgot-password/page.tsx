@@ -6,7 +6,6 @@ import Link from 'next/link';
 
 export const dynamic = "force-dynamic";
 
-
 export default function ForgotPassword() {
   const [email, setEmail] = useState('');
   const [loading, setLoading] = useState(false);
@@ -31,33 +30,34 @@ export default function ForgotPassword() {
   };
 
   return (
-    <div className="hero" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '100vh' }}>
-      <div className="glass-card" style={{ maxWidth: '450px', width: '90%', textAlign: 'center' }}>
-        <div className="mb-8">
-          <div className="w-20 h-20 bg-[var(--primary-gold-dim)] rounded-full flex items-center justify-center mx-auto mb-4 border border-[var(--primary-gold)]/30">
-            <ion-icon name="key-outline" style={{ fontSize: '2.5rem', color: 'var(--primary-gold)' }}></ion-icon>
+    <div className="hero flex items-center justify-center min-h-screen bg-[var(--bg-dark)] px-4">
+      <div className="glass-card bg-[var(--bg-surface)] border-[var(--border-subtle)]" style={{ maxWidth: '450px', width: '100%', textAlign: 'center' }}>
+        <div className="mb-6">
+          <div className="w-16 h-16 bg-[var(--primary-gold-dim)] rounded-full flex items-center justify-center mx-auto mb-4 border border-[var(--primary-gold-border)]">
+            <ion-icon name="key-outline" style={{ fontSize: '2rem', color: 'var(--primary-gold)' }}></ion-icon>
           </div>
-          <h2 className="serif-font" style={{ fontSize: '2.2rem', color: 'var(--primary-gold)', marginBottom: '0.5rem' }}>Şifremi Unuttum</h2>
-          <p style={{ color: 'var(--text-muted)', fontSize: '0.9rem' }}>
+          <h2 className="serif-font text-3xl text-[var(--text-main)] mb-2">Şifremi Unuttum</h2>
+          <p className="text-[var(--text-muted)] text-sm">
             Kayıtlı e-posta adresinizi girin, size bir sıfırlama linki gönderelim.
           </p>
         </div>
         
         {message && (
           <div style={{ 
-            background: message.type === 'error' ? 'rgba(139,0,0,0.4)' : 'rgba(34,139,34,0.4)', 
-            border: `1px solid ${message.type === 'error' ? 'rgba(255,0,0,0.2)' : 'rgba(0,255,0,0.2)'}`, 
-            color: '#fff', 
-            padding: '1rem', 
-            borderRadius: '12px', 
-            marginBottom: '1.5rem',
-            fontSize: '0.9rem'
+            background: message.type === 'error' ? 'rgba(239,68,68,0.1)' : 'rgba(34,197,94,0.1)', 
+            border: `1px solid ${message.type === 'error' ? 'rgba(239,68,68,0.3)' : 'rgba(34,197,94,0.3)'}`, 
+            color: message.type === 'error' ? '#ef4444' : '#10b981', 
+            padding: '0.85rem 1rem', 
+            borderRadius: '10px', 
+            marginBottom: '1.25rem',
+            fontSize: '0.85rem',
+            fontWeight: 'bold'
           }}>
             {message.text}
           </div>
         )}
 
-        <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '1.2rem' }}>
+        <form onSubmit={handleSubmit} className="flex flex-col gap-4">
           <div className="relative">
             <span className="absolute left-4 top-1/2 -translate-y-1/2 text-[var(--primary-gold)]">
               <ion-icon name="mail-outline"></ion-icon>
@@ -67,25 +67,18 @@ export default function ForgotPassword() {
               placeholder="E-posta Adresiniz" 
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              style={{ 
-                padding: '1rem 1rem 1rem 3rem', 
-                borderRadius: '12px', 
-                border: '1px solid rgba(255,255,255,0.1)', 
-                background: 'rgba(0,0,0,0.4)', 
-                color: '#fff',
-                width: '100%'
-              }}
+              className="w-full pl-11 pr-4 py-3.5 rounded-xl border border-[var(--border-medium)] bg-[var(--input-bg)] text-[var(--text-main)] outline-none focus:border-[var(--primary-gold)] transition-all text-sm"
               required
             />
           </div>
           
-          <button type="submit" className="btn btn-primary" style={{ width: '100%', padding: '1rem' }} disabled={loading}>
+          <button type="submit" className="btn btn-primary w-full py-3.5 font-bold text-xs uppercase tracking-wider" disabled={loading}>
             {loading ? 'Gönderiliyor...' : 'Sıfırlama Linki Gönder'}
           </button>
         </form>
         
-        <div style={{ marginTop: '2.5rem', paddingTop: '1.5rem', borderTop: '1px solid rgba(255,255,255,0.05)' }}>
-          <Link href="/login" style={{ color: 'var(--text-muted)', fontSize: '0.9rem', textDecoration: 'none' }} className="hover:text-[var(--primary-gold)] transition-colors">
+        <div className="mt-8 pt-4 border-t border-[var(--border-subtle)]">
+          <Link href="/login" className="text-xs font-bold text-[var(--text-muted)] hover:text-[var(--primary-gold)] transition-colors">
             ← Giriş Sayfasına Dön
           </Link>
         </div>

@@ -7,7 +7,6 @@ import Link from 'next/link';
 
 export const dynamic = "force-dynamic";
 
-
 function ResetPasswordForm() {
   const searchParams = useSearchParams();
   const router = useRouter();
@@ -75,29 +74,28 @@ function ResetPasswordForm() {
 
   if (!token || !email) {
     return (
-      <div className="glass-card animate-fadeIn" style={{ maxWidth: '450px', width: '90%', textAlign: 'center' }}>
-        <div className="w-20 h-20 bg-red-500/10 rounded-full flex items-center justify-center mx-auto mb-6 border border-red-500/30">
-          <ion-icon name="alert-circle-outline" style={{ fontSize: '2.5rem', color: '#ff4444' }}></ion-icon>
+      <div className="glass-card bg-[var(--bg-surface)] border-[var(--border-subtle)]" style={{ maxWidth: '450px', width: '90%', textAlign: 'center' }}>
+        <div className="w-16 h-16 bg-red-500/10 rounded-full flex items-center justify-center mx-auto mb-4 border border-red-500/30">
+          <ion-icon name="alert-circle-outline" style={{ fontSize: '2rem', color: '#ef4444' }}></ion-icon>
         </div>
-        <h2 className="serif-font" style={{ color: '#ff4444', fontSize: '2rem', marginBottom: '1rem' }}>Erişim Hatası</h2>
-        <p style={{ color: 'var(--text-muted)', lineHeight: '1.6' }}>Bu şifre sıfırlama talebi geçersiz veya süresi dolmuş. Güvenliğiniz için lütfen yeni bir talep oluşturun.</p>
-        <Link href="/forgot-password" style={{ marginTop: '2rem', display: 'inline-block' }} className="btn btn-outline w-full py-3">Yeni Link Talep Et</Link>
+        <h2 className="serif-font" style={{ color: '#ef4444', fontSize: '1.8rem', marginBottom: '0.75rem' }}>Erişim Hatası</h2>
+        <p style={{ color: 'var(--text-muted)', lineHeight: '1.6', fontSize: '0.875rem' }}>Bu şifre sıfırlama talebi geçersiz veya süresi dolmuş. Lütfen yeni bir talep oluşturun.</p>
+        <Link href="/forgot-password" className="btn btn-primary w-full py-3 mt-6 text-xs font-bold uppercase tracking-wider">Yeni Link Talep Et</Link>
       </div>
     );
   }
 
   if (success) {
     return (
-       <div className="glass-card animate-fadeIn" style={{ maxWidth: '450px', width: '90%', textAlign: 'center' }}>
-        <div className="w-24 h-24 bg-[var(--primary-gold-dim)] rounded-full flex items-center justify-center mx-auto mb-8 border border-[var(--primary-gold)]/30 relative">
-          <div className="absolute inset-0 rounded-full animate-ping bg-[var(--primary-gold)]/20 shadow-glow"></div>
-          <ion-icon name="checkmark-done-outline" style={{ fontSize: '3rem', color: 'var(--primary-gold)' }}></ion-icon>
+       <div className="glass-card bg-[var(--bg-surface)] border-[var(--border-subtle)]" style={{ maxWidth: '450px', width: '90%', textAlign: 'center' }}>
+        <div className="w-16 h-16 bg-green-500/10 rounded-full flex items-center justify-center mx-auto mb-6 border border-green-500/30">
+          <ion-icon name="checkmark-done-outline" style={{ fontSize: '2.5rem', color: '#10b981' }}></ion-icon>
         </div>
-        <h2 className="serif-font" style={{ fontSize: '2.4rem', color: 'var(--primary-gold)', marginBottom: '1rem' }}>Şifre Güncellendi!</h2>
-        <p style={{ color: 'var(--text-muted)', marginBottom: '2rem', lineHeight: '1.6' }}>
-          Yeni şifreniz başarıyla kaydedildi. {countdown} saniye içinde giriş sayfasına yönlendiriliyorsunuz...
+        <h2 className="serif-font text-3xl text-[var(--text-main)] mb-2">Şifre Güncellendi!</h2>
+        <p style={{ color: 'var(--text-muted)', marginBottom: '1.5rem', fontSize: '0.875rem' }}>
+          Yeni şifreniz başarıyla kaydedildi. {countdown} saniye içinde yönlendiriliyorsunuz...
         </p>
-        <Link href="/login" className="btn btn-primary w-full py-3 font-bold tracking-widest uppercase text-xs">
+        <Link href="/login" className="btn btn-primary w-full py-3 font-bold tracking-wider uppercase text-xs">
           Hemen Giriş Yap
         </Link>
       </div>
@@ -105,31 +103,35 @@ function ResetPasswordForm() {
   }
 
   return (
-    <div className="glass-card animate-fadeIn" style={{ maxWidth: '450px', width: '90%', textAlign: 'center' }}>
-      <div className="mb-10">
-        <div className="w-20 h-20 bg-[var(--primary-gold-dim)] rounded-full flex items-center justify-center mx-auto mb-6 border border-[var(--primary-gold)]/30">
-          <ion-icon name="lock-open-outline" style={{ fontSize: '2.5rem', color: 'var(--primary-gold)' }}></ion-icon>
+    <div className="glass-card bg-[var(--bg-surface)] border-[var(--border-subtle)]" style={{ maxWidth: '450px', width: '90%', textAlign: 'center' }}>
+      <div className="mb-6">
+        <div className="w-16 h-16 bg-[var(--primary-gold-dim)] rounded-full flex items-center justify-center mx-auto mb-4 border border-[var(--primary-gold-border)]">
+          <ion-icon name="lock-open-outline" style={{ fontSize: '2rem', color: 'var(--primary-gold)' }}></ion-icon>
         </div>
-        <h2 className="serif-font" style={{ fontSize: '2.2rem', color: 'var(--primary-gold)', marginBottom: '0.5rem' }}>Yeni Şifre Belirleyin</h2>
-        <p style={{ color: 'var(--text-muted)', fontSize: '0.9rem' }}>
+        <h2 className="serif-font text-3xl text-[var(--text-main)] mb-2">Yeni Şifre Belirleyin</h2>
+        <p className="text-[var(--text-muted)] text-sm">
           Lütfen yeni şifrenizi giriniz.
         </p>
       </div>
 
       {message && (
-        <div className={`fade-in-up p-4 mb-6 rounded-xl border text-sm ${
-          message.type === 'error' ? 'bg-red-500/10 border-red-500/20 text-red-200' : 'bg-green-500/10 border-green-500/20 text-green-200'
-        }`}>
-          <div className="flex items-center gap-2 justify-center">
-            <ion-icon name={message.type === 'error' ? "alert-circle" : "checkmark-circle"}></ion-icon>
-            {message.text}
-          </div>
+        <div style={{
+          background: message.type === 'error' ? 'rgba(239,68,68,0.1)' : 'rgba(34,197,94,0.1)',
+          border: `1px solid ${message.type === 'error' ? 'rgba(239,68,68,0.3)' : 'rgba(34,197,94,0.3)'}`,
+          color: message.type === 'error' ? '#ef4444' : '#10b981',
+          padding: '0.85rem 1rem',
+          borderRadius: '10px',
+          marginBottom: '1.25rem',
+          fontSize: '0.85rem',
+          fontWeight: 'bold'
+        }}>
+          {message.text}
         </div>
       )}
 
-      <form onSubmit={handleSubmit} className="flex flex-col gap-5">
-        <div className="relative group">
-          <span className="absolute left-4 top-1/2 -translate-y-1/2 text-[var(--primary-gold)] transition-all group-focus-within:scale-110">
+      <form onSubmit={handleSubmit} className="flex flex-col gap-4">
+        <div className="relative">
+          <span className="absolute left-4 top-1/2 -translate-y-1/2 text-[var(--primary-gold)]">
             <ion-icon name="key-outline"></ion-icon>
           </span>
           <input 
@@ -137,13 +139,13 @@ function ResetPasswordForm() {
             placeholder="Yeni Şifre" 
             value={newPassword}
             onChange={(e) => setNewPassword(e.target.value)}
-            className="w-full pl-12 pr-4 py-4 rounded-xl border border-white/10 bg-black/40 text-white focus:border-[var(--primary-gold)] focus:ring-1 focus:ring-[var(--primary-gold)]/30 transition-all outline-none"
+            className="w-full pl-11 pr-4 py-3.5 rounded-xl border border-[var(--border-medium)] bg-[var(--input-bg)] text-[var(--text-main)] outline-none focus:border-[var(--primary-gold)] transition-all text-sm"
             required 
           />
         </div>
 
-        <div className="relative group">
-          <span className="absolute left-4 top-1/2 -translate-y-1/2 text-[var(--primary-gold)] transition-all group-focus-within:scale-110">
+        <div className="relative">
+          <span className="absolute left-4 top-1/2 -translate-y-1/2 text-[var(--primary-gold)]">
             <ion-icon name="refresh-outline"></ion-icon>
           </span>
           <input 
@@ -151,24 +153,17 @@ function ResetPasswordForm() {
             placeholder="Yeni Şifreyi Onayla" 
             value={confirmPassword}
             onChange={(e) => setConfirmPassword(e.target.value)}
-            className="w-full pl-12 pr-4 py-4 rounded-xl border border-white/10 bg-black/40 text-white focus:border-[var(--primary-gold)] focus:ring-1 focus:ring-[var(--primary-gold)]/30 transition-all outline-none"
+            className="w-full pl-11 pr-4 py-3.5 rounded-xl border border-[var(--border-medium)] bg-[var(--input-bg)] text-[var(--text-main)] outline-none focus:border-[var(--primary-gold)] transition-all text-sm"
             required 
           />
         </div>
         
         <button 
           type="submit" 
-          className="btn btn-primary w-full py-4 font-bold tracking-widest uppercase text-xs mt-2 relative overflow-hidden group"
+          className="btn btn-primary w-full py-3.5 font-bold tracking-wider uppercase text-xs mt-2"
           disabled={loading}
         >
-          {loading ? (
-            <span className="flex items-center justify-center gap-2">
-              <div className="w-4 h-4 border-2 border-black/20 border-t-black rounded-full animate-spin"></div>
-              Güncelleniyor...
-            </span>
-          ) : (
-            'Şifreyi Güncelle'
-          )}
+          {loading ? 'Güncelleniyor...' : 'Şifreyi Güncelle'}
         </button>
       </form>
     </div>
@@ -177,15 +172,10 @@ function ResetPasswordForm() {
 
 export default function ResetPassword() {
   return (
-    <div className="hero flex items-center justify-center min-h-screen relative overflow-hidden">
-      {/* Arka plan dekoratif elementler */}
-      <div className="absolute top-1/4 -left-20 w-80 h-80 bg-[var(--primary-gold)]/5 rounded-full blur-[100px]"></div>
-      <div className="absolute bottom-1/4 -right-20 w-80 h-80 bg-[var(--primary-gold)]/10 rounded-full blur-[100px]"></div>
-      
+    <div className="hero flex items-center justify-center min-h-screen bg-[var(--bg-dark)]">
       <Suspense fallback={
-        <div className="flex flex-col items-center gap-4">
-          <div className="w-12 h-12 border-4 border-[var(--primary-gold)]/20 border-t-[var(--primary-gold)] rounded-full animate-spin"></div>
-          <p className="text-[var(--primary-gold)] font-bold animate-pulse">SAHNE HAZIRLANIYOR...</p>
+        <div className="flex flex-col items-center gap-4 text-[var(--primary-gold)]">
+          <p className="font-bold">Yükleniyor...</p>
         </div>
       }>
         <ResetPasswordForm />

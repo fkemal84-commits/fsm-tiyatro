@@ -6,7 +6,7 @@
   --bg-dark: #08080a;
   --bg-surface: #101014;
   --bg-surface-elevated: #16161c;
-  --bg-card: rgba(16, 16, 20, 0.9);
+  --bg-card: rgba(16, 16, 20, 0.95);
 
   --primary-gold: #c8a261;
   --primary-gold-light: #e0be7d;
@@ -30,39 +30,41 @@
   --ticket-bg: #14141a;
   --navbar-bg: rgba(8, 8, 10, 0.94);
   --input-bg: rgba(0, 0, 0, 0.4);
+  --btn-primary-text: #000000;
 
   --transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
-/* 2. MATİNE / PARŞÖMEN MODU (LIGHT THEME - KONTRASTLI VE SICAK) */
+/* 2. MATİNE / PARŞÖMEN MODU (LIGHT THEME - KONTRASTLI, SICAK VE OKUNAKLI) */
 html[data-theme="light"] {
   --bg-dark: #f5f1e8;
   --bg-surface: #ffffff;
   --bg-surface-elevated: #ede7da;
-  --bg-card: rgba(255, 255, 255, 0.95);
+  --bg-card: #ffffff;
 
-  --primary-gold: #9e7938;
-  --primary-gold-light: #b8914b;
-  --primary-gold-dim: rgba(158, 121, 56, 0.12);
-  --primary-gold-border: rgba(158, 121, 56, 0.3);
+  --primary-gold: #9e7428;
+  --primary-gold-light: #b88a38;
+  --primary-gold-dim: rgba(158, 116, 40, 0.1);
+  --primary-gold-border: rgba(158, 116, 40, 0.28);
 
   --accent-crimson: #851620;
   --accent-crimson-bright: #a11f2c;
   --accent-crimson-dim: rgba(133, 22, 32, 0.1);
 
-  --text-main: #181715;
-  --text-muted: #524f47;
-  --text-dim: #7d786d;
+  --text-main: #141416;
+  --text-muted: #49463e;
+  --text-dim: #757065;
 
-  --border-subtle: rgba(0, 0, 0, 0.1);
+  --border-subtle: rgba(0, 0, 0, 0.09);
   --border-medium: rgba(0, 0, 0, 0.18);
   
-  --shadow-subtle: 0 4px 20px rgba(0, 0, 0, 0.08);
-  --shadow-stage: 0 15px 40px -10px rgba(0, 0, 0, 0.15);
+  --shadow-subtle: 0 4px 18px rgba(0, 0, 0, 0.06);
+  --shadow-stage: 0 15px 40px -10px rgba(0, 0, 0, 0.12);
 
   --ticket-bg: #ffffff;
   --navbar-bg: rgba(245, 241, 232, 0.96);
-  --input-bg: #eae4d5;
+  --input-bg: #f9f7f2;
+  --btn-primary-text: #ffffff;
 }
 
 * {
@@ -80,7 +82,7 @@ body {
   position: relative;
   overscroll-behavior-y: contain;
   overscroll-behavior-x: auto;
-  transition: background-color 0.3s ease, color 0.3s ease;
+  transition: background-color 0.25s ease, color 0.25s ease;
 }
 
 /* Doğal Sahne Derinliği & Arka Plan Işığı */
@@ -97,6 +99,13 @@ body::before {
     linear-gradient(to bottom, transparent, var(--bg-dark));
   pointer-events: none;
   z-index: -1;
+}
+
+html[data-theme="light"] body::before {
+  background: 
+    radial-gradient(ellipse at 50% 0%, rgba(158, 116, 40, 0.05) 0%, transparent 60%),
+    radial-gradient(ellipse at 80% 100%, rgba(133, 22, 32, 0.03) 0%, transparent 50%),
+    linear-gradient(to bottom, transparent, var(--bg-dark));
 }
 
 /* Tipografi */
@@ -123,7 +132,8 @@ body::before {
 .editorial-card {
   background: var(--bg-surface);
   border: 1px solid var(--border-subtle);
-  border-radius: 12px;
+  border-radius: 14px;
+  box-shadow: var(--shadow-subtle);
   transition: var(--transition);
 }
 
@@ -139,7 +149,7 @@ body::before {
   -webkit-backdrop-filter: blur(12px);
   border: 1px solid var(--border-subtle);
   border-radius: 16px;
-  padding: 2.5rem;
+  padding: 2rem;
   box-shadow: var(--shadow-subtle);
   transition: var(--transition);
 }
@@ -154,11 +164,11 @@ body::before {
   align-items: center;
   justify-content: center;
   gap: 0.5rem;
-  padding: 0.85rem 1.75rem;
-  border-radius: 8px;
-  font-weight: 600;
-  font-size: 0.875rem;
-  letter-spacing: 0.05em;
+  padding: 0.8rem 1.6rem;
+  border-radius: 10px;
+  font-weight: 700;
+  font-size: 0.85rem;
+  letter-spacing: 0.04em;
   cursor: pointer;
   transition: var(--transition);
   text-decoration: none;
@@ -167,7 +177,7 @@ body::before {
 
 .btn-primary {
   background: var(--primary-gold);
-  color: #000;
+  color: var(--btn-primary-text);
 }
 
 .btn-primary:hover {
@@ -195,7 +205,7 @@ body::before {
   left: 0;
   width: 100%;
   z-index: 1000;
-  padding: 1.25rem 5%;
+  padding: 1.1rem 5%;
   background: transparent;
   transition: var(--transition);
 }
@@ -204,7 +214,7 @@ body::before {
   background: var(--navbar-bg);
   backdrop-filter: blur(16px);
   -webkit-backdrop-filter: blur(16px);
-  padding: 0.85rem 5%;
+  padding: 0.8rem 5%;
   border-bottom: 1px solid var(--border-subtle);
   box-shadow: var(--shadow-subtle);
 }
@@ -506,16 +516,6 @@ body::before {
     flex-direction: column;
     gap: 0.75rem;
   }
-}
-
-/* Hero Section */
-.hero {
-  position: relative;
-  min-height: 100vh;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 6rem 5% 4rem;
 }
 
 /* Sections */
