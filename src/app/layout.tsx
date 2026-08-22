@@ -1,10 +1,13 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import "./globals.css";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import PushNotificationManager from "@/components/PushNotificationManager";
-// Auth importları Client Componentlere bırakıldı
+
+export const dynamic = "force-dynamic";
+
 export const metadata: Metadata = {
+  metadataBase: new URL("https://fsmtiyatro.com"),
   title: {
     default: "FSM Tiyatro | Sahnenin Büyüsü",
     template: "%s | FSM Tiyatro"
@@ -37,8 +40,8 @@ export const metadata: Metadata = {
   },
 };
 
-export const viewport = {
-  themeColor: "#050505",
+export const viewport: Viewport = {
+  themeColor: "#08080a",
   width: "device-width",
   initialScale: 1,
   maximumScale: 1,

@@ -1,13 +1,13 @@
-'use client';
+import Link from 'next/link';
 
 export default function NotFound() {
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '60vh', color: 'white' }}>
-      <h1 style={{ fontSize: '4rem', color: '#D4AF37' }}>404</h1>
-      <p style={{ fontSize: '1.2rem', marginBottom: '2rem' }}>Aradığınız sayfa sahnede bulunamadı.</p>
-      <a href="/" style={{ padding: '0.8rem 2rem', backgroundColor: '#D4AF37', color: '#000', borderRadius: '4px', textDecoration: 'none', fontWeight: 'bold' }}>
+    <div className="flex flex-col items-center justify-center min-h-[60vh] p-6 text-center">
+      <h1 className="serif-font text-6xl text-[var(--primary-gold)] mb-4">404</h1>
+      <p className="text-[var(--text-muted)] text-lg mb-8">Aradığınız sayfa sahnede bulunamadı.</p>
+      <Link href="/" className="btn btn-primary">
         Ana Sayfaya Dön
-      </a>
+      </Link>
     </div>
   );
 }
