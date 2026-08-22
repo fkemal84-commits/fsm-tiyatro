@@ -26,7 +26,7 @@ export async function addPost(formData: FormData) {
       return { error: "Başlık ve içerik alanları zorunludur." };
     }
 
-    const { user } = await requireAuth(['SUPERADMIN', 'ADMIN', 'EDITOR']);
+    const { user } = await requireAuth(['SUPERADMIN', 'ADMIN', 'EDITOR', 'DIRECTOR']);
 
     let imageUrl = "";
     if (file && file.size > 0) {
@@ -62,12 +62,13 @@ export async function addPost(formData: FormData) {
 
     revalidatePath('/');
     revalidatePath('/blog');
+    revalidatePath('/yayin');
     revalidatePath('/sitemap.xml');
   } catch (error: any) {
     console.error("[ADD_POST] Hata:", error);
     return { error: error.message || "Yazı eklenirken hata oluştu." };
   }
-  redirect('/blog');
+  redirect('/yayin');
 }
 
 export async function deletePost(formData: FormData) {
@@ -75,7 +76,7 @@ export async function deletePost(formData: FormData) {
   if (!postId) return;
 
   try {
-    const { session, user } = await requireAuth(['SUPERADMIN', 'ADMIN', 'EDITOR']);
+    const { session, user } = await requireAuth(['SUPERADMIN', 'ADMIN', 'EDITOR', 'DIRECTOR']);
     const postDoc = await adminDb.collection('posts').doc(postId).get();
     if (!postDoc.exists) return;
 
@@ -95,6 +96,7 @@ export async function deletePost(formData: FormData) {
     await postDoc.ref.delete();
     revalidatePath('/');
     revalidatePath('/blog');
+    revalidatePath('/yayin');
     revalidatePath('/sitemap.xml');
   } catch (error: any) {
     console.error("[DELETE_POST] Hata:", error);
@@ -105,20 +107,35 @@ export async function addPlay(formData: FormData) {
   try {
     const title = formData.get('title') as string;
     const description = formData.get('description') as string;
-    const year = formData.get('year') as string;
-    const videoUrl = formData.get('videoUrl') as string;
+    const playwright = (formData.get('playwright') as string) || '';
+    const director = (formData.get('director') as string) || '';
+    const season = (formData.get('season') as string) || `${new Date().getFullYear()}–${new Date().getFullYear() + 1}`;
+    const genre = (formData.get('genre') as string) || 'Tiyatro Oyunu';
+    const duration = (formData.get('duration') as string) || '';
+    const year = (formData.get('year') as string) || new Date().getFullYear().toString();
+    const stageLocation = (formData.get('stageLocation') as string) || 'Haliç Yerleşkesi Konferans Salonu';
+    const directorNote = (formData.get('directorNote') as string) || '';
+    const status = (formData.get('status') as 'ACTIVE' | 'ARCHIVED' | 'UPCOMING') || 'ACTIVE';
+    const videoUrl = (formData.get('videoUrl') as string) || '';
+    
     const file = formData.get('image') as File | null;
+    const posterFile = formData.get('poster') as File | null;
     const galleryFiles = formData.getAll('gallery') as File[];
 
     if (!title || !description) {
       return { error: "Oyun adı ve açıklaması zorunludur." };
     }
 
-    await requireAuth(['SUPERADMIN', 'ADMIN']);
+    await requireAuth(['SUPERADMIN', 'ADMIN', 'DIRECTOR']);
 
     let imageUrl = "";
     if (file && file.size > 0) {
       imageUrl = await uploadToStorage(file, 'plays');
+    }
+
+    let posterUrl = "";
+    if (posterFile && posterFile.size > 0) {
+      posterUrl = await uploadToStorage(posterFile, 'plays/posters');
     }
 
     const uploadedGalleryUrls: string[] = [];
@@ -131,11 +148,42 @@ export async function addPlay(formData: FormData) {
       }
     }
 
+    // Cast ve Crew JSON parsing (varsa)
+    const rawCast = formData.get('castJson') as string;
+    const rawCrew = formData.get('crewJson') as string;
+    const rawDates = formData.get('datesJson') as string;
+
+    let cast = [];
+    let crew = [];
+    let showDates = [];
+
+    if (rawCast) {
+      try { cast = JSON.parse(rawCast); } catch (e) {}
+    }
+    if (rawCrew) {
+      try { crew = JSON.parse(rawCrew); } catch (e) {}
+    }
+    if (rawDates) {
+      try { showDates = JSON.parse(rawDates); } catch (e) {}
+    }
+
     await adminDb.collection('plays').add({
       title,
       description,
-      year: year || new Date().getFullYear().toString(),
+      playwright,
+      director,
+      season,
+      genre,
+      duration,
+      year,
+      stageLocation,
+      directorNote,
+      status,
+      cast,
+      crew,
+      showDates,
       imageUrl: imageUrl || null,
+      posterUrl: posterUrl || null,
       videoUrl: videoUrl || null,
       galleryUrls: uploadedGalleryUrls.join(','),
       createdAt: new Date().toISOString()
@@ -143,12 +191,14 @@ export async function addPlay(formData: FormData) {
 
     revalidatePath('/');
     revalidatePath('/plays');
+    revalidatePath('/sahne');
+    revalidatePath('/arsiv');
     revalidatePath('/sitemap.xml');
   } catch (error: any) {
     console.error("[ADD_PLAY] Hata:", error);
     return { error: error.message || "Oyun eklenirken bir hata oluştu." };
   }
-  redirect('/plays');
+  redirect('/sahne');
 }
 
 export async function deletePlay(formData: FormData) {
@@ -156,13 +206,16 @@ export async function deletePlay(formData: FormData) {
   if (!playId) return;
 
   try {
-    await requireAuth(['SUPERADMIN', 'ADMIN']);
+    await requireAuth(['SUPERADMIN', 'ADMIN', 'DIRECTOR']);
     const playDoc = await adminDb.collection('plays').doc(playId).get();
     if (!playDoc.exists) return;
 
     const playData = playDoc.data()!;
     if (playData.imageUrl) {
       await deleteStorageFile(playData.imageUrl);
+    }
+    if (playData.posterUrl) {
+      await deleteStorageFile(playData.posterUrl);
     }
     if (playData.galleryUrls) {
       const gUrls = (playData.galleryUrls as string).split(',');
@@ -174,6 +227,8 @@ export async function deletePlay(formData: FormData) {
     await playDoc.ref.delete();
     revalidatePath('/');
     revalidatePath('/plays');
+    revalidatePath('/sahne');
+    revalidatePath('/arsiv');
     revalidatePath('/sitemap.xml');
   } catch (error: any) {
     console.error("[DELETE_PLAY] Hata:", error);
@@ -201,6 +256,7 @@ export async function toggleLike(postId: string) {
 
     await postRef.update({ likes: updatedLikes });
     revalidatePath(`/blog/${postId}`);
+    revalidatePath(`/yayin/${postId}`);
     return { success: true, likes: updatedLikes };
   } catch (error: any) {
     return { error: error.message };
@@ -229,6 +285,7 @@ export async function addComment(formData: FormData) {
 
     await adminDb.collection('posts').doc(postId).collection('comments').add(commentData);
     revalidatePath(`/blog/${postId}`);
+    revalidatePath(`/yayin/${postId}`);
     return { success: true };
   } catch (error: any) {
     return { error: error.message };

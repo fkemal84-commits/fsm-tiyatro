@@ -15,8 +15,7 @@ export default function Navbar({ session: initialSession, initialTicketQueryActi
   const [scrolled, setScrolled] = useState(false);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [activeDropdown, setActiveDropdown] = useState<string | null>(null);
-  const [touchStart, setTouchStart] = useState<number | null>(null);
-  const [touchEnd, setTouchEnd] = useState<number | null>(null);
+  const [mobileSubMenu, setMobileSubMenu] = useState<string | null>(null);
   const [theme, setTheme] = useState<'light' | 'dark'>('dark');
   const [isTicketQueryActive, setIsTicketQueryActive] = useState<boolean>(initialTicketQueryActive);
   const pathname = usePathname();
@@ -26,7 +25,7 @@ export default function Navbar({ session: initialSession, initialTicketQueryActi
     const handleScroll = () => {
       if (!ticking) {
         window.requestAnimationFrame(() => {
-          const isScrolled = window.scrollY > 50;
+          const isScrolled = window.scrollY > 40;
           setScrolled(prev => prev !== isScrolled ? isScrolled : prev);
           ticking = false;
         });
@@ -38,7 +37,6 @@ export default function Navbar({ session: initialSession, initialTicketQueryActi
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
-  // Site yapılandırması (Biletimi Bul açık/kapalı durumu)
   useEffect(() => {
     const unsub = onSnapshot(doc(db, "settings", "site_config"), (snapshot) => {
       if (snapshot.exists()) {
@@ -51,7 +49,6 @@ export default function Navbar({ session: initialSession, initialTicketQueryActi
     return () => unsub();
   }, []);
 
-  // Tema yükleme ve takip (Varsayılan Daima Koyu Sahne Modu)
   useEffect(() => {
     const saved = localStorage.getItem('fsm_theme') as 'light' | 'dark' | null;
     if (saved === 'light') {
@@ -74,7 +71,6 @@ export default function Navbar({ session: initialSession, initialTicketQueryActi
     }
   };
 
-  // Menü açıkken arka plan kaymasını engelle
   useEffect(() => {
     if (isMenuOpen) {
       document.body.style.overflow = 'hidden';
@@ -86,232 +82,316 @@ export default function Navbar({ session: initialSession, initialTicketQueryActi
     };
   }, [isMenuOpen]);
 
-  // Sayfa değiştiğinde menüyü otomatik kapat
   useEffect(() => {
     setIsMenuOpen(false);
     setActiveDropdown(null);
+    setMobileSubMenu(null);
     document.body.style.overflow = 'unset';
   }, [pathname]);
 
   const role = currentSession?.user?.role;
-  // İsim düzeltmesi: undefined/null parçalarını temizle, surname yoksa email göster
   const userName = currentSession?.user?.name || '';
   const userSurname = (currentSession?.user as any)?.surname || '';
   const cleanName = [userName, userSurname]
-    .map(s => (s || '').replace(/undefined/gi, '').trim())
     .filter(Boolean)
-    .join(' ') || currentSession?.user?.email?.split('@')[0] || 'Üye';
+    .join(' ')
+    .replace(/undefined/gi, '')
+    .trim() || currentSession?.user?.email?.split('@')[0] || 'Üye';
 
-  // Rol etiketi (makine dilinden okunabilir Türkçeye)
   const roleLabels: Record<string, string> = {
     SUPERADMIN: 'Süper Admin',
-    ADMIN: 'Admin',
-    EDITOR: 'Editör',
-    SALES: 'Satış',
-    DIRECTOR: 'Yönetmen',
+    ADMIN: 'Yönetici 👑',
+    DIRECTOR: 'Yönetmen 🎬',
     ASST_DIRECTOR: 'Yrd. Yönetmen',
-    AKTOR: 'Aktör',
-    MEMBER: 'Üye',
-    PENDING: 'Onay Bekliyor',
+    AKTOR: 'Aktör 🎭',
+    PLAYER: 'Oyuncu 🎭',
+    EDITOR: 'İçerik Editörü',
+    SALES: 'Satış & Gişe',
+    MEMBER: 'Kulüp Üyesi',
   };
-  const roleLabel = roleLabels[role || ''] || role || '';
+
+  const roleLabel = roleLabels[role] || (role ? role : 'Üye');
+  const isAdmin = role === 'SUPERADMIN' || role === 'ADMIN';
 
   return (
-    <nav className={`navbar ${scrolled ? 'scrolled' : ''}`}>
+    <header className={`navbar ${scrolled ? 'scrolled' : ''}`}>
       <div className="nav-container">
-        <Link href="/" style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', textDecoration: 'none' }}>
-          <div style={{ position: 'relative', width: '40px', height: '40px', overflow: 'hidden', borderRadius: '8px', border: '1px solid var(--border-medium)', flexShrink: 0 }}>
+        
+        {/* LOGO */}
+        <Link href="/" className="flex items-center gap-3 text-decoration-none group">
+          <div className="relative w-9 h-9 rounded-full overflow-hidden border border-[var(--primary-gold)] shadow-sm flex-shrink-0">
             <Image 
               src="/brand-logo-v1.jpg" 
               alt="FSM Tiyatro Logo" 
-              fill 
-              style={{ objectFit: 'cover' }}
+              fill
+              className="object-cover group-hover:scale-105 transition-transform"
             />
           </div>
-          <span className="serif-font" style={{ fontSize: '1.5rem', letterSpacing: '0.1em', color: 'var(--text-main)' }}>
-            FSM <span style={{ color: 'var(--primary-gold)' }}>TİYATRO</span>
-          </span>
+          <div className="flex flex-col">
+            <span className="serif-font text-base sm:text-lg font-bold text-[var(--text-main)] tracking-wide leading-none">
+              FSM TİYATRO
+            </span>
+            <span className="text-[10px] text-[var(--primary-gold)] tracking-[0.2em] uppercase font-semibold mt-0.5">
+              Sinema & Tiyatro Topluluğu
+            </span>
+          </div>
         </Link>
-        
-        {/* DESKTOP LINKS */}
-        <div className="desktop-nav">
+
+        {/* DESKTOP NAV */}
+        <nav className="desktop-nav">
           <ul className="nav-links">
-            <li><Link href="/" className={pathname === '/' ? 'active' : ''}>Ana Sayfa</Link></li>
             
-            {isTicketQueryActive && (
-              <li>
-                <Link href="/biletimi-bul" className={pathname === '/biletimi-bul' ? 'active' : ''} style={{ display: 'flex', alignItems: 'center', gap: '0.3rem', color: 'var(--primary-gold)', fontWeight: 600 }}>
-                   <ion-icon name="qr-code-outline"></ion-icon> Biletimi Bul
-                </Link>
-              </li>
-            )}
-            
-            <li className="nav-dropdown">
-              <span className="dropdown-trigger">
-                Kulüp <ion-icon name="chevron-down-outline"></ion-icon>
+            {/* 1. SAHNE DROPDOWN */}
+            <li 
+              className="nav-dropdown"
+              onMouseEnter={() => setActiveDropdown('sahne')}
+              onMouseLeave={() => setActiveDropdown(null)}
+            >
+              <span className={`dropdown-trigger ${(pathname.startsWith('/sahne') || pathname.startsWith('/plays') || pathname === '/arsiv' || pathname === '/biletimi-bul') ? 'active' : ''}`}>
+                Sahne <ion-icon name="chevron-down-outline" style={{ fontSize: '0.8rem' }}></ion-icon>
               </span>
-              <ul className="dropdown-menu">
-                <li><Link href="/plays">Oyunlarımız</Link></li>
-                <li><Link href="/#manifesto">Hakkımızda & Manifesto</Link></li>
-                <li><Link href="/members">Üye Panosu</Link></li>
+              <ul className={`dropdown-menu ${activeDropdown === 'sahne' ? 'show' : ''}`}>
+                <li>
+                  <Link href="/sahne">
+                    <span className="font-bold text-[var(--text-main)] block">Sezon Repertuvarı</span>
+                    <span className="text-[11px] text-[var(--text-dim)] block">Güncel sahnelenen oyunlar</span>
+                  </Link>
+                </li>
+                <li>
+                  <Link href="/arsiv">
+                    <span className="font-bold text-[var(--text-main)] block">Dijital Arşiv</span>
+                    <span className="text-[11px] text-[var(--text-dim)] block">Geçmiş sezon prodüksiyonları</span>
+                  </Link>
+                </li>
+                {isTicketQueryActive && (
+                  <li>
+                    <Link href="/biletimi-bul">
+                      <span className="font-bold text-[var(--primary-gold)] block">Biletimi Bul / Gişe</span>
+                      <span className="text-[11px] text-[var(--text-dim)] block">Seyirci koltuk sorgulama</span>
+                    </Link>
+                  </li>
+                )}
               </ul>
             </li>
 
-            <li><Link href="/blog" className={pathname === '/blog' ? 'active' : ''}>Blog</Link></li>
-            
-            {(role === 'AKTOR' || role === 'SUPERADMIN' || role === 'ADMIN' || role === 'PLAYER' || role === 'DIRECTOR' || role === 'MEMBER' || role === 'SALES') && (
-              <li className="nav-dropdown">
-                <span className="dropdown-trigger" style={{ color: 'var(--primary-gold)' }}>
-                  Sahne Arkası <ion-icon name="chevron-down-outline"></ion-icon>
-                </span>
-                <ul className="dropdown-menu">
-                  <li><Link href="/members/rehearsals">Prova Takvimi</Link></li>
-                  <li><Link href="/members/team">Ekip Rehberi</Link></li>
-                  <li><Link href="/members/scripts">Senaryo Kasası</Link></li>
-                  {(role === 'SUPERADMIN' || role === 'ADMIN' || role === 'SALES') && (
-                    <li><Link href="/members/tickets" style={{ color: 'var(--primary-gold)' }}>🎫 Bilet Gişesi</Link></li>
-                  )}
-                </ul>
-              </li>
-            )}
-          </ul>
-        </div>
+            {/* 2. KULÜP DROPDOWN */}
+            <li 
+              className="nav-dropdown"
+              onMouseEnter={() => setActiveDropdown('kulup')}
+              onMouseLeave={() => setActiveDropdown(null)}
+            >
+              <span className={`dropdown-trigger ${pathname.startsWith('/kulup') ? 'active' : ''}`}>
+                Kulüp <ion-icon name="chevron-down-outline" style={{ fontSize: '0.8rem' }}></ion-icon>
+              </span>
+              <ul className={`dropdown-menu ${activeDropdown === 'kulup' ? 'show' : ''}`}>
+                <li>
+                  <Link href="/kulup">
+                    <span className="font-bold text-[var(--text-main)] block">Manifestomuz & Tarihçe</span>
+                    <span className="text-[11px] text-[var(--text-dim)] block">Vizyonumuz ve sahnemiz</span>
+                  </Link>
+                </li>
+                <li>
+                  <Link href="/kulup/ekip">
+                    <span className="font-bold text-[var(--text-main)] block">Topluluk & Kadro</span>
+                    <span className="text-[11px] text-[var(--text-dim)] block">Oyuncular ve teknik kadro</span>
+                  </Link>
+                </li>
+                <li>
+                  <Link href="/kulup/alumni">
+                    <span className="font-bold text-[var(--text-main)] block">Mezunlar / Alumni</span>
+                    <span className="text-[11px] text-[var(--text-dim)] block">Kulübümüzün kurucu hafızası</span>
+                  </Link>
+                </li>
+              </ul>
+            </li>
 
-        {/* ACTIONS & THEME TOGGLE */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-          
-          {/* Tema Değiştirici Buton */}
+            {/* 3. ÜRETİM & ATÖLYE */}
+            <li>
+              <Link href="/uretim" className={pathname.startsWith('/uretim') ? 'active' : ''}>
+                Üretim & Atölye
+              </Link>
+            </li>
+
+            {/* 4. YAYIN MERKEZİ */}
+            <li>
+              <Link href="/yayin" className={(pathname.startsWith('/yayin') || pathname.startsWith('/blog')) ? 'active' : ''}>
+                Yayın & Günce
+              </Link>
+            </li>
+
+            {/* 5. MEDYA ARŞİVİ */}
+            <li>
+              <Link href="/medya" className={pathname.startsWith('/medya') ? 'active' : ''}>
+                Medya
+              </Link>
+            </li>
+
+            {/* 6. KULÜBE KATIL */}
+            <li>
+              <Link href="/katil" className={pathname === '/katil' ? 'active' : ''} style={{ color: 'var(--primary-gold)', fontWeight: 600 }}>
+                Katıl
+              </Link>
+            </li>
+
+            {/* 7. DESTEK & SPONSOR */}
+            <li>
+              <Link href="/destek" className={pathname === '/destek' ? 'active' : ''}>
+                Destek
+              </Link>
+            </li>
+          </ul>
+        </nav>
+
+        {/* DESKTOP ACTIONS */}
+        <div className="desktop-actions">
+          {/* TEMA DEĞİŞTİRİCİ */}
           <button 
-            onClick={toggleTheme}
-            title={`Tema: ${theme === 'light' ? 'Matine Modu (Açık)' : 'Sahne Modu (Koyu)'}`}
-            style={{
-              width: '36px', height: '36px', borderRadius: '8px',
-              border: '1px solid var(--border-subtle)', background: 'var(--bg-surface)',
-              color: 'var(--text-muted)', display: 'flex', alignItems: 'center', justifyContent: 'center',
-              fontSize: '1.1rem', cursor: 'pointer', transition: 'all 0.2s',
-            }}
-            aria-label="Tema Seçimi"
+            onClick={toggleTheme} 
+            className="w-9 h-9 rounded-full flex items-center justify-center text-[var(--text-main)] bg-[var(--bg-surface-elevated)] border border-[var(--border-subtle)] hover:border-[var(--primary-gold)] transition-all cursor-pointer"
+            title={theme === 'dark' ? "Matine / Parşömen Moduna Geç" : "Gece / Sahne Moduna Geç"}
           >
-            {theme === 'light' ? (
-              <ion-icon name="sunny-outline" style={{ color: '#d97706' }}></ion-icon>
-            ) : (
-              <ion-icon name="moon-outline" style={{ color: 'var(--primary-gold)' }}></ion-icon>
-            )}
+            <ion-icon name={theme === 'dark' ? "sunny-outline" : "moon-outline"} style={{ fontSize: '1.1rem', color: theme === 'dark' ? 'var(--primary-gold)' : 'var(--text-main)' }}></ion-icon>
           </button>
 
-          {/* DESKTOP ACTIONS */}
-          <div className="desktop-actions">
-            {currentSession ? (
-              <>
-                {currentSession.user?.isAdminMode && (
-                  <span className="admin-badge">
-                    <ion-icon name="shield-checkmark-outline"></ion-icon> Yönetici
-                  </span>
-                )}
-                <Link href="/profile" className="profile-link">Profilim</Link>
-                <button onClick={() => signOut({ callbackUrl: '/' })} className="btn btn-logout">Çıkış</button>
-              </>
-            ) : (
-              <>
-                <Link href="/login" className="login-link">Üye Girişi</Link>
-                <Link href="/register" className="btn btn-primary" style={{ fontSize: '0.75rem', padding: '0.5rem 1.25rem' }}>Kayıt Ol</Link>
-              </>
-            )}
-          </div>
+          {currentSession?.user ? (
+            <div className="flex items-center gap-3">
+              {isAdmin && (
+                <Link href="/tanerabi/dashboard" className="admin-badge" title="Yönetim Konsolu">
+                  <ion-icon name="shield-checkmark"></ion-icon>
+                  <span>Yönetim</span>
+                </Link>
+              )}
+              <Link href="/members" className="profile-link flex items-center gap-1.5" title="Üye Panosu">
+                <ion-icon name="grid-outline"></ion-icon>
+                <span>Pano</span>
+              </Link>
+              <Link href="/profile" className="profile-link flex items-center gap-1.5 font-bold text-xs">
+                <ion-icon name="person-circle-outline" style={{ fontSize: '1.2rem' }}></ion-icon>
+                <span>{cleanName}</span>
+              </Link>
+              <button onClick={() => signOut({ callbackUrl: '/' })} className="btn-logout" title="Güvenli Çıkış">
+                <ion-icon name="log-out-outline"></ion-icon>
+              </button>
+            </div>
+          ) : (
+            <Link href="/login" className="btn btn-outline py-2 px-4 text-xs font-bold flex items-center gap-1.5">
+              <ion-icon name="log-in-outline"></ion-icon>
+              <span>Üye Girişi</span>
+            </Link>
+          )}
+        </div>
 
-          {/* MOBILE TOGGLE */}
-          <button className="mobile-toggle" onClick={() => setIsMenuOpen(!isMenuOpen)}>
+        {/* MOBİL TOGGLE */}
+        <div className="flex items-center gap-3 lg:hidden">
+          <button 
+            onClick={toggleTheme} 
+            className="w-8 h-8 rounded-full flex items-center justify-center text-[var(--text-main)] bg-[var(--bg-surface-elevated)] border border-[var(--border-subtle)] cursor-pointer"
+          >
+            <ion-icon name={theme === 'dark' ? "sunny-outline" : "moon-outline"} style={{ fontSize: '1rem', color: theme === 'dark' ? 'var(--primary-gold)' : 'var(--text-main)' }}></ion-icon>
+          </button>
+          
+          <button 
+            onClick={() => setIsMenuOpen(!isMenuOpen)} 
+            className="mobile-toggle"
+            aria-label="Menüyü Aç"
+          >
             <ion-icon name={isMenuOpen ? "close-outline" : "menu-outline"}></ion-icon>
           </button>
         </div>
 
-        {/* MOBILE DRAWER — Sadece 1024px altında CSS ile görünür, masaüstünde kesinlikle gizli */}
-        <div 
-          style={{ display: 'none' }}
-          className={`mobile-drawer ${isMenuOpen ? 'open' : ''}`}
-          onTouchStart={(e) => setTouchStart(e.targetTouches[0].clientX)}
-          onTouchMove={(e) => setTouchEnd(e.targetTouches[0].clientX)}
-          onTouchEnd={() => {
-            if (!touchStart || !touchEnd) return;
-            const distance = touchEnd - touchStart;
-            if (distance > 70) {
-              if (activeDropdown) { setActiveDropdown(null); }
-              else { setIsMenuOpen(false); }
-            }
-            setTouchStart(null);
-            setTouchEnd(null);
-          }}
-        >
-          <div className="mobile-drawer-content">
-            <ul className={`mobile-nav-links ${activeDropdown ? 'slide-left' : ''}`}>
-              {/* LEVEL 1 */}
-              <li className="mobile-nav-level">
-                <Link href="/" onClick={() => setIsMenuOpen(false)}>Ana Sayfa</Link>
-                
-                {isTicketQueryActive && (
-                  <Link href="/biletimi-bul" onClick={() => setIsMenuOpen(false)} style={{ color: 'var(--primary-gold)', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                    <ion-icon name="qr-code-outline"></ion-icon> Biletimi Bul
-                  </Link>
-                )}
+      </div>
 
-                <div className="mobile-dropdown-trigger" onClick={() => setActiveDropdown('klub')}>
-                  Kulüp <ion-icon name="chevron-forward-outline"></ion-icon>
+      {/* MOBİL DRAWER */}
+      <div className={`mobile-drawer ${isMenuOpen ? 'open' : ''}`}>
+        <div className="mobile-drawer-content">
+          <div className={`mobile-nav-links ${mobileSubMenu ? 'slide-left' : ''}`}>
+            
+            {/* 1. SEVİYE MOBİL MENÜ */}
+            <div className="mobile-nav-level">
+              <div className="mobile-dropdown-trigger" onClick={() => setMobileSubMenu('sahne')}>
+                <span>🎭 Sahne & Prodüksiyon</span>
+                <ion-icon name="chevron-forward-outline"></ion-icon>
+              </div>
+
+              <div className="mobile-dropdown-trigger" onClick={() => setMobileSubMenu('kulup')}>
+                <span>🏛️ Kulüp & Topluluk</span>
+                <ion-icon name="chevron-forward-outline"></ion-icon>
+              </div>
+
+              <Link href="/uretim" onClick={() => setIsMenuOpen(false)}>🎨 Üretim & Atölye</Link>
+              <Link href="/yayin" onClick={() => setIsMenuOpen(false)}>📚 Yayın & Günce</Link>
+              <Link href="/medya" onClick={() => setIsMenuOpen(false)}>📷 Medya Arşivi</Link>
+              <Link href="/katil" onClick={() => setIsMenuOpen(false)} style={{ color: 'var(--primary-gold)' }}>✨ Kulübe Katıl</Link>
+              <Link href="/destek" onClick={() => setIsMenuOpen(false)}>🤝 Destek & Sponsor</Link>
+              {isTicketQueryActive && (
+                <Link href="/biletimi-bul" onClick={() => setIsMenuOpen(false)} style={{ color: 'var(--primary-gold)' }}>🎟️ Biletimi Bul</Link>
+              )}
+            </div>
+
+            {/* 2. SEVİYE MOBİL MENÜ (ALT MENÜLER) */}
+            <div className="mobile-nav-level">
+              <div className="mobile-back-btn" onClick={() => setMobileSubMenu(null)}>
+                <ion-icon name="chevron-back-outline"></ion-icon> Ana Menüye Dön
+              </div>
+
+              {mobileSubMenu === 'sahne' && (
+                <div className="mobile-sub-menu">
+                  <Link href="/sahne" onClick={() => setIsMenuOpen(false)}>Sezon Repertuvarı</Link>
+                  <Link href="/arsiv" onClick={() => setIsMenuOpen(false)}>Dijital Prodüksiyon Arşivi</Link>
+                  {isTicketQueryActive && <Link href="/biletimi-bul" onClick={() => setIsMenuOpen(false)}>Bilet / Gişe Sorgulama</Link>}
                 </div>
-                <Link href="/blog" onClick={() => setIsMenuOpen(false)}>Blog</Link>
-                {(role === 'AKTOR' || role === 'SUPERADMIN' || role === 'ADMIN' || role === 'PLAYER' || role === 'DIRECTOR' || role === 'MEMBER' || role === 'SALES') && (
-                  <div className="mobile-dropdown-trigger" style={{ color: 'var(--primary-gold)' }} onClick={() => setActiveDropdown('stage')}>
-                    Sahne Arkası <ion-icon name="chevron-forward-outline"></ion-icon>
-                  </div>
-                )}
-              </li>
+              )}
 
-              {/* LEVEL 2 */}
-              <li className="mobile-nav-level secondary">
-                <div className="mobile-back-btn" onClick={() => setActiveDropdown(null)}>
-                  <ion-icon name="arrow-back-outline"></ion-icon> Geri
-                </div>
-                {activeDropdown === 'klub' && (
-                  <div className="mobile-sub-menu">
-                    <Link href="/plays" onClick={() => setIsMenuOpen(false)}>Oyunlarımız</Link>
-                    <Link href="/#manifesto" onClick={() => setIsMenuOpen(false)}>Hakkımızda & Manifesto</Link>
-                    <Link href="/members" onClick={() => setIsMenuOpen(false)}>Üye Panosu</Link>
-                  </div>
-                )}
-
-                {activeDropdown === 'stage' && (
-                  <div className="mobile-sub-menu">
-                    <Link href="/members/rehearsals" onClick={() => setIsMenuOpen(false)}>Prova Takvimi</Link>
-                    <Link href="/members/team" onClick={() => setIsMenuOpen(false)}>Ekip Rehberi</Link>
-                    <Link href="/members/scripts" onClick={() => setIsMenuOpen(false)}>Senaryo Kasası</Link>
-                    {(role === 'SUPERADMIN' || role === 'ADMIN' || role === 'SALES') && (
-                      <Link href="/members/tickets" onClick={() => setIsMenuOpen(false)} style={{ color: 'var(--primary-gold)' }}>🎫 Bilet Gişesi</Link>
-                    )}
-                  </div>
-                )}
-              </li>
-            </ul>
-
-            {/* MOBILE FOOTER */}
-            <div className="mobile-drawer-footer">
-              {currentSession ? (
-                <>
-                  <div className="mobile-user-info">
-                    <span className="user-name">{cleanName}</span>
-                    <span className="user-role">{roleLabel}</span>
-                  </div>
-                  <Link href="/profile" className="btn btn-outline" onClick={() => setIsMenuOpen(false)}>Profilim</Link>
-                  <button onClick={() => signOut({ callbackUrl: '/' })} className="btn btn-logout">Çıkış Yap</button>
-                </>
-              ) : (
-                <div className="mobile-auth-btns">
-                  <Link href="/login" className="btn btn-outline" onClick={() => setIsMenuOpen(false)}>Üye Girişi</Link>
-                  <Link href="/register" className="btn btn-primary" onClick={() => setIsMenuOpen(false)}>Kayıt Ol</Link>
+              {mobileSubMenu === 'kulup' && (
+                <div className="mobile-sub-menu">
+                  <Link href="/kulup" onClick={() => setIsMenuOpen(false)}>Manifestomuz & Tarihçe</Link>
+                  <Link href="/kulup/ekip" onClick={() => setIsMenuOpen(false)}>Topluluk & Kadro Rehberi</Link>
+                  <Link href="/kulup/alumni" onClick={() => setIsMenuOpen(false)}>Mezunlar / Alumni Ağı</Link>
                 </div>
               )}
             </div>
+
           </div>
+
+          {/* MOBİL DRAWER ALT ALANI */}
+          <div className="mobile-drawer-footer">
+            {currentSession?.user ? (
+              <div>
+                <div className="mobile-user-info">
+                  <span className="user-name">{cleanName}</span>
+                  <span className="user-role">{roleLabel}</span>
+                </div>
+                <div className="mobile-auth-btns">
+                  {isAdmin && (
+                    <Link href="/tanerabi/dashboard" onClick={() => setIsMenuOpen(false)} className="btn btn-primary w-full py-2.5 text-xs">
+                      Yönetim Konsolu
+                    </Link>
+                  )}
+                  <Link href="/members" onClick={() => setIsMenuOpen(false)} className="btn btn-outline w-full py-2.5 text-xs">
+                    Üye Panosu
+                  </Link>
+                  <Link href="/profile" onClick={() => setIsMenuOpen(false)} className="btn btn-outline w-full py-2.5 text-xs">
+                    Profilim & Portfolyo
+                  </Link>
+                  <button onClick={() => signOut({ callbackUrl: '/' })} className="btn-logout w-full py-2.5 text-xs mt-2">
+                    Çıkış Yap
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <div className="flex flex-col gap-3">
+                <Link href="/login" onClick={() => setIsMenuOpen(false)} className="btn btn-primary w-full py-3 text-center text-xs font-bold">
+                  Üye Girişi Yap
+                </Link>
+                <Link href="/register" onClick={() => setIsMenuOpen(false)} className="btn btn-outline w-full py-3 text-center text-xs font-bold">
+                  Kayıt Ol (Öğrenci Portalı)
+                </Link>
+              </div>
+            )}
+          </div>
+
         </div>
       </div>
-    </nav>
+    </header>
   );
 }

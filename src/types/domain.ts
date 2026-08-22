@@ -8,35 +8,61 @@ export type UserRole =
   | 'EDITOR' 
   | 'SALES' 
   | 'MEMBER' 
+  | 'ALUMNI'
   | 'PENDING' 
   | 'USER';
 
-export interface User {
-  id: string;
-  name: string;
-  surname: string;
-  email: string;
-  role: UserRole;
-  phone?: string;
+export interface CastMember {
+  roleName: string;
+  actorName: string;
+  userId?: string;
   photoUrl?: string;
-  department?: string;
-  hobbies?: string;
-  pastPlays?: string;
-  skills?: string;
-  bio?: string;
-  assignedPlays?: string[];
-  createdAt: string;
+}
+
+export interface CrewMember {
+  department: 'Yönetmen' | 'Yrd. Yönetmen' | 'Dramaturgi' | 'Işık Tasarımı' | 'Ses & Müzik' | 'Dekor & Kostüm' | 'Kondüvit' | 'Afiş & Görsel' | 'Organizasyon' | 'Genel Ekip';
+  memberName: string;
+  userId?: string;
+}
+
+export interface ShowDate {
+  date: string;
+  time: string;
+  venue: string;
+  ticketUrl?: string;
 }
 
 export interface Play {
   id: string;
+  slug?: string;
   title: string;
+  originalTitle?: string;
+  playwright?: string;
+  translator?: string;
+  director?: string;
+  assistantDirector?: string;
+  season?: string;
+  genre?: string;
+  duration?: string;
+  stageLocation?: string;
+  status?: 'ACTIVE' | 'ARCHIVED' | 'UPCOMING';
+  
   description: string;
+  directorNote?: string;
+  dramaturgyNote?: string;
+  
+  cast?: CastMember[];
+  crew?: CrewMember[];
+  showDates?: ShowDate[];
+  
   year?: string;
   imageUrl?: string;
+  posterUrl?: string;
   videoUrl?: string;
   galleryUrls?: string;
+  pressKitUrl?: string;
   createdAt: string;
+  updatedAt?: string;
 }
 
 export interface AcademicMeta {
@@ -58,13 +84,15 @@ export interface Post {
   title: string;
   content: string;
   excerpt?: string;
-  category: 'Kulis' | 'Makale' | 'Blog' | 'Haber' | 'Akademik Bildiri';
+  category: 'Kulis' | 'Makale' | 'Blog' | 'Haber' | 'Akademik Bildiri' | 'Tiyatro Yazısı';
   author?: string;
   authorEmail?: string;
+  authorRole?: string;
   imageUrl?: string;
   likes?: string[];
   academicMeta?: AcademicMeta;
   createdAt: string;
+  updatedAt?: string;
 }
 
 export interface Comment {
@@ -73,6 +101,42 @@ export interface Comment {
   authorName: string;
   authorEmail: string;
   authorPhoto?: string;
+  createdAt: string;
+}
+
+export interface EventItem {
+  id: string;
+  title: string;
+  type?: 'Atölye' | 'Söyleşi' | 'Film Gösterimi' | 'Festival' | 'Okuma Tiyatrosu' | 'Genel Etkinlik';
+  instructor?: string;
+  date: string;
+  time?: string;
+  location: string;
+  description?: string;
+  coverImageUrl?: string;
+  capacity?: number;
+  registrationOpen?: boolean;
+  createdAt: string;
+}
+
+export interface User {
+  id: string;
+  name: string;
+  surname: string;
+  email: string;
+  role: UserRole;
+  membershipStatus?: 'ACTIVE' | 'ALUMNI' | 'HONORARY';
+  joinedSeason?: string;
+  graduationYear?: string;
+  departments?: string[];
+  phone?: string;
+  photoUrl?: string;
+  department?: string;
+  hobbies?: string;
+  pastPlays?: string;
+  skills?: string;
+  bio?: string;
+  assignedPlays?: string[];
   createdAt: string;
 }
 
@@ -111,18 +175,10 @@ export interface OccupiedSeat {
   ticketHolder?: string;
 }
 
-export interface EventItem {
-  id: string;
-  title: string;
-  date: string;
-  location: string;
-  description?: string;
-  createdAt: string;
-}
-
 export interface SiteConfig {
   heroImageUrl?: string;
   isTicketQueryActive?: boolean;
   contactEmail?: string;
   pinnedSlides?: string[];
+  activeSeason?: string;
 }

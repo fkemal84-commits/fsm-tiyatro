@@ -15,7 +15,6 @@ export function middleware(request: NextRequest) {
     return NextResponse.next();
   }
 
-  // Hostname analizi (örn: bilet.fsmtiyatro.com, admin.localhost:3000)
   const currentHost = hostname.replace(/:\d+$/, ''); // Port numarasını temizle
   
   // 1. GİŞE & BİLET SUBDOMAINİ (bilet.fsmtiyatro.com, gise.fsmtiyatro.com)
@@ -28,7 +27,7 @@ export function middleware(request: NextRequest) {
   // 2. AKADEMİ & KULİS SUBDOMAINİ (akademi.fsmtiyatro.com, kulis.fsmtiyatro.com)
   if (currentHost.startsWith('akademi.') || currentHost.startsWith('kulis.')) {
     if (url.pathname === '/') {
-      return NextResponse.rewrite(new URL('/blog', request.url));
+      return NextResponse.rewrite(new URL('/yayin', request.url));
     }
   }
 
@@ -44,13 +43,6 @@ export function middleware(request: NextRequest) {
 
 export const config = {
   matcher: [
-    /*
-     * Match all request paths except for the ones starting with:
-     * - api (API routes)
-     * - _next/static (static files)
-     * - _next/image (image optimization files)
-     * - favicon.ico, sitemap.xml, robots.txt (metadata files)
-     */
     '/((?!api|_next/static|_next/image|favicon.ico|sitemap.xml|robots.txt|manifest.json|sw.js).*)',
   ],
 };
