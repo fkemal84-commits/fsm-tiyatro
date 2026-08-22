@@ -68,7 +68,7 @@ function ResetPasswordForm() {
       setLoading(false);
     } else {
       setSuccess(true);
-      setMessage({ type: 'success', text: 'Şifreniz başarıyla mühürlendi! Sahneye dönmeye hazırsınız.' });
+      setMessage({ type: 'success', text: 'Şifreniz başarıyla güncellendi.' });
       setLoading(false);
     }
   };
@@ -112,7 +112,7 @@ function ResetPasswordForm() {
         </div>
         <h2 className="serif-font" style={{ fontSize: '2.2rem', color: 'var(--primary-gold)', marginBottom: '0.5rem' }}>Yeni Şifre Belirleyin</h2>
         <p style={{ color: 'var(--text-muted)', fontSize: '0.9rem' }}>
-          Lütfen sahneye giriş için kullanacağınız yeni şifrenizi giriniz.
+          Lütfen yeni şifrenizi giriniz.
         </p>
       </div>
 
@@ -164,10 +164,10 @@ function ResetPasswordForm() {
           {loading ? (
             <span className="flex items-center justify-center gap-2">
               <div className="w-4 h-4 border-2 border-black/20 border-t-black rounded-full animate-spin"></div>
-              GÜNCELLENİYOR...
+              Güncelleniyor...
             </span>
           ) : (
-            'ŞİFREYİ MÜHÜRLE'
+            'Şifreyi Güncelle'
           )}
         </button>
       </form>

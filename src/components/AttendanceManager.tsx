@@ -343,7 +343,7 @@ export default function AttendanceManager({
             disabled={loading}
             className="w-full btn btn-primary py-4 rounded-2xl font-bold tracking-widest text-xs shadow-glow"
           >
-            {loading ? 'KAYDEDİLİYOR...' : 'YOKLAMAYI VE NOTLARI MÜHÜRLE'}
+            {loading ? 'Kaydediliyor...' : 'Yoklamayı Kaydet'}
           </button>
         </div>
       )}

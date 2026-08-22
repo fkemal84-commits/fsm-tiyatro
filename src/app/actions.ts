@@ -552,47 +552,42 @@ export async function nudgePlayers(targetUserIds?: string[]) {
     await requireAuth(['SUPERADMIN', 'ADMIN', 'DIRECTOR', 'ASST_DIRECTOR']);
 
     const messages = [
-      "🎭 Ezberler su gibi olsun arkadaşlar. Sahne sizi bekler! 🎬",
-      "📢 Sahne tozu yutmaya az kaldı, mazeret istemiyorum! 🎭",
-      "🎬 Rolünü yaşamayan, kuliste çay dağıtır! 😂",
-      "🎭 Tiradın ortasında unutulan replik, yönetmenin kalbine inen oktur! 🏹",
-      "📢 Provaya geç kalan dekora yardım eder, ona göre! 🎨",
-      "🎭 'Olmak ya da olmamak' değil mesele, 'Gelmek ya da gelmemek'! 🚶‍♂️",
-      "🎬 Reji masasında sinirden kalem kırdırtmayın bana! ✏️💥",
-      "🎭 Işıklar yandığında orada mısın yoksa evde Netflix mi? 📺",
-      "📢 Bugün ezbersiz geleni suyla ıslatırım, şaka değil! 💧😂",
-      "🎭 Sahne disiplini olmayan, pandomim yapsın! 🤫🎭",
-      "🎬 Sesin salona ulaşmıyorsa, fısıldaşmaya devam etme! 📣",
-      "🎭 'Godot'yu Beklerken' değil burası, seni bekliyoruz! ⏳🎞️",
-      "📢 Textini yastığının altına koyup uyuma, oku! 📖😴",
-      "🎭 Kuliste gıybet bittiyse sahneye buyurun beyler/bayanlar! ☕",
-      "🎬 Bu oyunun yıldızı sensin ama sadece ezerbini tamamlarsan! ⭐",
-      "🎭 Kostümün sığmıyorsa bu senin değil, diyetsizliğin suçudur! 🍎😂",
-      "📢 Repliklerin havada uçuştuğu saatlerdeyiz, yakala! 💨",
-      "🎭 Karakterine gir dedik, kapıda kal demedik! 🚪🚶‍♀️",
-      "🎬 Reji sinirli, reji gergin, reji acıktı! Gel de yemek söyleyelim! 🍕",
-      "🎭 Sahnedeki gölgen bile senden daha iyi oynuyor şu an! 👤😂",
-      "📢 Dekoru taşıyacak kollara, repliği taşıyacak beyne ihtiyaç var! 💪🧠",
-      "🎭 Hayalindeki alkışlar için bugün terlemek zorundasın! 🔥👏",
-      "🎬 Perde arkasında saklanma, sahnenin tozuna bulan! 🕸️",
-      "🎭 Bu oyun bitmez, sen gelirsen ama belki biter! 😂",
-      "📢 Mazeretin 'otobüs kaçtı' ise, koşarak gelmeye başla! 🏃‍♂️",
-      "🎭 Tiyatro bir ekip işidir, ekibin en zayıf halkası olma! ⛓️",
-      "🎬 Ezberin sıfırsa makyajın seni kurtarmaz! 💄🤡",
-      "🎭 Replikleri kendi dilinde değil, yazarın dilinde söyle! 👅",
-      "📢 Sahne üzerinde uyuyan güzel istemiyoruz, canlanın! 🤴✨",
-      "🎭 Duygu ver dedik, borç ver demedik! Oynayın! 😂💸",
-      "🎬 Perde açıldığında 'öksürük' krizine girmek istemiyorsan çalış! 😷",
-      "🎭 Sanat sanat içindir; prova senin için! 🎨",
-      "📢 Reji masasında ejderha besliyorum, geç kalanı yiyor! 🐉😂",
-      "🎭 Replik geçişlerin I-KAR-US gibi yere çakılmasın! ☀️🪽",
-      "🎬 Teksti unutup doğaçlama yapma, Oscar vermiyoruz! 🏆",
-      "🎭 Alkışlar kulağında çınlasın, tekstin elinde paralansın! 👏📖",
-      "📢 Bugün provada olmayan, gala yemeğinde de olmaz! 🥙😂",
-      "🎭 Dram dedik ama senin gelmemen kadar dramatik değil! 🎭😢",
-      "🎬 Kuliste fısıldaşma, sahnede haykır! 🗣️",
-      "🎭 En kötü prova bile, yapılmayan provadan iyidir! 🎭",
-      "📢 'To be or not to be', provaya gel gerisini sorma! 🎞️"
+      "🎭 Ezberler nerede? Prova başlamadan önce bir bakın tekstlerinize.",
+      "📢 Bu hafta prova sezonunun en kritik haftalarından biri. Hazır olun!",
+      "🎬 Replikleri doğru, tempoyu tutturun. Seyirci hepsini duyuyor.",
+      "🎭 Sahneye çıkmadan önce bir dakika karakterinizle yalnız kalın.",
+      "📢 Geç kalan varsa haber versin. Plan yapalım.",
+      "🎭 Bugün küçük bir adım atarsanız, galada büyük fark yaratır.",
+      "🎬 Metin ezberi tamam olunca beden dili gelir. Sıralı ilerleyin.",
+      "🎭 Karşılıklı sahneler için partneri olan arkadaşlar önceden bir tazeleme yapsın.",
+      "📢 Dekor yerleştirmesi değişti, prova öncesi bir göz atın.",
+      "🎭 Sesinizi koruyun, bugün tekrar çok olabilir.",
+      "🎬 Kostüm deneme provası için kendinizi hazırlayın.",
+      "🎭 Bu hafta tam kadro olmak önemli. Mazeretleri önceden bildirin.",
+      "📢 Sahnede enerji düşüklüğü var, provayı zorlayarak değil, konsantre olarak çözün.",
+      "🎭 Replikleri iyi bilmek yetmez; doğru yerde durmak, doğru bakış da prova işi.",
+      "🎬 Yönetmenin notlarını bir daha gözden geçirin, değişiklik olmuş olabilir.",
+      "🎭 Bugün provada görmek istiyorum herkesi. İyi çalışmalar.",
+      "📢 Dekor hazırlanıyor, teknik ekiple koordinasyon kurun.",
+      "🎭 Sahneler arasındaki geçiş süreleri kısaltılacak, buna göre pozisyon alın.",
+      "🎬 Gala yaklaşıyor. Artık her prova kritik.",
+      "🎭 Bugün sessiz prova var. Sadece beden dili, ses yok.",
+      "📢 Sahne ışıkları test edilecek, provada yerlerinizde durun.",
+      "🎭 Metin üzerinde hâlâ boşluk hissediyorsanız bugün sorun, fırsat bu fırsat.",
+      "🎬 Perde arası geçişi konuştuk. Prova öncesi sahne arkasına bakın.",
+      "🎭 Gruplar kendi aralarında küçük tazeleme yapabilir prova öncesi.",
+      "📢 Bugün zor bir sahne var. Birbirinize destek olun.",
+      "🎭 Provaya 15 dakika erken gelin, ısınma yapacağız.",
+      "🎬 Seyircinin göreceği her şey bu provada netleşecek. Ciddiye alın.",
+      "🎭 Yönetmen bugün özellikle ritim ve tempo üzerine yoğunlaşacak.",
+      "📢 Ekipman hazır, sadece siz eksiksiniz. Buyrun sahneye.",
+      "🎭 Prova sonrası kısa toplantı var. Kaçmayın.",
+      "🎬 Her prova bir şeyi öğretir. Bugün ne öğreneceğinizi merak ediyorum.",
+      "🎭 Bugün tam prova, kostümle. Buna göre gelin.",
+      "📢 Teknik aksaklık olursa sahneyi boş bırakmayın, devam edin.",
+      "🎭 Mikrofon testi var. Ses ekibiyle çalışın.",
+      "🎬 Sahnede durduğunuz yerleri bir kez daha kontrol edin.",
+      "🎭 Bugünün provası yarının gösteri sızıntısıdır. Gerçekmiş gibi oynayın."
     ];
     const randomMsg = messages[Math.floor(Math.random() * messages.length)];
 
@@ -1371,5 +1366,49 @@ export async function getOccupiedSeats() {
   } catch (error: any) {
     console.error("[GET_OCCUPIED_SEATS] Hata:", error);
     return { error: "Koltuk bilgileri alınırken bir hata oluştu." };
+  }
+}
+
+// --- SİTE YAPILANDIRMASI (site_config) ---
+
+export async function getSiteConfig() {
+  try {
+    const doc = await adminDb.collection('settings').doc('site_config').get();
+    if (!doc.exists) return { success: true, config: null };
+    return { success: true, config: doc.data() };
+  } catch (error: any) {
+    console.error("[GET_SITE_CONFIG] Hata:", error);
+    return { error: "Site yapılandırması alınamadı." };
+  }
+}
+
+export async function updateSiteConfig(formData: FormData) {
+  try {
+    await requireAuth(['SUPERADMIN', 'ADMIN']);
+
+    const heroImageUrl = formData.get('heroImageUrl') as string | null;
+    const pinnedSlidesRaw = formData.get('pinnedSlides') as string | null;
+    const contactEmail = formData.get('contactEmail') as string | null;
+
+    const update: Record<string, any> = {
+      updatedAt: new Date().toISOString(),
+    };
+
+    if (heroImageUrl !== null) update.heroImageUrl = heroImageUrl;
+    if (pinnedSlidesRaw !== null) {
+      try {
+        update.pinnedSlides = JSON.parse(pinnedSlidesRaw);
+      } catch {
+        update.pinnedSlides = [];
+      }
+    }
+    if (contactEmail !== null) update.contactEmail = contactEmail;
+
+    await adminDb.collection('settings').doc('site_config').set(update, { merge: true });
+    revalidatePath('/');
+    return { success: true };
+  } catch (error: any) {
+    console.error("[UPDATE_SITE_CONFIG] Hata:", error);
+    return { error: error.message };
   }
 }

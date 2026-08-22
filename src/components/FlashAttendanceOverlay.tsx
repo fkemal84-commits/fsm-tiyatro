@@ -118,7 +118,7 @@ export default function FlashAttendanceOverlay() {
             {responded ? (
               <div className="bg-green-600/20 border border-green-500/30 p-6 rounded-3xl animate-bounce">
                 <ion-icon name="checkmark-done-outline" style={{ fontSize: '3rem', color: '#22c55e' }}></ion-icon>
-                <p className="text-green-400 font-bold mt-2 uppercase tracking-widest text-sm">VARLIĞINIZ MÜHÜRLENDİ</p>
+                <p className="text-green-400 font-bold mt-2 tracking-widest text-sm">Yoklama Alındı ✓</p>
               </div>
             ) : (
               <button
@@ -129,13 +129,13 @@ export default function FlashAttendanceOverlay() {
                 <div className="w-full h-full rounded-full bg-black flex flex-col items-center justify-center space-y-2 group-hover:bg-transparent transition-colors">
                   <ion-icon name="finger-print-outline" style={{ fontSize: '4rem', color: loading ? '#666' : 'var(--primary-gold)' }} className="group-hover:text-black"></ion-icon>
                   <span className="text-white group-hover:text-black font-bold tracking-widest uppercase text-xl">
-                    {loading ? 'YÜKLENİYOR...' : 'BURADAYIM!'}
+                    {loading ? 'Kaydediliyor...' : 'Buradayım'}
                   </span>
                 </div>
               </button>
             )}
 
-            <p className="text-white/20 text-xs uppercase tracking-[0.2em]">Kalan Süre: {timeLeft} Saniye</p>
+              <p className="text-white/20 text-xs uppercase tracking-[0.2em]">Kalan süre: {timeLeft} saniye</p>
           </div>
         </div>
       )}

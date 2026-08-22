@@ -1,4 +1,5 @@
 import ScrollReveal from "@/components/ScrollReveal";
+import HeroCarousel, { HeroSlide } from "@/components/HeroCarousel";
 import { adminDb } from "@/lib/firebase-admin";
 import Image from "next/image";
 import Link from "next/link";
@@ -7,109 +8,78 @@ export const dynamic = "force-dynamic";
 
 export default async function Home() {
   let plays: any[] = [];
+  let posts: any[] = [];
+  let siteConfig: any = null;
+
   try {
-    const playsSnapshot = await adminDb.collection('plays').orderBy('createdAt', 'desc').limit(3).get();
-    plays = playsSnapshot.docs.map(doc => ({
-      id: doc.id,
-      ...doc.data()
-    }));
+    const [playsSnapshot, postsSnapshot, configDoc] = await Promise.all([
+      adminDb.collection('plays').orderBy('createdAt', 'desc').limit(6).get(),
+      adminDb.collection('posts').orderBy('createdAt', 'desc').limit(4).get(),
+      adminDb.collection('settings').doc('site_config').get(),
+    ]);
+
+    plays = playsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+    posts = postsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+    if (configDoc.exists) siteConfig = configDoc.data();
   } catch (e) {
-    console.error("Home plays fetch error:", e);
+    console.error("Home fetch error:", e);
   }
+
+  // --- Carousel slaytlarını oluştur ---
+  const pinnedIds: string[] = siteConfig?.pinnedSlides || [];
+
+  // Tüm içeriklerden havuz oluştur
+  const allItems: HeroSlide[] = [
+    ...plays.map(p => ({
+      id: p.id,
+      type: 'play' as const,
+      title: p.title,
+      subtitle: p.description?.slice(0, 160),
+      imageUrl: p.imageUrl || siteConfig?.heroImageUrl || undefined,
+      href: `/plays/${p.id}`,
+      tag: `${p.year || '2026'} Sezonu · Oyun`,
+      date: p.date,
+    })),
+    ...posts.map(p => ({
+      id: p.id,
+      type: 'post' as const,
+      title: p.title,
+      subtitle: p.excerpt || p.content?.slice(0, 160),
+      imageUrl: p.imageUrl || siteConfig?.heroImageUrl || undefined,
+      href: `/blog/${p.id}`,
+      tag: 'Blog · Kulis',
+      date: p.createdAt ? new Date(p.createdAt).toLocaleDateString('tr-TR', { day: 'numeric', month: 'long', year: 'numeric' }) : undefined,
+    })),
+  ];
+
+  // Pinlenmiş içerikler önce, geri kalanlar ardından (max 5 slayt)
+  const pinnedSlides = allItems.filter(s => pinnedIds.includes(s.id));
+  const restSlides = allItems.filter(s => !pinnedIds.includes(s.id));
+  const slides: HeroSlide[] = [...pinnedSlides, ...restSlides].slice(0, 5);
+
+  // Eğer hiç içerik yoksa varsayılan slayt
+  if (slides.length === 0) {
+    slides.push({
+      id: 'default',
+      type: 'pinned',
+      title: 'Sahnenin Hakikati, Perdenin Büyüsü.',
+      subtitle: 'Klasik metinlerden çağdaş sahnelemelere; kolektif üretim disiplini ve üniversite ruhuyla sahnede insanı, duyguyu ve gerçeği arayan sanat topluluğuyuz.',
+      imageUrl: siteConfig?.heroImageUrl || undefined,
+      href: '/plays',
+      tag: '2025–2026 Sezonu · Fatih Sultan Mehmet Vakıf Üniversitesi',
+    });
+  }
+
+  // Ana sayfada gösterilecek oyunlar (en fazla 3)
+  const featuredPlays = plays.slice(0, 3);
 
   return (
     <main className="min-h-screen bg-[var(--bg-dark)]">
-      
-      {/* 1. HERO SECTION - Editoryal Sahne */}
-      <section className="relative pt-40 pb-24 px-[5%] max-w-[1380px] mx-auto min-h-[90vh] flex flex-col justify-center">
-        <div className="max-w-4xl">
-          
-          {/* Sezon & Kurum Damgası */}
-          <div className="inline-flex items-center gap-3 mb-6 px-3.5 py-1.5 rounded-full border border-[var(--primary-gold-border)] bg-[var(--primary-gold-dim)] text-[var(--primary-gold)] text-xs font-bold tracking-[0.18em] uppercase">
-            <span className="w-1.5 h-1.5 rounded-full bg-[var(--primary-gold)] animate-pulse"></span>
-            2025–2026 Sezonu &bull; Fatih Sultan Mehmet Vakıf Üniversitesi
-          </div>
 
-          <h1 className="serif-font text-5xl sm:text-6xl md:text-7xl lg:text-8xl text-[var(--text-main)] leading-[1.04] mb-8">
-            Sahnenin Hakikati,<br />
-            <span className="italic font-normal text-[var(--primary-gold)] serif-sub">Perdenin Büyüsü.</span>
-          </h1>
+      {/* 1. HERO — Dinamik Carousel */}
+      <HeroCarousel slides={slides} />
 
-          <p className="text-lg sm:text-xl text-[var(--text-muted)] max-w-2xl font-light leading-relaxed mb-10">
-            Klasik metinlerden çağdaş sahnelemelere; kolektif üretim disiplini ve üniversite ruhuyla sahnede insanı, duyguyu ve gerçeği arayan sanat topluluğuyuz.
-          </p>
-
-          <div className="flex flex-wrap items-center gap-4">
-            <Link 
-              href="/biletimi-bul" 
-              className="btn btn-primary px-8 py-4 text-sm font-bold tracking-wider"
-            >
-              <ion-icon name="qr-code-outline" style={{ fontSize: '1.2rem' }}></ion-icon>
-              BİLETİMİ SORGULA
-            </Link>
-            
-            <Link 
-              href="/plays" 
-              className="btn btn-outline px-8 py-4 text-sm tracking-wider"
-            >
-              SEZON REPERTUVARI
-            </Link>
-
-            <Link 
-              href="#manifesto" 
-              className="px-6 py-4 text-sm text-[var(--text-muted)] hover:text-[var(--text-main)] transition-colors"
-            >
-              Kulüp Hakkında →
-            </Link>
-          </div>
-        </div>
-
-        {/* Alt Meta Şerit */}
-        <div className="mt-20 pt-8 border-t border-[var(--border-subtle)] grid grid-cols-2 md:grid-cols-4 gap-6 text-left">
-          <div>
-            <span className="block text-[11px] text-[var(--text-dim)] uppercase font-bold tracking-widest">TOPLULUK</span>
-            <span className="text-sm font-semibold text-[var(--text-main)]">Sinema ve Tiyatro Kulübü</span>
-          </div>
-          <div>
-            <span className="block text-[11px] text-[var(--text-dim)] uppercase font-bold tracking-widest">YERLEŞKE</span>
-            <span className="text-sm font-semibold text-[var(--text-main)]">Haliç Yerleşkesi & Sahne</span>
-          </div>
-          <div>
-            <span className="block text-[11px] text-[var(--text-dim)] uppercase font-bold tracking-widest">DİJİTAL SİSTEM</span>
-            <span className="text-sm font-semibold text-[var(--text-main)]">Canlı Yoklama & QR Gişe</span>
-          </div>
-          <div>
-            <span className="block text-[11px] text-[var(--text-dim)] uppercase font-bold tracking-widest">DURUM</span>
-            <span className="text-sm font-semibold text-[var(--primary-gold)] flex items-center gap-1.5">
-              <span className="w-2 h-2 rounded-full bg-emerald-500"></span> Provalar Aktif
-            </span>
-          </div>
-        </div>
-      </section>
-
-      {/* 2. KAYAN SAHNE BANDI (MARQUEE TICKER) */}
-      <div className="marquee-container" aria-hidden="true">
-        <div className="marquee-content">
-          <span className="text-xs font-bold uppercase tracking-[0.25em] text-[var(--text-muted)] flex items-center gap-4">
-            PERDE HİÇ KAPANMASIN <span className="text-[var(--primary-gold)]">&bull;</span>
-            2026 SEZONU REPERTUVARI <span className="text-[var(--primary-gold)]">&bull;</span>
-            CANLI PROVA VE ATÖLYELER <span className="text-[var(--primary-gold)]">&bull;</span>
-            HALİÇ SAHNESİ <span className="text-[var(--primary-gold)]">&bull;</span>
-            SENARYO KASASI VE KULİS <span className="text-[var(--primary-gold)]">&bull;</span>
-            BİLETİNİ ONLİNE DOĞRULA <span className="text-[var(--primary-gold)]">&bull;</span>
-          </span>
-          <span className="text-xs font-bold uppercase tracking-[0.25em] text-[var(--text-muted)] flex items-center gap-4">
-            PERDE HİÇ KAPANMASIN <span className="text-[var(--primary-gold)]">&bull;</span>
-            2026 SEZONU REPERTUVARI <span className="text-[var(--primary-gold)]">&bull;</span>
-            CANLI PROVA VE ATÖLYELER <span className="text-[var(--primary-gold)]">&bull;</span>
-            HALİÇ SAHNESİ <span className="text-[var(--primary-gold)]">&bull;</span>
-            SENARYO KASASI VE KULİS <span className="text-[var(--primary-gold)]">&bull;</span>
-            BİLETİNİ ONLİNE DOĞRULA <span className="text-[var(--primary-gold)]">&bull;</span>
-          </span>
-        </div>
-      </div>
-
-      {/* 3. SEZON OYUNLARI VİTRİNİ */}
+      {/* 2. SEZON OYUNLARI VİTRİNİ */}
       <section className="section max-w-[1380px] mx-auto" id="repertuvar">
         <ScrollReveal className="flex flex-col md:flex-row md:items-end justify-between mb-12 gap-6 border-b border-[var(--border-subtle)] pb-8">
           <div>
@@ -122,12 +92,12 @@ export default async function Home() {
         </ScrollReveal>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-          {plays.length > 0 ? (
-            plays.map((play) => (
+          {featuredPlays.length > 0 ? (
+            featuredPlays.map((play) => (
               <ScrollReveal key={play.id} className="editorial-card group flex flex-col p-0 overflow-hidden">
                 <div className="relative w-full aspect-[3/4] bg-[var(--bg-surface-elevated)] overflow-hidden border-b border-[var(--border-subtle)]">
-                  <Image 
-                    src={play.imageUrl || '/default-cover.svg'} 
+                  <Image
+                    src={play.imageUrl || '/default-cover.svg'}
                     alt={play.title || 'Oyun Afişi'}
                     fill
                     className="object-cover transition-transform duration-500 group-hover:scale-105"
@@ -145,10 +115,10 @@ export default async function Home() {
                   <p className="text-sm text-[var(--text-muted)] line-clamp-3 mb-6 font-light leading-relaxed">
                     {play.description}
                   </p>
-                  
+
                   <div className="mt-auto pt-4 border-t border-[var(--border-subtle)] flex items-center justify-between">
                     <span className="text-xs text-[var(--text-dim)] uppercase font-bold tracking-wider">FSM Tiyatro</span>
-                    <Link 
+                    <Link
                       href={`/plays/${play.id}`}
                       className="text-xs font-bold text-[var(--primary-gold)] uppercase tracking-wider hover:text-[var(--text-main)] transition-colors"
                     >
@@ -167,12 +137,12 @@ export default async function Home() {
         </div>
       </section>
 
-      {/* 4. SANAT MANİFESTOSU & DEĞERLERİMİZ */}
+      {/* 3. SANAT MANİFESTOSU & DEĞERLERİMİZ */}
       <section className="section bg-[var(--bg-surface)] border-y border-[var(--border-subtle)]" id="manifesto">
         <div className="max-w-[1380px] mx-auto grid grid-cols-1 lg:grid-cols-12 gap-12 items-center">
-          
+
           <ScrollReveal className="lg:col-span-6 space-y-6">
-            <span className="editorial-tag text-[var(--primary-gold)] block">SANAT MANİFESTOSU</span>
+            <span className="editorial-tag text-[var(--primary-gold)] block">HAKKIMIZDA</span>
             <h2 className="serif-font text-3xl sm:text-4xl md:text-5xl text-[var(--text-main)] leading-tight">
               "İnsanı, insana, insanla, insanca anlatma sanatı."
             </h2>
@@ -185,7 +155,7 @@ export default async function Home() {
 
             <div className="pt-4 flex gap-4">
               <Link href="/blog" className="btn btn-outline text-xs tracking-wider">
-                Kulis Güncesi & Blog
+                Blog & Yazılar
               </Link>
               <Link href="/members/team" className="btn btn-primary text-xs tracking-wider">
                 Ekibimizi Tanıyın
@@ -222,7 +192,7 @@ export default async function Home() {
         </div>
       </section>
 
-      {/* 5. KURUMSAL İŞ BİRLİKLERİ & SANAT DESTEKÇİLERİ */}
+      {/* 4. KURUMSAL İŞ BİRLİKLERİ & SANAT DESTEKÇİLERİ */}
       <section className="section max-w-[1380px] mx-auto text-center" id="sponsorluk">
         <ScrollReveal className="max-w-3xl mx-auto mb-12">
           <span className="editorial-tag text-[var(--primary-gold)] block mb-2">KURUMSAL & SANAT DESTEĞİ</span>
@@ -233,7 +203,7 @@ export default async function Home() {
         </ScrollReveal>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-5xl mx-auto mb-12 text-left">
-          
+
           <div className="editorial-card p-8 border-t-2 border-t-[#a89078] flex flex-col justify-between">
             <div>
               <span className="text-xs font-bold text-[#a89078] uppercase tracking-widest block mb-2">ETKİNLİK DESTEĞİ</span>
@@ -271,12 +241,13 @@ export default async function Home() {
 
         <ScrollReveal>
           <div className="inline-flex flex-wrap items-center justify-center gap-4 p-4 rounded-xl bg-[var(--bg-surface)] border border-[var(--border-subtle)]">
-            <span className="text-xs text-[var(--text-muted)]">Sponsorluk & İletişim Koordinasyonu:</span>
-            <a 
-              href="mailto:tiyatro@fsm.edu.tr" 
+            <span className="text-xs text-[var(--text-muted)]">Sponsorluk & İletişim:</span>
+            <a
+              href={`mailto:${siteConfig?.contactEmail || 'tiyatro@fsm.edu.tr'}`}
               className="text-xs font-bold text-[var(--primary-gold)] hover:underline flex items-center gap-1.5"
             >
-              <ion-icon name="mail-outline"></ion-icon> tiyatro@fsm.edu.tr
+              <ion-icon name="mail-outline"></ion-icon>
+              {siteConfig?.contactEmail || 'tiyatro@fsm.edu.tr'}
             </a>
             <span className="text-[var(--text-dim)] hidden sm:inline">&bull;</span>
             <span className="text-xs text-[var(--text-muted)] font-mono">FSMVÜ Sinema ve Tiyatro Kulübü</span>

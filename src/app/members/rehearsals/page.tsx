@@ -310,8 +310,8 @@ export default async function RehearsalsPage(props: { searchParams: Promise<{ vi
                     <label htmlFor="saveAsPreset" className="text-xs text-white/60 cursor-pointer hover:text-white transition-colors">Bu bilgileri şablon (preset) olarak kaydet</label>
                   </div>
 
-                  <button type="submit" className="md:col-span-2 btn btn-primary py-4 font-bold tracking-widest uppercase text-xs shadow-glow mt-2">
-                    TAKVİME MÜHÜRLE
+                  <button type="submit" className="md:col-span-2 btn btn-primary py-4 font-bold tracking-widest text-xs shadow-glow mt-2">
+                    Provayı Kaydet
                   </button>
                 </form>
               </section>
