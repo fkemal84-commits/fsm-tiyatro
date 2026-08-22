@@ -1,35 +1,32 @@
 'use client';
 
 import { useState } from 'react';
-import { useRouter } from 'next/navigation';
 import { registerUser } from '@/app/actions';
+import Link from 'next/link';
 
 export const dynamic = "force-dynamic";
 
-
 export default function Register() {
-  const router = useRouter();
+  const [phoneDisplay, setPhoneDisplay] = useState('');
+  const [rawPhone, setRawPhone] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [successMessage, setSuccessMessage] = useState('');
-  const [phoneDisplay, setPhoneDisplay] = useState('');
 
-  const formatPhone = (val: string) => {
-    const digits = val.replace(/\D/g, '');
-    const limited = digits.substring(0, 10);
+  const formatPhoneNumber = (value: string) => {
+    const numbers = value.replace(/\D/g, '').slice(0, 10);
+    setRawPhone(numbers);
     
-    let formatted = '';
-    if (limited.length > 0) {
-      formatted += limited.substring(0, 3);
-      if (limited.length > 3) formatted += ' ' + limited.substring(3, 6);
-      if (limited.length > 6) formatted += ' ' + limited.substring(6, 8);
-      if (limited.length > 8) formatted += ' ' + limited.substring(8, 10);
-    }
-    return formatted;
+    if (numbers.length === 0) return '';
+    if (numbers.length <= 3) return `(${numbers}`;
+    if (numbers.length <= 6) return `(${numbers.slice(0, 3)}) ${numbers.slice(3)}`;
+    if (numbers.length <= 8) return `(${numbers.slice(0, 3)}) ${numbers.slice(3, 6)} ${numbers.slice(6)}`;
+    return `(${numbers.slice(0, 3)}) ${numbers.slice(3, 6)} ${numbers.slice(6, 8)} ${numbers.slice(8, 10)}`;
   };
 
   const handlePhoneChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setPhoneDisplay(formatPhone(e.target.value));
+    const formatted = formatPhoneNumber(e.target.value);
+    setPhoneDisplay(formatted);
   };
 
   const hashPassword = async (pwd: string) => {
@@ -45,26 +42,31 @@ export default function Register() {
     e.preventDefault();
     setLoading(true);
     setError('');
+
     const form = e.currentTarget;
     const formData = new FormData(form);
     
+    // Ham telefon numarasını gönderiyoruz
+    formData.set('phone', rawPhone);
+
+    const rawPassword = formData.get('password') as string;
+    const isSchoolEmail = (formData.get('email') as string || '').toLowerCase().endsWith('@stu.fsm.edu.tr');
+
     try {
-      const password = formData.get('password') as string;
-      if (password) {
-        const hashed = await hashPassword(password);
-        formData.set('password', hashed);
-      }
+      const hashedPassword = await hashPassword(rawPassword);
+      formData.set('password', hashedPassword);
 
       const res = await registerUser(formData);
       if (res?.error) {
         setError(res.error);
         setLoading(false);
-      } else if (res?.pending) {
+        return;
+      }
+
+      if (!isSchoolEmail) {
         setSuccessMessage("Kayıt talebiniz alındı! Okul dışı e-posta kullandığınız için hesabınız yönetici onayından sonra aktif edilecektir. Onaylandığında giriş yapabilirsiniz.");
-        setLoading(false);
       } else {
-        setSuccessMessage("Kayıt başarılı! Okul e-postanızla anında üye oldunuz. Şimdi giriş yapabilirsiniz.");
-        setTimeout(() => router.push('/login'), 3000);
+        window.location.href = '/login?registered=true';
       }
     } catch (err: any) {
       setError("Beklenmedik bir hata oluştu: " + err.message);
@@ -73,7 +75,7 @@ export default function Register() {
   };
 
   return (
-    <div className="hero flex items-center justify-center min-h-screen pt-20 md:pt-24 pb-10">
+    <div className="hero flex items-center justify-center min-h-screen pt-24 pb-12 bg-[var(--bg-dark)]">
       <div className="glass-card w-[92%] max-w-[500px] p-6 md:p-10">
         
         {successMessage ? (
@@ -81,16 +83,17 @@ export default function Register() {
              <div className="text-6xl md:text-7xl text-[var(--primary-gold)] mb-6">
                 <ion-icon name="checkmark-circle-outline"></ion-icon>
              </div>
-             <h2 className="serif-font text-2xl md:text-3xl text-white mb-4">Süreç Başlatıldı</h2>
+             <h2 className="serif-font text-2xl md:text-3xl text-[var(--text-main)] mb-4">Süreç Başlatıldı</h2>
              <p className="text-[var(--text-muted)] text-sm md:text-base leading-relaxed mb-8">{successMessage}</p>
-             <a href="/login" className="btn btn-primary w-full">Giriş Sayfasına Dön</a>
+             <Link href="/login" className="btn btn-primary w-full">Giriş Sayfasına Dön</Link>
           </div>
         ) : (
           <>
-            <h2 className="serif-font text-3xl md:text-4xl text-[var(--primary-gold)] mb-2 text-center">Aileye Katıl</h2>
+            <span className="editorial-tag text-[var(--primary-gold)] block text-center mb-2">YENİ ÜYE KAYDI</span>
+            <h2 className="serif-font text-3xl md:text-4xl text-[var(--text-main)] mb-2 text-center">Aileye Katıl</h2>
             <p className="text-[var(--text-muted)] mb-8 text-center text-xs md:text-sm">FSM Tiyatro ve Sinema Kulübü Resmi Öğrenci ve Üye Kayıt Formu</p>
             
-            {error && <div className="bg-red-900/50 text-white p-3 rounded-lg mb-4 border border-red-500/30 text-sm text-center">{error}</div>}
+            {error && <div className="bg-red-500/15 text-red-400 p-3 rounded-lg mb-4 border border-red-500/30 text-sm text-center">{error}</div>}
  
             <form onSubmit={handleRegister} className="flex flex-col gap-4">
               <div className="flex flex-col md:flex-row gap-4">
@@ -98,14 +101,14 @@ export default function Register() {
                   type="text" 
                   name="name" 
                   placeholder="Adınız" 
-                  className="flex-1 p-3.5 rounded-xl border border-white/10 bg-black/40 text-white outline-none focus:border-[var(--primary-gold)]/50 transition-all" 
+                  className="flex-1 p-3.5 rounded-xl border border-[var(--border-medium)] bg-[var(--input-bg)] text-[var(--text-main)] outline-none focus:border-[var(--primary-gold)] transition-all text-sm" 
                   required 
                 />
                 <input 
                   type="text" 
                   name="surname" 
                   placeholder="Soyadınız" 
-                  className="flex-1 p-3.5 rounded-xl border border-white/10 bg-black/40 text-white outline-none focus:border-[var(--primary-gold)]/50 transition-all" 
+                  className="flex-1 p-3.5 rounded-xl border border-[var(--border-medium)] bg-[var(--input-bg)] text-[var(--text-main)] outline-none focus:border-[var(--primary-gold)] transition-all text-sm" 
                   required 
                 />
               </div>
@@ -113,15 +116,15 @@ export default function Register() {
               <input 
                 type="email" 
                 name="email" 
-                placeholder="Okul (fsm.edu.tr) veya Kişisel E-posta" 
-                className="w-full p-3.5 rounded-xl border border-white/10 bg-black/40 text-white outline-none focus:border-[var(--primary-gold)]/50 transition-all" 
+                placeholder="Okul (@stu.fsm.edu.tr) veya Kişisel E-posta" 
+                className="w-full p-3.5 rounded-xl border border-[var(--border-medium)] bg-[var(--input-bg)] text-[var(--text-main)] outline-none focus:border-[var(--primary-gold)] transition-all text-sm" 
                 required 
               />
               
               <div className="flex gap-2">
                 <select 
                   name="countryCode" 
-                  className="w-[85px] p-3.5 rounded-xl border border-white/10 bg-black/40 text-white outline-none focus:border-[var(--primary-gold)]/50 transition-all text-xs"
+                  className="w-[90px] p-3.5 rounded-xl border border-[var(--border-medium)] bg-[var(--input-bg)] text-[var(--text-main)] outline-none focus:border-[var(--primary-gold)] transition-all text-xs"
                   defaultValue="+90"
                 >
                   <option value="+90">TR +90</option>
@@ -138,39 +141,39 @@ export default function Register() {
                   name="phone" 
                   value={phoneDisplay}
                   onChange={handlePhoneChange}
-                  placeholder="5XX XXX XX XX" 
-                  inputMode="numeric"
-                  className="flex-1 p-3.5 rounded-xl border border-white/10 bg-black/40 text-white outline-none focus:border-[var(--primary-gold)]/50 transition-all" 
+                  placeholder="(5XX) XXX XX XX" 
+                  className="flex-1 p-3.5 rounded-xl border border-[var(--border-medium)] bg-[var(--input-bg)] text-[var(--text-main)] outline-none focus:border-[var(--primary-gold)] transition-all text-sm" 
                   required 
-                  title="Lütfen 10 haneli telefon numaranızı başında 0 olmadan giriniz"
                 />
               </div>
-              
+
               <input 
                 type="password" 
                 name="password" 
-                placeholder="Sisteme Giriş Şifrenizi Belirleyin" 
-                className="w-full p-3.5 rounded-xl border border-white/10 bg-black/40 text-white outline-none focus:border-[var(--primary-gold)]/50 transition-all" 
+                placeholder="Güçlü bir şifre belirleyin" 
+                className="w-full p-3.5 rounded-xl border border-[var(--border-medium)] bg-[var(--input-bg)] text-[var(--text-main)] outline-none focus:border-[var(--primary-gold)] transition-all text-sm" 
                 required 
-                minLength={6} 
-                autoComplete="new-password"
               />
-              
-              <label className="flex gap-3 items-start my-1 cursor-pointer group">
-                <input type="checkbox" name="consent" className="mt-1 accent-[var(--primary-gold)]" required />
-                <span className="text-[11px] md:text-xs text-[var(--text-muted)] leading-relaxed group-hover:text-white transition-colors">
-                  Kişisel verilerimin kulüp faaliyetleri kapsamında işlenmesine dair <a href="#" className="underline text-[var(--primary-gold)]">Üye Aydınlatma ve Açık Rıza Metnini</a> okudum, anladım ve onaylıyorum.
-                </span>
-              </label>
- 
+
+              <div className="flex items-start gap-3 my-2 text-left">
+                <input type="checkbox" name="consent" id="consent" required className="mt-1 accent-[var(--primary-gold)]" />
+                <label htmlFor="consent" className="text-xs text-[var(--text-muted)] cursor-pointer leading-relaxed">
+                  Kulüp içi prova duyuruları, etkinlik takvimi ve koordinasyon iletişimlerinin tarafıma iletilmesini onaylıyorum.
+                </label>
+              </div>
+
               <button 
                 type="submit" 
-                className="btn btn-primary w-full mt-2 py-4 font-bold tracking-wider" 
+                className="btn btn-primary w-full py-4 text-sm font-bold tracking-wider" 
                 disabled={loading}
               >
-                {loading ? 'Sisteme Kaydediliyor...' : 'Kaydı Tamamla ve Üye Ol'}
+                {loading ? 'Kaydınız İşleniyor...' : 'Kayıt Ol'}
               </button>
             </form>
+
+            <div className="mt-6 pt-4 border-t border-[var(--border-subtle)] text-center text-xs text-[var(--text-muted)]">
+              Zaten bir hesabınız var mı? <Link href="/login" className="text-[var(--primary-gold)] font-bold hover:underline">Giriş Yapın</Link>
+            </div>
           </>
         )}
       </div>

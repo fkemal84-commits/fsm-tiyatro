@@ -2,9 +2,9 @@
 
 import { useState } from 'react';
 import { signIn } from 'next-auth/react';
+import Link from 'next/link';
 
 export const dynamic = "force-dynamic";
-
 
 export default function AdminSecretLogin() {
   const [email, setEmail] = useState('');
@@ -49,11 +49,12 @@ export default function AdminSecretLogin() {
   };
 
   return (
-    <div className="hero" style={{ height: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-      <div className="glass-card" style={{ maxWidth: '400px', width: '90%', textAlign: 'center', border: '1px solid var(--accent-red)' }}>
-        <h2 className="serif-font" style={{ fontSize: '2rem', color: 'var(--accent-red)', marginBottom: '1.5rem' }}>Yönetim Girişi</h2>
+    <div className="hero" style={{ height: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'var(--bg-dark)' }}>
+      <div className="glass-card" style={{ maxWidth: '400px', width: '90%', textAlign: 'center', border: '1px solid var(--primary-gold-border)' }}>
+        <span className="editorial-tag text-[var(--primary-gold)] block mb-2">YÖNETİM PANELİ</span>
+        <h2 className="serif-font" style={{ fontSize: '2rem', color: 'var(--text-main)', marginBottom: '1.5rem' }}>Yönetici Girişi</h2>
         
-        {error && <div style={{ background: 'rgba(139,0,0,0.5)', border: '1px solid rgba(255,0,0,0.3)', color: '#fff', padding: '0.8rem', borderRadius: '8px', marginBottom: '1rem' }}>{error}</div>}
+        {error && <div style={{ background: 'rgba(239,68,68,0.15)', border: '1px solid rgba(239,68,68,0.3)', color: '#ef4444', padding: '0.8rem', borderRadius: '8px', marginBottom: '1rem', fontSize: '0.85rem' }}>{error}</div>}
 
         <form onSubmit={handleLogin} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
           <input 
@@ -61,7 +62,7 @@ export default function AdminSecretLogin() {
             placeholder="E-posta" 
             value={email}
             onChange={(e) => setEmail(e.target.value)}
-            style={{ padding: '1rem', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.2)', background: 'rgba(0,0,0,0.5)', color: '#fff' }}
+            style={{ padding: '1rem', borderRadius: '8px', border: '1px solid var(--border-medium)', background: 'var(--input-bg)', color: 'var(--text-main)' }}
             required
           />
           <input 
@@ -69,18 +70,18 @@ export default function AdminSecretLogin() {
             placeholder="Şifre" 
             value={password}
             onChange={(e) => setPassword(e.target.value)}
-            style={{ padding: '1rem', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.2)', background: 'rgba(0,0,0,0.5)', color: '#fff' }}
+            style={{ padding: '1rem', borderRadius: '8px', border: '1px solid var(--border-medium)', background: 'var(--input-bg)', color: 'var(--text-main)' }}
             required
           />
-          <button type="submit" className="btn btn-outline" style={{ marginTop: '1rem', borderColor: 'var(--accent-red)', color: 'var(--text-main)' }} disabled={loading}>
+          <button type="submit" className="btn btn-primary" style={{ marginTop: '1rem', width: '100%' }} disabled={loading}>
             {loading ? 'Giriş yapılıyor...' : 'Giriş Yap'}
           </button>
         </form>
 
         <div style={{ marginTop: '1.5rem', fontSize: '0.85rem' }}>
-          <a href="/forgot-password" style={{ color: 'var(--text-muted)', textDecoration: 'none' }} className="hover:text-[var(--primary-gold)] transition-all">
+          <Link href="/forgot-password" style={{ color: 'var(--text-muted)', textDecoration: 'none' }} className="hover:text-[var(--primary-gold)] transition-all">
             Şifremi Unuttum?
-          </a>
+          </Link>
         </div>
       </div>
     </div>
