@@ -1,124 +1,120 @@
 import ScrollReveal from "@/components/ScrollReveal";
 import { Metadata } from "next";
 import Image from "next/image";
+import Link from "next/link";
 import { adminDb } from "@/lib/firebase-admin";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
-import { addPlay } from "@/app/actions";
 
 export const metadata: Metadata = {
-  title: "Sahnede İz Bırakanlar",
-  description: "FSM Tiyatro'nun geçmişten bugüne sergilediği tüm oyunlar ve başarı hikayelerimiz.",
+  title: "Repertuvar & Sahnede İz Bırakanlar",
+  description: "FSM Tiyatro'nun geçmişten bugüne sergilediği tüm oyunlar, sahne prodüksiyonları ve başarı hikayelerimiz.",
 };
 
 export const dynamic = 'force-dynamic';
 
 export default async function Plays() {
   const session = await getServerSession(authOptions);
-  const role = (session?.user as any)?.role;
-  const canAdd = role === 'SUPERADMIN' || role === 'ADMIN';
+  let userRole = (session?.user as any)?.role;
+
+  if (session?.user?.email) {
+    const uSnap = await adminDb.collection('users').where('email', '==', session.user.email).limit(1).get();
+    if (!uSnap.empty) {
+      userRole = uSnap.docs[0].data().role;
+    }
+  }
+
+  const canManage = userRole === 'SUPERADMIN' || userRole === 'ADMIN';
 
   const snapshot = await adminDb.collection('plays').orderBy('createdAt', 'desc').get();
   const plays = snapshot.docs.map(doc => ({
-      id: doc.id,
-      ...doc.data(),
-      createdAt: doc.data().createdAt ? new Date(doc.data().createdAt) : new Date()
+    id: doc.id,
+    ...doc.data(),
+    createdAt: doc.data().createdAt ? new Date(doc.data().createdAt) : new Date()
   } as any));
 
   return (
-    <main>
-      <header style={{ padding: '12rem 5% 4rem', textAlign: 'center', background: 'radial-gradient(circle at center top, rgba(139,0,0,0.4) 0%, var(--bg-dark) 80%)', borderBottom: 'var(--glass-border)' }}>
-        <ScrollReveal>
-          <h1 className="serif-font" style={{ fontSize: '4rem', color: 'var(--primary-gold)', marginBottom: '1rem' }}>Sahnede İz Bırakanlar</h1>
-          <p style={{ color: 'var(--text-muted)', maxWidth: '600px', margin: '0 auto', fontSize: '1.1rem' }}>Kuruluşumuzdan bu yana sahnelediğimiz, üniversitemizde sanatın nabzını tutan seçkin eserlerimiz.</p>
-        </ScrollReveal>
+    <main className="min-h-screen bg-[var(--bg-dark)] pt-36 pb-24">
+      {/* Header */}
+      <header className="max-w-[1380px] mx-auto px-[5%] text-center mb-16">
+        <span className="editorial-tag text-[var(--primary-gold)] block mb-3">REPERTUVAR & SAHNE TARİHİ</span>
+        <h1 className="serif-font text-5xl sm:text-6xl md:text-7xl text-[var(--text-main)] mb-4">
+          Sahnede İz Bırakanlar
+        </h1>
+        <p className="text-[var(--text-muted)] max-w-xl mx-auto text-base sm:text-lg font-light leading-relaxed">
+          Kuruluşumuzdan bu yana sahnelediğimiz, üniversitemizde sanatın ve tiyatronun nabzını tutan seçkin eserlerimiz.
+        </p>
+
+        {/* Yetkili Panel Erişimi Butonu (Sadece Adminler Görür) */}
+        {canManage && (
+          <div className="mt-8 flex justify-center">
+            <Link 
+              href="/tanerabi/dashboard?tab=plays" 
+              className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full border border-[var(--primary-gold-border)] bg-[var(--primary-gold-dim)] text-[var(--primary-gold)] text-xs font-bold tracking-wider uppercase hover:scale-105 transition-all"
+            >
+              <ion-icon name="film-outline" style={{ fontSize: '1rem' }}></ion-icon>
+              Oyun Ekle / Yönetim Paneli →
+            </Link>
+          </div>
+        )}
       </header>
 
-      <section className="section">
+      {/* Oyunlar Galerisi */}
+      <section className="max-w-[1380px] mx-auto px-[5%]">
         <ScrollReveal>
-          <div style={{ maxWidth: '1200px', margin: '0 auto' }}>
-            
-            {/* ADMIN OYUN EKLEME FORMU */}
-            {canAdd && (
-              <div className="glass-card frame-glow" style={{ marginBottom: '4rem', padding: '2.5rem', borderStyle: 'dashed', borderColor: 'var(--primary-gold)' }}>
-                 <h2 className="serif-font" style={{ color: 'var(--primary-gold)', marginBottom: '1.5rem', fontSize: '1.8rem', display: 'flex', alignItems: 'center', gap: '0.8rem' }}>
-                    <ion-icon name="add-circle-outline"></ion-icon> Yeni Oyun Portfolyosu Ekle
-                 </h2>
-                 <form action={addPlay as any} encType="multipart/form-data" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '1.5rem' }}>
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-                      <input 
-                        type="text" 
-                        name="title" 
-                        placeholder="Oyun Adı (Örn: Hamlet)" 
-                        style={{ padding: '1rem', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.2)', background: 'rgba(0,0,0,0.5)', color: '#fff' }}
-                        required
-                      />
-                      <input 
-                        type="text" 
-                        name="year"
-                        placeholder="Sezon (Örn: 2026 SEZONU)" 
-                        style={{ padding: '1rem', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.2)', background: 'rgba(0,0,0,0.5)', color: '#fff' }}
-                        required
-                      />
-                      <input 
-                        type="text" 
-                        name="videoUrl" 
-                        placeholder="YouTube Video Linki (Opsiyonel)" 
-                        style={{ padding: '1rem', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.2)', background: 'rgba(0,0,0,0.5)', color: '#fff' }}
-                      />
-                    </div>
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-                      <textarea 
-                        name="description"
-                        placeholder="Oyun Özeti ve Sanatsal Vizyon..." 
-                        rows={5}
-                        style={{ padding: '1rem', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.2)', background: 'rgba(0,0,0,0.5)', color: '#fff' }}
-                        required
-                      ></textarea>
-                      <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-                        <label style={{ fontSize: '0.8rem', color: 'var(--primary-gold)', opacity: 0.8 }}>Oyun Afişi (Maks. 2MB):</label>
-                        <input 
-                          type="file" 
-                          name="poster" 
-                          accept="image/*" 
-                          style={{ color: 'var(--text-muted)', fontSize: '0.85rem' }} 
-                        />
-                      </div>
-                      <button type="submit" className="btn btn-primary" style={{ padding: '1rem' }}>Sisteme İşle ve Yayınla</button>
-                    </div>
-                 </form>
-              </div>
-            )}
-
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))', gap: '2.5rem' }}>
-            
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
             {plays.length === 0 ? (
-               <p style={{ textAlign: 'center', color: 'var(--text-muted)', padding: '2rem', gridColumn: '1 / -1' }}>Henüz bir oyun eklenmemiş.</p>
+              <div className="col-span-full editorial-card text-center py-16">
+                <p className="text-[var(--text-muted)] text-sm mb-4">Henüz kayıtlı bir oyun bulunmuyor.</p>
+                {canManage && (
+                  <Link href="/tanerabi/dashboard?tab=plays" className="btn btn-primary text-xs">
+                    İlk Oyunu Ekle
+                  </Link>
+                )}
+              </div>
             ) : (
-               plays.map(play => (
-                  <ScrollReveal key={play.id}>
-                    <div style={{ background: 'var(--bg-card)', border: 'var(--glass-border)', borderRadius: '12px', overflow: 'hidden', transition: 'var(--transition)' }}>
-                      <div style={{ position: 'relative', width: '100%', height: '480px', borderBottom: 'var(--glass-border)' }}>
-                        <Image 
-                          src={play.imageUrl || '/default-cover.svg'} 
-                          alt={`${play.title} Afiş`} 
-                          fill 
-                          style={{ objectFit: 'cover' }}
-                          sizes="(max-width: 768px) 100vw, 320px"
-                        />
+              plays.map(play => (
+                <ScrollReveal key={play.id}>
+                  <article className="editorial-card group p-0 overflow-hidden flex flex-col h-full transition-all duration-300 hover:border-[var(--primary-gold-border)]">
+                    <div className="relative w-full aspect-[3/4] bg-[var(--bg-surface-elevated)] overflow-hidden border-b border-[var(--border-subtle)]">
+                      <Image 
+                        src={play.imageUrl || '/default-cover.svg'} 
+                        alt={`${play.title} Afişi`} 
+                        fill 
+                        className="object-cover transition-transform duration-500 group-hover:scale-105"
+                        sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+                      />
+                      {play.year && (
+                        <div className="absolute top-4 left-4 bg-[var(--bg-dark)]/85 backdrop-blur-md px-3 py-1 rounded text-[11px] font-bold text-[var(--primary-gold)] tracking-widest border border-[var(--border-subtle)] uppercase">
+                          {play.year}
+                        </div>
+                      )}
+                    </div>
+                    
+                    <div className="p-6 md:p-8 flex flex-col justify-between flex-1">
+                      <div>
+                        <h2 className="serif-font text-2xl md:text-3xl text-[var(--text-main)] mb-3 leading-snug group-hover:text-[var(--primary-gold)] transition-colors">
+                          {play.title}
+                        </h2>
+                        <p className="text-[var(--text-muted)] text-sm font-light leading-relaxed line-clamp-3 mb-6">
+                          {play.description}
+                        </p>
                       </div>
-                      <div style={{ padding: '2rem', textAlign: 'center' }}>
-                        <span style={{ color: 'var(--primary-gold)', fontWeight: 600, fontSize: '0.9rem', letterSpacing: '2px', marginBottom: '0.5rem', display: 'block' }}>{play.year}</span>
-                        <h3 className="serif-font" style={{ fontSize: '1.8rem', color: '#fff', marginBottom: '1rem' }}>{play.title}</h3>
-                        <p style={{ color: 'var(--text-muted)', fontSize: '0.95rem', marginBottom: '1.5rem' }}>{play.description.length > 100 ? play.description.substring(0, 100) + '...' : play.description}</p>
-                        <a href={`/plays/${play.id}`} className="btn btn-outline" style={{ padding: '0.5rem 1.5rem', fontSize: '0.9rem' }}>Detaylar</a>
+
+                      <div className="pt-4 border-t border-[var(--border-subtle)] flex items-center justify-between mt-auto">
+                        <span className="text-xs text-[var(--text-dim)] font-mono uppercase tracking-wider">FSM Tiyatro</span>
+                        <Link 
+                          href={`/plays/${play.id}`} 
+                          className="text-xs font-bold text-[var(--primary-gold)] uppercase tracking-wider hover:underline flex items-center gap-1.5"
+                        >
+                          Detaylar & Afiş →
+                        </Link>
                       </div>
                     </div>
-                  </ScrollReveal>
-               ))
+                  </article>
+                </ScrollReveal>
+              ))
             )}
-
-            </div>
           </div>
         </ScrollReveal>
       </section>
