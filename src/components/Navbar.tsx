@@ -17,7 +17,7 @@ export default function Navbar({ session: initialSession, initialTicketQueryActi
   const [activeDropdown, setActiveDropdown] = useState<string | null>(null);
   const [touchStart, setTouchStart] = useState<number | null>(null);
   const [touchEnd, setTouchEnd] = useState<number | null>(null);
-  const [theme, setTheme] = useState<'system' | 'light' | 'dark'>('system');
+  const [theme, setTheme] = useState<'light' | 'dark'>('dark');
   const [isTicketQueryActive, setIsTicketQueryActive] = useState<boolean>(initialTicketQueryActive);
   const pathname = usePathname();
 
@@ -51,31 +51,26 @@ export default function Navbar({ session: initialSession, initialTicketQueryActi
     return () => unsub();
   }, []);
 
-  // Tema yükleme ve takip
+  // Tema yükleme ve takip (Varsayılan Daima Koyu Sahne Modu)
   useEffect(() => {
-    const saved = localStorage.getItem('fsm_theme') as 'system' | 'light' | 'dark' | null;
-    if (saved) {
-      setTheme(saved);
-      if (saved === 'system') {
-        document.documentElement.removeAttribute('data-theme');
-      } else {
-        document.documentElement.setAttribute('data-theme', saved);
-      }
+    const saved = localStorage.getItem('fsm_theme') as 'light' | 'dark' | null;
+    if (saved === 'light') {
+      setTheme('light');
+      document.documentElement.setAttribute('data-theme', 'light');
+    } else {
+      setTheme('dark');
+      document.documentElement.removeAttribute('data-theme');
     }
   }, []);
 
   const toggleTheme = () => {
-    let nextTheme: 'system' | 'light' | 'dark';
-    if (theme === 'system') nextTheme = 'light';
-    else if (theme === 'light') nextTheme = 'dark';
-    else nextTheme = 'system';
-
+    const nextTheme: 'light' | 'dark' = theme === 'dark' ? 'light' : 'dark';
     setTheme(nextTheme);
     localStorage.setItem('fsm_theme', nextTheme);
-    if (nextTheme === 'system') {
-      document.documentElement.removeAttribute('data-theme');
+    if (nextTheme === 'light') {
+      document.documentElement.setAttribute('data-theme', 'light');
     } else {
-      document.documentElement.setAttribute('data-theme', nextTheme);
+      document.documentElement.removeAttribute('data-theme');
     }
   };
 
@@ -99,6 +94,8 @@ export default function Navbar({ session: initialSession, initialTicketQueryActi
   }, [pathname]);
 
   const role = currentSession?.user?.role;
+  const rawName = currentSession?.user?.name || '';
+  const cleanName = rawName.replace(/undefined/g, '').trim() || currentSession?.user?.email || 'Kulüp Üyesi';
 
   return (
     <nav className={`navbar ${scrolled ? 'scrolled' : ''}`}>
@@ -168,13 +165,11 @@ export default function Navbar({ session: initialSession, initialTicketQueryActi
           {/* Tema Değiştirici Buton */}
           <button 
             onClick={toggleTheme}
-            title={`Tema: ${theme === 'system' ? 'Otomatik (Sistem)' : theme === 'light' ? 'Sabah / Matine (Açık)' : 'Gece / Sahne (Koyu)'}`}
+            title={`Tema: ${theme === 'light' ? 'Matine Modu (Açık)' : 'Sahne Modu (Koyu)'}`}
             className="w-9 h-9 rounded-lg border border-[var(--border-subtle)] bg-[var(--bg-surface)] text-[var(--text-muted)] hover:text-[var(--primary-gold)] hover:border-[var(--primary-gold-border)] flex items-center justify-center text-lg transition-all"
             aria-label="Tema Seçimi"
           >
-            {theme === 'system' ? (
-              <ion-icon name="contrast-outline"></ion-icon>
-            ) : theme === 'light' ? (
+            {theme === 'light' ? (
               <ion-icon name="sunny-outline" style={{ color: '#d97706' }}></ion-icon>
             ) : (
               <ion-icon name="moon-outline" style={{ color: 'var(--primary-gold)' }}></ion-icon>
@@ -185,7 +180,7 @@ export default function Navbar({ session: initialSession, initialTicketQueryActi
           <div className="desktop-actions">
             {currentSession ? (
               <>
-                {currentSession.user.isAdminMode && (
+                {currentSession.user?.isAdminMode && (
                   <span className="admin-badge">
                     <ion-icon name="shield-checkmark-outline"></ion-icon> Yönetici
                   </span>
@@ -282,8 +277,8 @@ export default function Navbar({ session: initialSession, initialTicketQueryActi
               {currentSession ? (
                 <>
                   <div className="mobile-user-info">
-                    <span className="user-name">{currentSession.user.name}</span>
-                    <span className="user-role">{currentSession.user.role}</span>
+                    <span className="user-name">{cleanName}</span>
+                    <span className="user-role">{currentSession.user?.role}</span>
                   </div>
                   <Link href="/profile" className="btn btn-outline" onClick={() => setIsMenuOpen(false)}>Profilim</Link>
                   <button onClick={() => signOut({ callbackUrl: '/' })} className="btn btn-logout">Çıkış Yap</button>

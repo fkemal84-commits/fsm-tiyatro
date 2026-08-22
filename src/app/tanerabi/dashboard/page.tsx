@@ -63,7 +63,7 @@ export default async function Dashboard({ searchParams }: { searchParams: Promis
       <div style={{ minHeight: '100vh', background: 'var(--bg-dark)', display: 'flex', flexDirection: 'column' }}>
 
         {/* Üst Bar */}
-        <div style={{ paddingTop: '5.5rem', paddingBottom: '1.25rem', paddingLeft: '5%', paddingRight: '5%', borderBottom: '1px solid var(--border-subtle)', background: 'var(--bg-surface)' }}>
+        <div style={{ paddingTop: '7.5rem', paddingBottom: '1.5rem', paddingLeft: '5%', paddingRight: '5%', borderBottom: '1px solid var(--border-subtle)', background: 'var(--bg-surface)' }}>
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', maxWidth: '1380px', margin: '0 auto' }}>
             <div>
               <span style={{ fontSize: '0.7rem', color: 'var(--primary-gold)', fontWeight: 'bold', letterSpacing: '0.15em', textTransform: 'uppercase', display: 'block', marginBottom: '0.25rem' }}>
@@ -90,7 +90,7 @@ export default async function Dashboard({ searchParams }: { searchParams: Promis
 
           {/* Sol Sidebar */}
           <aside style={{ width: '220px', flexShrink: 0 }}>
-            <nav style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem', position: 'sticky', top: '6.5rem' }}>
+            <nav style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem', position: 'sticky', top: '8rem' }}>
               {tabs.map(tab => (
                 <Link
                   key={tab.key}

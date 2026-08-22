@@ -6,15 +6,15 @@ export default function Footer({ showTicketQuery = true }: { showTicketQuery?: b
     <footer className="border-t border-[var(--border-subtle)] bg-[var(--bg-surface)] mt-24 text-[var(--text-muted)] text-sm">
       <div className="max-w-[1380px] mx-auto px-[5%] py-16">
         <div className="grid grid-cols-1 md:grid-cols-4 gap-10 mb-12">
-          
+
           {/* Kulüp Künyesi */}
           <div className="md:col-span-2 space-y-4">
             <div className="flex items-center gap-3">
               <div className="relative w-10 h-10 overflow-hidden rounded-lg border border-[var(--border-medium)]">
-                <Image 
-                  src="/brand-logo-v1.jpg" 
-                  alt="FSM Tiyatro Logo" 
-                  fill 
+                <Image
+                  src="/brand-logo-v1.jpg"
+                  alt="FSM Tiyatro Logo"
+                  fill
                   className="object-cover"
                 />
               </div>

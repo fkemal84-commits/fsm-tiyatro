@@ -369,6 +369,10 @@ body::before {
 }
 
 /* Mobil Menü */
+.mobile-drawer {
+  display: none !important;
+}
+
 .mobile-toggle {
   display: none;
   background: transparent;
@@ -384,12 +388,13 @@ body::before {
   }
 
   .mobile-toggle {
-    display: flex;
+    display: flex !important;
     align-items: center;
     justify-content: center;
   }
 
   .mobile-drawer {
+    display: block !important;
     position: fixed;
     top: 0;
     right: -100%;
