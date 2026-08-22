@@ -62,14 +62,13 @@ export const metadata: Metadata = {
   manifest: "/manifest.json",
   icons: {
     icon: [
-      { url: "/favicon.ico" },
-      { url: "/icon-32x32.png", sizes: "32x32", type: "image/png" },
-      { url: "/icon-192x192.png", sizes: "192x192", type: "image/png" },
-      { url: "/icon-512x512.png", sizes: "512x512", type: "image/png" },
+      { url: "/favicon.ico?v=fsm_v3" },
+      { url: "/favicon-32x32.png?v=fsm_v3", sizes: "32x32", type: "image/png" },
+      { url: "/brand-logo.png?v=fsm_v3", sizes: "512x512", type: "image/png" },
     ],
-    shortcut: "/favicon.ico",
+    shortcut: "/brand-logo.png?v=fsm_v3",
     apple: [
-      { url: "/apple-touch-icon.png", sizes: "180x180", type: "image/png" }
+      { url: "/apple-touch-icon.png?v=fsm_v3", sizes: "180x180", type: "image/png" }
     ],
   },
   appleWebApp: {
@@ -114,11 +113,12 @@ export default async function RootLayout({
   return (
     <html lang="tr" className={`${outfit.variable} ${playfair.variable} ${cormorant.variable}`}>
       <head>
-        <link rel="icon" type="image/x-icon" href="/favicon.ico" />
-        <link rel="icon" type="image/png" sizes="32x32" href="/icon-32x32.png" />
-        <link rel="icon" type="image/png" sizes="192x192" href="/icon-192x192.png" />
-        <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
-        <link rel="apple-touch-icon-precomposed" sizes="180x180" href="/apple-touch-icon.png" />
+        <link rel="icon" type="image/x-icon" href="/favicon.ico?v=fsm_v3" />
+        <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png?v=fsm_v3" />
+        <link rel="icon" type="image/png" sizes="512x512" href="/brand-logo.png?v=fsm_v3" />
+        <link rel="shortcut icon" type="image/png" href="/brand-logo.png?v=fsm_v3" />
+        <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png?v=fsm_v3" />
+        <link rel="apple-touch-icon-precomposed" sizes="180x180" href="/apple-touch-icon.png?v=fsm_v3" />
         <script type="module" src="https://unpkg.com/ionicons@7.1.0/dist/ionicons/ionicons.esm.js" async></script>
         <script noModule={true} src="https://unpkg.com/ionicons@7.1.0/dist/ionicons/ionicons.js" async></script>
         <script dangerouslySetInnerHTML={{
