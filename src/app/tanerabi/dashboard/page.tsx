@@ -330,7 +330,7 @@ export default async function Dashboard({ searchParams }: { searchParams: Promis
                           {p.year && <span style={{ color: 'var(--text-dim)', fontSize: '0.75rem', marginLeft: '0.75rem' }}>{p.year}</span>}
                         </div>
                         <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center', flexShrink: 0 }}>
-                          <Link href={`/plays/${p.id}`} target="_blank" style={{ padding: '0.35rem 0.75rem', border: '1px solid var(--border-medium)', borderRadius: '6px', fontSize: '0.75rem', color: 'var(--text-muted)', textDecoration: 'none' }}>Görüntüle</Link>
+                          <Link href={`/oyunlar/${p.id}`} target="_blank" style={{ padding: '0.35rem 0.75rem', border: '1px solid var(--border-medium)', borderRadius: '6px', fontSize: '0.75rem', color: 'var(--text-muted)', textDecoration: 'none' }}>Görüntüle</Link>
                           <DeleteButton action={deletePlay as any} id={p.id} name={p.title} confirmMessage="Bu oyunu silmek istediğine emin misin?" idFieldName="playId" />
                         </div>
                       </div>
@@ -341,11 +341,11 @@ export default async function Dashboard({ searchParams }: { searchParams: Promis
               </div>
             )}
 
-            {/* --- BLOG --- */}
+            {/* --- KULİS & YAZILAR --- */}
             {activeTab === 'blog' && (
               <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
                 <div style={{ background: 'var(--bg-surface)', border: '1px solid var(--border-subtle)', borderRadius: '12px', padding: '1.5rem' }}>
-                  <h2 style={{ color: 'var(--text-main)', marginBottom: '1.25rem', fontSize: '1.1rem', fontWeight: 'bold' }}>Yeni Blog Yazısı Ekle</h2>
+                  <h2 style={{ color: 'var(--text-main)', marginBottom: '1.25rem', fontSize: '1.1rem', fontWeight: 'bold' }}>Yeni Kulis / Blog Yazısı Ekle</h2>
                   <form action={addPost as any} encType="multipart/form-data" style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
                     <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: '1rem' }}>
                       <div>
@@ -354,8 +354,7 @@ export default async function Dashboard({ searchParams }: { searchParams: Promis
                       </div>
                       <div>
                         <label style={labelStyle}>Kategori</label>
-                        <select name="category" style={inputStyle} defaultValue="Blog">
-                          <option value="Blog">Blog</option>
+                        <select name="category" style={inputStyle} defaultValue="Kulis">
                           <option value="Kulis">Kulis</option>
                           <option value="Makale">Makale</option>
                           <option value="Haber">Haber</option>
@@ -399,7 +398,7 @@ export default async function Dashboard({ searchParams }: { searchParams: Promis
                           {p.createdAt && <span style={{ color: 'var(--text-dim)', fontSize: '0.75rem', marginLeft: '0.75rem' }}>{new Date(p.createdAt).toLocaleDateString('tr-TR')}</span>}
                         </div>
                         <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center', flexShrink: 0 }}>
-                          <Link href={`/blog/${p.id}`} target="_blank" style={{ padding: '0.35rem 0.75rem', border: '1px solid var(--border-medium)', borderRadius: '6px', fontSize: '0.75rem', color: 'var(--text-muted)', textDecoration: 'none' }}>Görüntüle</Link>
+                          <Link href={`/kulis/${p.id}`} target="_blank" style={{ padding: '0.35rem 0.75rem', border: '1px solid var(--border-medium)', borderRadius: '6px', fontSize: '0.75rem', color: 'var(--text-muted)', textDecoration: 'none' }}>Görüntüle</Link>
                           <DeleteButton action={deletePost as any} id={p.id} name={p.title} confirmMessage="Bu yazıyı silmek istediğine emin misin?" idFieldName="postId" />
                         </div>
                       </div>
