@@ -95,51 +95,51 @@ export default function BiletimiBulPage() {
   }
 
   return (
-    <main className="min-h-screen pt-36 pb-24 bg-[var(--bg-dark)]">
-      <div className="max-w-5xl mx-auto px-6">
+    <main className="min-h-screen pt-24 pb-16 sm:pt-36 sm:pb-24 bg-[var(--bg-dark)]">
+      <div className="max-w-5xl mx-auto px-4 sm:px-6">
         
         {/* Başlık Alanı */}
-        <div className="text-center mb-12 max-w-xl mx-auto">
-          <span className="editorial-tag text-[var(--primary-gold)] block mb-2">DİJİTAL GİŞE & KONTROL</span>
-          <h1 className="serif-font text-4xl sm:text-5xl text-[var(--text-main)] mb-3">Biletimi Sorgula</h1>
-          <p className="text-[var(--text-muted)] text-sm leading-relaxed">
+        <div className="text-center mb-8 sm:mb-12 max-w-xl mx-auto">
+          <span className="editorial-tag text-[var(--primary-gold)] block mb-2 text-[10px]">DİJİTAL GİŞE & KONTROL</span>
+          <h1 className="serif-font text-2xl sm:text-4xl md:text-5xl text-[var(--text-main)] mb-3 break-words">Biletimi Sorgula</h1>
+          <p className="text-[var(--text-muted)] text-xs sm:text-sm leading-relaxed">
             Ad ve soyadınızı girerek biletinize ait QR kodu ve koltuk bilginizi görüntüleyebilirsiniz. Lütfen salona girişte bu ekranı görevliye gösterin.
           </p>
         </div>
 
         {tickets.length === 0 ? (
-          <div className="space-y-16">
+          <div className="space-y-10 sm:space-y-16">
             {/* Sorgu Formu */}
-            <div className="editorial-card p-8 max-w-lg mx-auto bg-[var(--bg-surface)]">
-              <form onSubmit={handleSubmit} className="space-y-6">
+            <div className="editorial-card p-5 sm:p-8 max-w-lg mx-auto bg-[var(--bg-surface)]">
+              <form onSubmit={handleSubmit} className="space-y-5 sm:space-y-6">
                 {error && (
-                  <div className="bg-rose-500/10 border border-rose-500/30 text-rose-500 p-4 rounded text-xs font-medium">
+                  <div className="bg-rose-500/10 border border-rose-500/30 text-rose-500 p-3.5 rounded text-xs font-medium">
                     {error}
                   </div>
                 )}
                 
-                <div className="space-y-4">
+                <div className="space-y-3 sm:space-y-4">
                   <div>
-                    <label className="block text-[11px] font-bold text-[var(--text-dim)] uppercase tracking-wider mb-2">
+                    <label className="block text-[10px] sm:text-[11px] font-bold text-[var(--text-dim)] uppercase tracking-wider mb-1.5">
                       ADINIZ
                     </label>
                     <input 
                       name="name" 
                       required 
                       type="text" 
-                      className="w-full bg-[var(--input-bg)] border border-[var(--border-medium)] rounded-lg px-4 py-3.5 text-[var(--text-main)] focus:outline-none focus:border-[var(--primary-gold)] transition-colors text-sm placeholder:text-[var(--text-dim)]"
+                      className="w-full bg-[var(--input-bg)] border border-[var(--border-medium)] rounded-lg px-3.5 py-3 text-[var(--text-main)] focus:outline-none focus:border-[var(--primary-gold)] transition-colors text-sm placeholder:text-[var(--text-dim)]"
                       placeholder="Örn: Ahmet"
                     />
                   </div>
                   <div>
-                    <label className="block text-[11px] font-bold text-[var(--text-dim)] uppercase tracking-wider mb-2">
+                    <label className="block text-[10px] sm:text-[11px] font-bold text-[var(--text-dim)] uppercase tracking-wider mb-1.5">
                       SOYADINIZ
                     </label>
                     <input 
                       name="surname" 
                       required 
                       type="text" 
-                      className="w-full bg-[var(--input-bg)] border border-[var(--border-medium)] rounded-lg px-4 py-3.5 text-[var(--text-main)] focus:outline-none focus:border-[var(--primary-gold)] transition-colors text-sm placeholder:text-[var(--text-dim)]"
+                      className="w-full bg-[var(--input-bg)] border border-[var(--border-medium)] rounded-lg px-3.5 py-3 text-[var(--text-main)] focus:outline-none focus:border-[var(--primary-gold)] transition-colors text-sm placeholder:text-[var(--text-dim)]"
                       placeholder="Örn: Yılmaz"
                     />
                   </div>
@@ -148,11 +148,11 @@ export default function BiletimiBulPage() {
                 <button 
                   type="submit" 
                   disabled={loading}
-                  className="w-full btn btn-primary py-4 text-xs font-bold tracking-widest uppercase flex items-center justify-center gap-2"
+                  className="w-full btn btn-primary py-3.5 text-xs font-bold tracking-widest uppercase flex items-center justify-center gap-2 cursor-pointer"
                 >
                   {loading ? 'Sorgulanıyor...' : (
                     <>
-                      <ion-icon name="qr-code-outline" style={{ fontSize: '1.2rem' }}></ion-icon>
+                      <ion-icon name="qr-code-outline" style={{ fontSize: '1.1rem' }}></ion-icon>
                       BİLETİMİ GÖSTER
                     </>
                   )}
@@ -161,10 +161,10 @@ export default function BiletimiBulPage() {
             </div>
             
             {/* Salon Yerleşim Haritası */}
-            <div className="editorial-card p-6 md:p-8 bg-[var(--bg-surface)]">
+            <div className="editorial-card p-4 sm:p-6 md:p-8 bg-[var(--bg-surface)] overflow-hidden">
               <div className="text-center mb-6">
                 <span className="editorial-tag text-[var(--text-dim)] block text-[10px] mb-1">SALON DÜZENİ</span>
-                <h2 className="serif-font text-2xl text-[var(--text-main)]">Koltuk Yerleşim Durumu</h2>
+                <h2 className="serif-font text-xl sm:text-2xl text-[var(--text-main)]">Koltuk Yerleşim Durumu</h2>
               </div>
               <SeatMap occupiedSeats={occupiedSeats} readonly />
             </div>

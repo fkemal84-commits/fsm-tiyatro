@@ -24,7 +24,7 @@ export default async function KulisPage() {
   const baseUrl = process.env.NEXTAUTH_URL || 'https://fsmtiyatro.com';
 
   return (
-    <div className="min-h-screen bg-[var(--bg-dark)] pt-32 pb-24">
+    <div className="min-h-screen bg-[var(--bg-dark)] pt-24 pb-16 sm:pt-32 sm:pb-24">
       <BreadcrumbsJsonLd 
         items={[
           { name: 'Ana Sayfa', url: baseUrl },
@@ -33,19 +33,19 @@ export default async function KulisPage() {
       />
 
       {/* Başlık */}
-      <div className="max-w-[1380px] mx-auto px-[5%] mb-12">
-        <span className="editorial-tag text-[var(--primary-gold)] block mb-2">SAHNE ARKASI & METİNLER</span>
-        <h1 className="serif-font text-4xl sm:text-5xl md:text-6xl text-[var(--text-main)] mb-3">Kulis</h1>
-        <p className="text-sm sm:text-base text-[var(--text-muted)] font-light max-w-xl">
+      <div className="max-w-[1380px] mx-auto px-[5%] mb-8 sm:mb-12">
+        <span className="editorial-tag text-[var(--primary-gold)] block mb-2 text-[10px]">SAHNE ARKASI & METİNLER</span>
+        <h1 className="serif-font text-3xl sm:text-5xl md:text-6xl text-[var(--text-main)] mb-3 break-words">Kulis</h1>
+        <p className="text-xs sm:text-sm md:text-base text-[var(--text-muted)] font-light max-w-xl">
           Prova günlükleri, oyuncu ve yönetmen notları, tiyatro incelemeleri.
         </p>
       </div>
 
       <div className="max-w-[1380px] mx-auto px-[5%]">
         {posts.length > 0 ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 md:gap-8">
             {posts.map((post) => (
-              <article key={post.id} className="editorial-card p-6 bg-[var(--bg-surface)] flex flex-col justify-between group">
+              <article key={post.id} className="editorial-card p-5 sm:p-6 bg-[var(--bg-surface)] flex flex-col justify-between group">
                 <div>
                   {post.imageUrl && (
                     <div className="relative w-full aspect-[16/9] rounded-lg overflow-hidden mb-4 border border-[var(--border-subtle)] bg-[var(--bg-surface-elevated)]">

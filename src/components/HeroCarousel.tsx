@@ -67,75 +67,75 @@ export default function HeroCarousel({ slides, showTicketQuery = true }: HeroCar
       </div>
 
       {/* İçerik */}
-      <div className="relative z-10 pt-40 pb-28 px-[5%] max-w-[1380px] mx-auto min-h-[92vh] flex flex-col justify-center">
+      <div className="relative z-10 pt-28 pb-14 sm:pt-36 sm:pb-24 px-[5%] max-w-[1380px] mx-auto min-h-[80vh] sm:min-h-[88vh] flex flex-col justify-center">
         <div className="max-w-3xl animate-fadeIn" key={slide.id}>
           
           {/* Etiket */}
-          <div className="inline-flex items-center gap-2.5 mb-5 px-3.5 py-1.5 rounded-full border border-[var(--primary-gold-border)] bg-[var(--primary-gold-dim)] text-[var(--primary-gold)] text-[11px] font-bold tracking-[0.18em] uppercase">
+          <div className="inline-flex items-center gap-2 mb-4 px-3 py-1 rounded-full border border-[var(--primary-gold-border)] bg-[var(--primary-gold-dim)] text-[var(--primary-gold)] text-[10px] sm:text-[11px] font-bold tracking-[0.18em] uppercase">
             <span className="w-1.5 h-1.5 rounded-full bg-[var(--primary-gold)] animate-pulse" />
             {slide.tag}
           </div>
 
           {/* Başlık */}
-          <h1 className="serif-font text-5xl sm:text-6xl md:text-7xl text-[var(--text-main)] leading-[1.05] mb-5">
+          <h1 className="serif-font text-3xl sm:text-5xl md:text-6xl lg:text-7xl text-[var(--text-main)] leading-[1.1] mb-4 break-words">
             {slide.title}
           </h1>
 
           {/* Alt başlık */}
           {slide.subtitle && (
-            <p className="text-lg text-[var(--text-muted)] max-w-xl font-light leading-relaxed mb-8">
+            <p className="text-sm sm:text-base md:text-lg text-[var(--text-muted)] max-w-xl font-light leading-relaxed mb-6 sm:mb-8">
               {slide.subtitle}
             </p>
           )}
 
           {/* CTA */}
-          <div className="flex flex-wrap items-center gap-4">
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 sm:gap-4">
             <Link
               href={slide.href}
-              className="btn btn-primary px-7 py-3.5 text-sm font-bold tracking-wider"
+              className="btn btn-primary px-6 py-3 text-xs sm:text-sm font-bold tracking-wider text-center"
             >
               {slide.type === 'post' ? 'Yazıyı Oku' : slide.type === 'play' ? 'Oyun Detayları' : 'Daha Fazla'}
             </Link>
             {showTicketQuery ? (
-              <Link href="/biletimi-bul" className="btn btn-outline px-7 py-3.5 text-sm tracking-wider">
+              <Link href="/biletimi-bul" className="btn btn-outline px-6 py-3 text-xs sm:text-sm tracking-wider text-center">
                 Biletimi Sorgula
               </Link>
             ) : (
-              <Link href="/plays" className="btn btn-outline px-7 py-3.5 text-sm tracking-wider">
-                Repertuvarı İncele
+              <Link href="/oyunlar" className="btn btn-outline px-6 py-3 text-xs sm:text-sm tracking-wider text-center">
+                Oyunları İncele
               </Link>
             )}
           </div>
         </div>
 
         {/* Alt bar: meta bilgileri */}
-        <div className="mt-16 pt-6 border-t border-[var(--border-subtle)] flex flex-wrap items-center justify-between gap-4">
-          <div className="flex flex-wrap gap-6 text-left">
+        <div className="mt-8 sm:mt-12 pt-4 sm:pt-6 border-t border-[var(--border-subtle)] flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+          <div className="flex flex-wrap gap-4 sm:gap-6 text-left text-xs">
             <div>
-              <span className="block text-[10px] text-[var(--text-dim)] uppercase font-bold tracking-widest">TOPLULUK</span>
-              <span className="text-sm font-semibold text-[var(--text-main)]">FSM Sinema ve Tiyatro</span>
+              <span className="block text-[9px] sm:text-[10px] text-[var(--text-dim)] uppercase font-bold tracking-widest">TOPLULUK</span>
+              <span className="text-xs sm:text-sm font-semibold text-[var(--text-main)]">FSM Tiyatro Kulübü</span>
             </div>
             <div>
-              <span className="block text-[10px] text-[var(--text-dim)] uppercase font-bold tracking-widest">YERLEŞKE</span>
-              <span className="text-sm font-semibold text-[var(--text-main)]">Haliç Yerleşkesi & Sahne</span>
+              <span className="block text-[9px] sm:text-[10px] text-[var(--text-dim)] uppercase font-bold tracking-widest">YERLEŞKE</span>
+              <span className="text-xs sm:text-sm font-semibold text-[var(--text-main)]">Haliç Yerleşkesi</span>
             </div>
             {slide.date && (
               <div>
-                <span className="block text-[10px] text-[var(--text-dim)] uppercase font-bold tracking-widest">TARİH</span>
-                <span className="text-sm font-semibold text-[var(--text-main)]">{slide.date}</span>
+                <span className="block text-[9px] sm:text-[10px] text-[var(--text-dim)] uppercase font-bold tracking-widest">TARİH</span>
+                <span className="text-xs sm:text-sm font-semibold text-[var(--text-main)]">{slide.date}</span>
               </div>
             )}
           </div>
 
           {/* Slayt navigasyonu */}
           {slides.length > 1 && (
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-3 self-end sm:self-auto">
               <button
                 onClick={prev}
-                className="w-9 h-9 rounded-full border border-[var(--border-medium)] flex items-center justify-center text-[var(--text-muted)] hover:border-[var(--primary-gold)] hover:text-[var(--primary-gold)] transition-all"
+                className="w-8 h-8 rounded-full border border-[var(--border-medium)] flex items-center justify-center text-[var(--text-muted)] hover:border-[var(--primary-gold)] hover:text-[var(--primary-gold)] transition-all cursor-pointer"
                 aria-label="Önceki slayt"
               >
-                <ion-icon name="chevron-back-outline" style={{ fontSize: '1rem' }} />
+                <ion-icon name="chevron-back-outline" style={{ fontSize: '0.9rem' }} />
               </button>
 
               <div className="flex gap-1.5">
@@ -143,10 +143,10 @@ export default function HeroCarousel({ slides, showTicketQuery = true }: HeroCar
                   <button
                     key={i}
                     onClick={() => goTo(i)}
-                    className={`rounded-full transition-all duration-300 ${
+                    className={`rounded-full transition-all duration-300 cursor-pointer ${
                       i === current
-                        ? 'w-6 h-2 bg-[var(--primary-gold)]'
-                        : 'w-2 h-2 bg-[var(--border-medium)] hover:bg-[var(--text-dim)]'
+                        ? 'w-5 h-1.5 bg-[var(--primary-gold)]'
+                        : 'w-1.5 h-1.5 bg-[var(--border-medium)] hover:bg-[var(--text-dim)]'
                     }`}
                     aria-label={`Slayt ${i + 1}`}
                   />
@@ -155,13 +155,13 @@ export default function HeroCarousel({ slides, showTicketQuery = true }: HeroCar
 
               <button
                 onClick={next}
-                className="w-9 h-9 rounded-full border border-[var(--border-medium)] flex items-center justify-center text-[var(--text-muted)] hover:border-[var(--primary-gold)] hover:text-[var(--primary-gold)] transition-all"
+                className="w-8 h-8 rounded-full border border-[var(--border-medium)] flex items-center justify-center text-[var(--text-muted)] hover:border-[var(--primary-gold)] hover:text-[var(--primary-gold)] transition-all cursor-pointer"
                 aria-label="Sonraki slayt"
               >
-                <ion-icon name="chevron-forward-outline" style={{ fontSize: '1rem' }} />
+                <ion-icon name="chevron-forward-outline" style={{ fontSize: '0.9rem' }} />
               </button>
 
-              <span className="text-[11px] text-[var(--text-dim)] font-mono ml-1">
+              <span className="text-[10px] text-[var(--text-dim)] font-mono ml-1">
                 {current + 1}/{slides.length}
               </span>
             </div>

@@ -20,7 +20,7 @@ export default function KatilPage() {
   ];
 
   return (
-    <div className="min-h-screen bg-[var(--bg-dark)] pt-32 pb-24">
+    <div className="min-h-screen bg-[var(--bg-dark)] pt-24 pb-16 sm:pt-32 sm:pb-24">
       <BreadcrumbsJsonLd 
         items={[
           { name: 'Ana Sayfa', url: baseUrl },
@@ -28,26 +28,26 @@ export default function KatilPage() {
         ]} 
       />
 
-      <div className="max-w-3xl mx-auto px-6 space-y-12">
+      <div className="max-w-3xl mx-auto px-4 sm:px-6 space-y-10 sm:space-y-12">
         
         {/* Başlık ve Ana Mesaj */}
         <div>
-          <span className="editorial-tag text-[var(--primary-gold)] block mb-2">SEÇMELER & KATILIM</span>
-          <h1 className="serif-font text-4xl sm:text-5xl text-[var(--text-main)] mb-4 leading-tight">
+          <span className="editorial-tag text-[var(--primary-gold)] block mb-2 text-[10px]">SEÇMELER & KATILIM</span>
+          <h1 className="serif-font text-2xl sm:text-4xl md:text-5xl text-[var(--text-main)] mb-3 sm:mb-4 leading-tight break-words">
             Burada Sadece Oyuncular Yok.
           </h1>
-          <p className="text-base text-[var(--text-muted)] font-light leading-relaxed">
+          <p className="text-sm sm:text-base text-[var(--text-muted)] font-light leading-relaxed">
             FSM Tiyatro'da bir oyunu sıfırdan sahneye taşımak için rejiye, ışığa, sese, dekora, afişe ve sahne arkası koordinasyonuna ihtiyaç duyarız. Önceden tiyatro deneyiminizin olması gerekmez; merakınız ve öğrenme isteğiniz yeterlidir.
           </p>
         </div>
 
         {/* Çalışma Alanları Listesi */}
-        <div className="editorial-card p-8 bg-[var(--bg-surface)]">
-          <h2 className="serif-font text-2xl text-[var(--text-main)] mb-6">Neler Yapıyoruz?</h2>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+        <div className="editorial-card p-5 sm:p-8 bg-[var(--bg-surface)]">
+          <h2 className="serif-font text-xl sm:text-2xl text-[var(--text-main)] mb-4 sm:mb-6">Neler Yapıyoruz?</h2>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
             {areas.map((a, i) => (
               <div key={i} className="space-y-1">
-                <h3 className="font-bold text-sm text-[var(--text-main)] flex items-center gap-2">
+                <h3 className="font-bold text-xs sm:text-sm text-[var(--text-main)] flex items-center gap-2">
                   <span className="w-1.5 h-1.5 rounded-full bg-[var(--primary-gold)]"></span>
                   {a.title}
                 </h3>
@@ -60,8 +60,8 @@ export default function KatilPage() {
         </div>
 
         {/* Nasıl Katılırım? */}
-        <div className="editorial-card p-8 bg-[var(--bg-surface)] space-y-6">
-          <h2 className="serif-font text-2xl text-[var(--text-main)]">Nasıl Katılırım?</h2>
+        <div className="editorial-card p-5 sm:p-8 bg-[var(--bg-surface)] space-y-5 sm:space-y-6">
+          <h2 className="serif-font text-xl sm:text-2xl text-[var(--text-main)]">Nasıl Katılırım?</h2>
           
           <div className="space-y-3 text-xs text-[var(--text-muted)] leading-relaxed font-light">
             <p>
@@ -75,7 +75,7 @@ export default function KatilPage() {
             </p>
           </div>
 
-          <div className="pt-6 border-t border-[var(--border-subtle)] flex flex-col sm:flex-row items-center justify-between gap-4">
+          <div className="pt-5 sm:pt-6 border-t border-[var(--border-subtle)] flex flex-col sm:flex-row items-center justify-between gap-4">
             <span className="text-xs text-[var(--text-dim)]">Sorularınız için: tiyatro@fsm.edu.tr</span>
             <Link href="/register" className="btn btn-primary text-xs font-bold px-8 py-3 w-full sm:w-auto text-center">
               Öğrenci Kaydı Oluştur

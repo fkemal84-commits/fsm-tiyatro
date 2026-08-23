@@ -26,7 +26,7 @@ export default async function OyunlarPage() {
   const baseUrl = process.env.NEXTAUTH_URL || 'https://fsmtiyatro.com';
 
   return (
-    <div className="min-h-screen bg-[var(--bg-dark)] pt-32 pb-24">
+    <div className="min-h-screen bg-[var(--bg-dark)] pt-24 pb-16 sm:pt-32 sm:pb-24">
       <BreadcrumbsJsonLd 
         items={[
           { name: 'Ana Sayfa', url: baseUrl },
@@ -35,15 +35,15 @@ export default async function OyunlarPage() {
       />
 
       {/* Başlık */}
-      <div className="max-w-[1380px] mx-auto px-[5%] mb-12">
-        <span className="editorial-tag text-[var(--primary-gold)] block mb-2">FSM TİYATRO</span>
-        <h1 className="serif-font text-4xl sm:text-5xl md:text-6xl text-[var(--text-main)] mb-3">Oyunlarımız</h1>
-        <p className="text-sm sm:text-base text-[var(--text-muted)] font-light max-w-xl">
+      <div className="max-w-[1380px] mx-auto px-[5%] mb-8 sm:mb-12">
+        <span className="editorial-tag text-[var(--primary-gold)] block mb-2 text-[10px]">FSM TİYATRO</span>
+        <h1 className="serif-font text-3xl sm:text-5xl md:text-6xl text-[var(--text-main)] mb-3 break-words">Oyunlarımız</h1>
+        <p className="text-xs sm:text-sm md:text-base text-[var(--text-muted)] font-light max-w-xl">
           Sahnede hayat bulan güncel oyunlarımız ve kulübümüzün geçmiş prodüksiyonları.
         </p>
       </div>
 
-      <div className="max-w-[1380px] mx-auto px-[5%] space-y-16">
+      <div className="max-w-[1380px] mx-auto px-[5%] space-y-12 sm:space-y-16">
         
         {/* 1. GÜNCEL OYUNLAR */}
         <div>

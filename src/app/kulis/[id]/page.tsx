@@ -82,7 +82,7 @@ export default async function KulisDetailPage({ params }: { params: Promise<{ id
   const isAcademic = post.academicMeta?.isAcademic || post.category === 'Akademik Bildiri';
 
   return (
-    <div className="min-h-screen bg-[var(--bg-dark)] pt-32 pb-24">
+    <div className="min-h-screen bg-[var(--bg-dark)] pt-24 pb-16 sm:pt-32 sm:pb-24">
       {/* Yapısal Veri (JSON-LD) */}
       <ArticleJsonLd post={post} />
       <BreadcrumbsJsonLd 
@@ -93,21 +93,21 @@ export default async function KulisDetailPage({ params }: { params: Promise<{ id
         ]} 
       />
 
-      <div className="max-w-3xl mx-auto px-6">
+      <div className="max-w-3xl mx-auto px-4 sm:px-6">
         
         {/* Üst Geri Butonu */}
         <Link 
           href="/kulis" 
-          className="text-xs font-bold text-[var(--text-muted)] hover:text-[var(--primary-gold)] uppercase tracking-wider inline-flex items-center gap-1.5 mb-8 transition-colors"
+          className="text-xs font-bold text-[var(--text-muted)] hover:text-[var(--primary-gold)] uppercase tracking-wider inline-flex items-center gap-1.5 mb-6 sm:mb-8 transition-colors"
         >
           <ion-icon name="arrow-back-outline"></ion-icon> Kulis Yazılarına Dön
         </Link>
 
         {/* Yazı Kartı */}
-        <article className="editorial-card p-8 md:p-12 bg-[var(--bg-surface)]">
+        <article className="editorial-card p-5 sm:p-8 md:p-12 bg-[var(--bg-surface)]">
           
-          <div className="flex items-center justify-between text-xs mb-4 pb-4 border-b border-[var(--border-subtle)] text-[var(--text-dim)]">
-            <span className="text-[var(--primary-gold)] font-bold uppercase tracking-wider">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between text-xs mb-4 pb-4 border-b border-[var(--border-subtle)] text-[var(--text-dim)] gap-1">
+            <span className="text-[var(--primary-gold)] font-bold uppercase tracking-wider text-[10px]">
               {post.category || 'Kulis'}
             </span>
             <span>
@@ -115,7 +115,7 @@ export default async function KulisDetailPage({ params }: { params: Promise<{ id
             </span>
           </div>
 
-          <h1 className="serif-font text-3xl sm:text-4xl text-[var(--text-main)] mb-6 leading-tight">
+          <h1 className="serif-font text-2xl sm:text-3xl md:text-4xl text-[var(--text-main)] mb-6 leading-tight break-words">
             {post.title}
           </h1>
 

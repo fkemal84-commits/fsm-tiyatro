@@ -51,7 +51,7 @@ export default async function OyunDetailPage({ params }: { params: Promise<{ id:
   const videoId = play.videoUrl ? getYoutubeId(play.videoUrl) : null;
 
   return (
-    <div className="min-h-screen bg-[var(--bg-dark)] pt-32 pb-24">
+    <div className="min-h-screen bg-[var(--bg-dark)] pt-24 pb-16 sm:pt-32 sm:pb-24">
       {/* Yapısal Veri (JSON-LD) */}
       <PlayJsonLd play={play} />
       <BreadcrumbsJsonLd 
@@ -62,22 +62,22 @@ export default async function OyunDetailPage({ params }: { params: Promise<{ id:
         ]} 
       />
 
-      <div className="max-w-5xl mx-auto px-6">
+      <div className="max-w-5xl mx-auto px-4 sm:px-6">
         
         {/* Üst Geri Butonu */}
         <Link 
           href="/oyunlar" 
-          className="text-xs font-bold text-[var(--text-muted)] hover:text-[var(--primary-gold)] uppercase tracking-wider inline-flex items-center gap-1.5 mb-8 transition-colors"
+          className="text-xs font-bold text-[var(--text-muted)] hover:text-[var(--primary-gold)] uppercase tracking-wider inline-flex items-center gap-1.5 mb-6 sm:mb-8 transition-colors"
         >
           <ion-icon name="arrow-back-outline"></ion-icon> Tüm Oyunlar
         </Link>
 
         {/* Ana Oyun Bloğu */}
-        <div className="grid grid-cols-1 md:grid-cols-12 gap-10 mb-12">
+        <div className="grid grid-cols-1 md:grid-cols-12 gap-6 sm:gap-10 mb-10 sm:mb-12">
           
           {/* Sol: Afiş */}
           <div className="md:col-span-5">
-            <div className="editorial-card p-3 bg-[var(--bg-surface)]">
+            <div className="editorial-card p-2.5 sm:p-3 bg-[var(--bg-surface)] max-w-sm mx-auto md:max-w-none">
               <div className="relative w-full aspect-[3/4] rounded-lg overflow-hidden border border-[var(--border-subtle)] bg-[var(--bg-surface-elevated)]">
                 <Image
                   src={play.posterUrl || play.imageUrl || '/default-cover.svg'}
@@ -94,23 +94,23 @@ export default async function OyunDetailPage({ params }: { params: Promise<{ id:
           {/* Sağ: Bilgiler & Künye */}
           <div className="md:col-span-7 flex flex-col justify-between">
             <div>
-              <div className="flex items-center gap-2 mb-2">
-                <span className="text-[11px] font-bold text-[var(--primary-gold)] bg-[var(--primary-gold-dim)] px-2.5 py-0.5 rounded border border-[var(--primary-gold-border)] font-mono">
+              <div className="flex items-center gap-2 mb-2 flex-wrap">
+                <span className="text-[10px] sm:text-[11px] font-bold text-[var(--primary-gold)] bg-[var(--primary-gold-dim)] px-2.5 py-0.5 rounded border border-[var(--primary-gold-border)] font-mono">
                   {play.season || play.year || 'FSM Tiyatro'}
                 </span>
                 {play.genre && (
-                  <span className="text-[11px] text-[var(--text-dim)] font-medium">
+                  <span className="text-[10px] sm:text-[11px] text-[var(--text-dim)] font-medium">
                     &bull; {play.genre}
                   </span>
                 )}
               </div>
 
-              <h1 className="serif-font text-3xl sm:text-4xl md:text-5xl text-[var(--text-main)] mb-4 leading-tight">
+              <h1 className="serif-font text-2xl sm:text-4xl md:text-5xl text-[var(--text-main)] mb-3 sm:mb-4 leading-tight">
                 {play.title}
               </h1>
 
               {/* Temel Künye */}
-              <div className="space-y-1.5 text-xs text-[var(--text-muted)] mb-6 pb-6 border-b border-[var(--border-subtle)]">
+              <div className="space-y-1.5 text-xs text-[var(--text-muted)] mb-5 pb-5 border-b border-[var(--border-subtle)]">
                 {play.playwright && (
                   <div><span className="text-[var(--text-dim)]">Yazan:</span> <strong className="text-[var(--text-main)]">{play.playwright}</strong></div>
                 )}
@@ -126,18 +126,18 @@ export default async function OyunDetailPage({ params }: { params: Promise<{ id:
               </div>
 
               {/* Açıklama */}
-              <div className="text-sm leading-relaxed text-[var(--text-muted)] font-light whitespace-pre-wrap mb-6">
+              <div className="text-xs sm:text-sm leading-relaxed text-[var(--text-muted)] font-light whitespace-pre-wrap mb-6">
                 {play.description}
               </div>
             </div>
 
             {/* Bilet Sorgulama Butonu */}
-            <div className="p-4 bg-[var(--bg-surface)] rounded-xl border border-[var(--border-subtle)] flex items-center justify-between gap-4 mt-4">
-              <div>
+            <div className="p-4 bg-[var(--bg-surface)] rounded-xl border border-[var(--border-subtle)] flex flex-col sm:flex-row items-center justify-between gap-3 mt-4">
+              <div className="text-center sm:text-left">
                 <span className="text-xs font-bold text-[var(--text-main)] block">Temsil Bileti Sorgulama</span>
                 <span className="text-[11px] text-[var(--text-dim)]">Koltuk ve biletinizi kontrol edin</span>
               </div>
-              <Link href="/biletimi-bul" className="btn btn-primary !py-2 !px-4 text-xs font-bold flex-shrink-0">
+              <Link href="/biletimi-bul" className="btn btn-primary !py-2.5 !px-5 text-xs font-bold w-full sm:w-auto text-center flex-shrink-0">
                 Biletimi Bul
               </Link>
             </div>
