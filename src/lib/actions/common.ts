@@ -57,13 +57,15 @@ export async function deleteStorageFile(publicUrl: string) {
   }
 }
 
+import sharp from 'sharp';
+
 /**
- * Firebase Storage'a güvenli dosya yükleme
+ * Firebase Storage'a güvenli dosya yükleme (Sharp optimizasyonu ve Data URI Fallback destekli)
  */
-export async function uploadToStorage(file: File, folder: string) {
-  const MAX_SIZE = 10 * 1024 * 1024; // 10 MB
+export async function uploadToStorage(file: File, folder: string): Promise<string> {
+  const MAX_SIZE = 12 * 1024 * 1024; // 12 MB
   if (file.size > MAX_SIZE) {
-    throw new Error("Dosya boyutu çok büyük! Maksimum 10 MB yükleyebilirsiniz.");
+    throw new Error("Dosya boyutu çok büyük! Maksimum 12 MB yükleyebilirsiniz.");
   }
 
   const allowedTypes = ['image/jpeg', 'image/png', 'image/webp', 'image/gif', 'application/pdf'];
@@ -72,27 +74,51 @@ export async function uploadToStorage(file: File, folder: string) {
   }
 
   const bytes = await file.arrayBuffer();
-  const buffer = Buffer.from(bytes);
+  let buffer = Buffer.from(bytes);
+  let mimeType = file.type;
+
+  // Görselleri Sharp ile otomatik optimize et (WebP 80 kalite, max 1920px genişlik)
+  if (file.type.startsWith('image/')) {
+    try {
+      buffer = await sharp(buffer)
+        .resize({ width: 1920, height: 1080, fit: 'inside', withoutEnlargement: true })
+        .webp({ quality: 80 })
+        .toBuffer();
+      mimeType = 'image/webp';
+    } catch (err) {
+      console.warn("[UPLOAD] Sharp optimizasyon uyarısı, orijinal dosya kullanılacak:", err);
+    }
+  }
+
   const uniquePrefix = Date.now() + '-' + Math.round(Math.random() * 1E9);
-  const safeName = file.name.replace(/[^a-zA-Z0-9.-]/g, '');
+  const rawBaseName = file.name.replace(/[^a-zA-Z0-9.-]/g, '').replace(/\.[^/.]+$/, "");
+  const safeName = rawBaseName + (mimeType === 'image/webp' ? '.webp' : '');
   const filename = `${folder}/${uniquePrefix}-${safeName}`;
 
   const bucketName = process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET || 'fsm-tiyatro.firebasestorage.app';
-  const bucket = adminStorage.bucket(bucketName);
-  const fileRef = bucket.file(filename);
 
-  await fileRef.save(buffer, {
-    metadata: {
-      contentType: file.type,
-      cacheControl: 'public, max-age=31536000'
-    }
-  });
-
+  // 1. Firebase Storage'a yüklemeyi dene
   try {
-    await fileRef.makePublic();
-  } catch (e: any) {
-    // Ignore UBLA / ACL restriction if already public
-  }
+    const bucket = adminStorage.bucket(bucketName);
+    const fileRef = bucket.file(filename);
 
-  return `https://firebasestorage.googleapis.com/v0/b/${bucketName}/o/${encodeURIComponent(filename)}?alt=media`;
+    await fileRef.save(buffer, {
+      metadata: {
+        contentType: mimeType,
+        cacheControl: 'public, max-age=31536000'
+      }
+    });
+
+    try {
+      await fileRef.makePublic();
+    } catch {
+      // UBLA aktifse makePublic yoksayılır
+    }
+
+    return `https://firebasestorage.googleapis.com/v0/b/${bucketName}/o/${encodeURIComponent(filename)}?alt=media`;
+  } catch (storageErr: any) {
+    console.warn(`[UPLOAD] Firebase Storage yüklemesi başarısız (${storageErr.message || storageErr}), doğrudan güvenli Base64 Data URI olarak kaydediliyor.`);
+    // Storage kapalı/billing pasifse direkt Data URI olarak döndür
+    return `data:${mimeType};base64,${buffer.toString('base64')}`;
+  }
 }

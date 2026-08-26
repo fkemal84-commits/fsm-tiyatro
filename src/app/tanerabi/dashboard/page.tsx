@@ -1,5 +1,6 @@
 import { addPost, addPlay, changeUserRole, deletePost, deletePlay, approveUser, addEvent, deleteEvent, updateSiteConfig } from '@/app/actions';
 import DeleteButton from '@/components/DeleteButton';
+import SiteConfigForm from '@/components/SiteConfigForm';
 import { adminDb } from '@/lib/firebase-admin';
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
@@ -522,94 +523,8 @@ export default async function Dashboard({ searchParams }: { searchParams: Promis
                   </div>
                 </div>
 
-                <div style={{ background: 'var(--bg-surface)', border: '1px solid var(--border-subtle)', borderRadius: '12px', padding: '1.5rem' }}>
-                  <h2 style={{ color: 'var(--text-main)', marginBottom: '0.5rem', fontSize: '1.1rem', fontWeight: 'bold' }}>Site Yapılandırması</h2>
-                  <p style={{ color: 'var(--text-muted)', fontSize: '0.8rem', marginBottom: '1.5rem' }}>Ana sayfa hero görseli, pinli slaytlar ve iletişim bilgilerini buradan güncelleyin. Değişiklikler anında canlıya yansır.</p>
-
-                  <form action={updateSiteConfig as any} encType="multipart/form-data" style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
-                    <div>
-                      <label style={labelStyle}>Hero Arka Plan Görseli Yükle (PNG, JPG, WEBP, PDF)</label>
-                      <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
-                        <input
-                          type="file"
-                          name="heroImage"
-                          accept="image/jpeg,image/png,image/webp,image/gif,application/pdf"
-                          style={{
-                            padding: '0.75rem',
-                            background: 'var(--input-bg)',
-                            border: '1px dashed var(--primary-gold-border)',
-                            borderRadius: '8px',
-                            color: 'var(--text-muted)',
-                            fontSize: '0.85rem',
-                            cursor: 'pointer'
-                          }}
-                        />
-
-                        {siteConfig?.heroImageUrl && (
-                          <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', padding: '0.75rem 1rem', background: 'var(--bg-surface-elevated)', borderRadius: '8px', border: '1px solid var(--border-subtle)' }}>
-                            <img
-                              src={siteConfig.heroImageUrl}
-                              alt="Mevcut Hero Arka Planı"
-                              style={{ width: '80px', height: '48px', objectFit: 'cover', borderRadius: '6px', border: '1px solid var(--border-medium)' }}
-                            />
-                            <div style={{ flex: 1, minWidth: 0 }}>
-                              <span style={{ fontSize: '0.75rem', color: 'var(--primary-gold)', fontWeight: 'bold', display: 'block' }}>✓ Yüklü Arka Plan Görseli Aktif</span>
-                              <span style={{ fontSize: '0.7rem', color: 'var(--text-dim)', display: 'block', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                                {siteConfig.heroImageUrl}
-                              </span>
-                            </div>
-                          </div>
-                        )}
-                      </div>
-                      <p style={{ fontSize: '0.72rem', color: 'var(--text-dim)', marginTop: '0.4rem' }}>
-                        Bilgisayarınızdan dosya seçtiğinizde görsel doğrudan Firebase Storage'a yüklenip veritabanına işlenecektir. Link kopyalamanıza gerek yoktur.
-                      </p>
-                    </div>
-
-                    <div>
-                      <label style={labelStyle}>İsteğe Bağlı: Harici Görsel / Dosya Linki (URL)</label>
-                      <input
-                        type="url"
-                        name="heroImageUrl"
-                        defaultValue={siteConfig?.heroImageUrl || ''}
-                        placeholder="https://..."
-                        style={inputStyle}
-                      />
-                    </div>
-
-                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
-                      <div>
-                        <label style={labelStyle}>Hero Banner Başlığı (Varsayılan: Provalardan Sahneye.)</label>
-                        <input
-                          type="text"
-                          name="heroTitle"
-                          defaultValue={siteConfig?.heroTitle || ''}
-                          placeholder="Provalardan Sahneye."
-                          style={inputStyle}
-                        />
-                      </div>
-                      <div>
-                        <label style={labelStyle}>İletişim / Sponsorluk E-Postası</label>
-                        <input type="email" name="contactEmail" defaultValue={siteConfig?.contactEmail || 'tiyatro@fsm.edu.tr'} placeholder="tiyatro@fsm.edu.tr" style={inputStyle} />
-                      </div>
-                    </div>
-
-                    <div>
-                      <label style={labelStyle}>Hero Banner Alt Açıklaması (İsteğe Bağlı)</label>
-                      <input
-                        type="text"
-                        name="heroSubtitle"
-                        defaultValue={siteConfig?.heroSubtitle || ''}
-                        placeholder="Fatih Sultan Mehmet Vakıf Üniversitesi Tiyatro Kulübü..."
-                        style={inputStyle}
-                      />
-                    </div>
-
-                    <button type="submit" style={{ padding: '0.85rem 2rem', background: 'var(--primary-gold)', color: '#000', border: 'none', borderRadius: '8px', fontWeight: 'bold', fontSize: '0.875rem', cursor: 'pointer', alignSelf: 'flex-start' }}>
-                      Kaydet ve Yayınla
-                    </button>
-                  </form>
-                </div>
+                {/* Site Yapılandırması İstemci Formu */}
+                <SiteConfigForm siteConfig={siteConfig} />
 
                 {/* Pinlenmiş slaytlar */}
                 <div style={{ background: 'var(--bg-surface)', border: '1px solid var(--border-subtle)', borderRadius: '12px', padding: '1.5rem' }}>
