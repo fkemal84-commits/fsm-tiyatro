@@ -60,7 +60,7 @@ export async function getSiteConfig() {
 
 export async function updateSiteConfig(formData: FormData) {
   try {
-    await requireAuth(['SUPERADMIN', 'ADMIN']);
+    await requireAuth(['SUPERADMIN', 'ADMIN', 'EDITOR']);
 
     const updatePayload: Record<string, any> = {
       updatedAt: new Date().toISOString(),
@@ -77,21 +77,32 @@ export async function updateSiteConfig(formData: FormData) {
     const heroImageUrlInput = formData.get('heroImageUrl') as string | null;
 
     if (heroImageFile && heroImageFile.size > 0) {
+      console.log(`[SITE_CONFIG] Hero görseli yükleniyor: ${heroImageFile.name}, ${heroImageFile.size} byte`);
       const uploadedUrl = await uploadToStorage(heroImageFile, 'hero');
+      console.log(`[SITE_CONFIG] Hero görseli yüklendi: ${uploadedUrl}`);
       updatePayload.heroImageUrl = uploadedUrl;
-    } else if (heroImageUrlInput !== null && heroImageUrlInput !== undefined) {
-      if (heroImageUrlInput.trim() !== '') {
-        updatePayload.heroImageUrl = heroImageUrlInput.trim();
-      }
+    } else if (heroImageUrlInput !== null && heroImageUrlInput !== undefined && heroImageUrlInput.trim() !== '') {
+      updatePayload.heroImageUrl = heroImageUrlInput.trim();
     }
 
-    // 3. İletişim E-Postası
+    // 3. Başlık ve Alt Başlık (İsteğe bağlı)
+    const heroTitle = formData.get('heroTitle') as string | null;
+    if (heroTitle !== null && heroTitle !== undefined && heroTitle.trim() !== '') {
+      updatePayload.heroTitle = heroTitle.trim();
+    }
+
+    const heroSubtitle = formData.get('heroSubtitle') as string | null;
+    if (heroSubtitle !== null && heroSubtitle !== undefined && heroSubtitle.trim() !== '') {
+      updatePayload.heroSubtitle = heroSubtitle.trim();
+    }
+
+    // 4. İletişim E-Postası
     const contactEmail = formData.get('contactEmail') as string | null;
     if (contactEmail !== null && contactEmail !== undefined) {
       updatePayload.contactEmail = contactEmail.trim();
     }
 
-    // 4. Pinli slaytlar
+    // 5. Pinli slaytlar
     const pinnedSlidesRaw = formData.get('pinnedSlides');
     if (pinnedSlidesRaw !== null && pinnedSlidesRaw !== undefined) {
       try {
@@ -102,6 +113,7 @@ export async function updateSiteConfig(formData: FormData) {
     }
 
     await adminDb.collection('settings').doc('site_config').set(updatePayload, { merge: true });
+    console.log(`[SITE_CONFIG] Firestore settings/site_config güncellendi:`, updatePayload);
 
     revalidatePath('/');
     revalidatePath('/biletimi-bul');

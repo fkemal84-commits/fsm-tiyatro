@@ -32,7 +32,23 @@ export default async function Home() {
   // --- Hero Slaytları ---
   const pinnedIds: string[] = siteConfig?.pinnedSlides || [];
 
-  const allItems: HeroSlide[] = [
+  const allItems: HeroSlide[] = [];
+
+  // 1. Eğer site yapılandırmasında özel bir hero arka planı yüklüyse, ana slayt olarak ekle
+  if (siteConfig?.heroImageUrl) {
+    allItems.push({
+      id: 'custom_hero_banner',
+      type: 'pinned',
+      title: siteConfig.heroTitle || 'Provalardan Sahneye.',
+      subtitle: siteConfig.heroSubtitle || 'Fatih Sultan Mehmet Vakıf Üniversitesi Tiyatro Kulübü. Klasiklerden çağdaş sahnelemelere, üniversite ruhuyla sahnede üretiyoruz.',
+      imageUrl: siteConfig.heroImageUrl,
+      href: '/oyunlar',
+      tag: 'FSM Tiyatro',
+    });
+  }
+
+  // 2. Oyunlar ve Kulis Yazıları
+  allItems.push(
     ...plays.map(p => ({
       id: p.id,
       type: 'play' as const,
@@ -52,12 +68,12 @@ export default async function Home() {
       href: `/kulis/${p.id}`,
       tag: 'Kulis',
       date: p.createdAt ? new Date(p.createdAt).toLocaleDateString('tr-TR') : undefined,
-    })),
-  ];
+    }))
+  );
 
   const pinnedSlides = allItems.filter(s => pinnedIds.includes(s.id));
   const restSlides = allItems.filter(s => !pinnedIds.includes(s.id));
-  const slides: HeroSlide[] = [...pinnedSlides, ...restSlides].slice(0, 3);
+  const slides: HeroSlide[] = [...pinnedSlides, ...restSlides].slice(0, 4);
 
   if (slides.length === 0) {
     slides.push({

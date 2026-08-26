@@ -577,9 +577,32 @@ export default async function Dashboard({ searchParams }: { searchParams: Promis
                       />
                     </div>
 
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+                      <div>
+                        <label style={labelStyle}>Hero Banner Başlığı (Varsayılan: Provalardan Sahneye.)</label>
+                        <input
+                          type="text"
+                          name="heroTitle"
+                          defaultValue={siteConfig?.heroTitle || ''}
+                          placeholder="Provalardan Sahneye."
+                          style={inputStyle}
+                        />
+                      </div>
+                      <div>
+                        <label style={labelStyle}>İletişim / Sponsorluk E-Postası</label>
+                        <input type="email" name="contactEmail" defaultValue={siteConfig?.contactEmail || 'tiyatro@fsm.edu.tr'} placeholder="tiyatro@fsm.edu.tr" style={inputStyle} />
+                      </div>
+                    </div>
+
                     <div>
-                      <label style={labelStyle}>İletişim / Sponsorluk E-Postası</label>
-                      <input type="email" name="contactEmail" defaultValue={siteConfig?.contactEmail || 'tiyatro@fsm.edu.tr'} placeholder="tiyatro@fsm.edu.tr" style={inputStyle} />
+                      <label style={labelStyle}>Hero Banner Alt Açıklaması (İsteğe Bağlı)</label>
+                      <input
+                        type="text"
+                        name="heroSubtitle"
+                        defaultValue={siteConfig?.heroSubtitle || ''}
+                        placeholder="Fatih Sultan Mehmet Vakıf Üniversitesi Tiyatro Kulübü..."
+                        style={inputStyle}
+                      />
                     </div>
 
                     <button type="submit" style={{ padding: '0.85rem 2rem', background: 'var(--primary-gold)', color: '#000', border: 'none', borderRadius: '8px', fontWeight: 'bold', fontSize: '0.875rem', cursor: 'pointer', alignSelf: 'flex-start' }}>

@@ -15,23 +15,22 @@ export async function requireAuth(allowedRoles: string[]) {
 
   const user = uSnap.docs[0].data();
   const uid = uSnap.docs[0].id;
+  const userRole = user.role;
 
-  const isAdminAction = allowedRoles.some(role => ['ADMIN', 'SUPERADMIN', 'DIRECTOR'].includes(role));
-  const isAdminMode = (session.user as any)?.isAdminMode === true;
-
-  if (isAdminAction && !isAdminMode) {
-    throw new Error("Bu işlem için yönetici modunda giriş yapmalısınız.");
+  // SUPERADMIN ve ADMIN her zaman tam yetkilidir
+  if (userRole === 'SUPERADMIN' || userRole === 'ADMIN') {
+    return { session, user, uid };
   }
 
-  if (!allowedRoles.includes(user.role)) {
-    if (allowedRoles.includes('AKTOR') && user.role === 'PLAYER') {
-      // Geçerli
-    } else {
-      throw new Error("Bu işlemi yapmaya yetkiniz yok.");
-    }
+  if (allowedRoles.includes(userRole)) {
+    return { session, user, uid };
   }
 
-  return { session, user, uid };
+  if (allowedRoles.includes('AKTOR') && userRole === 'PLAYER') {
+    return { session, user, uid };
+  }
+
+  throw new Error("Bu işlemi yapmaya yetkiniz yok.");
 }
 
 /**
@@ -42,7 +41,7 @@ export async function deleteStorageFile(publicUrl: string) {
   try {
     const urlObj = new URL(publicUrl);
     const pathname = decodeURI(urlObj.pathname);
-    const bucketName = process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET;
+    const bucketName = process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET || 'fsm-tiyatro.firebasestorage.app';
 
     const pathParts = pathname.split('/');
     const bucketIndex = pathParts.findIndex(p => p === bucketName);
@@ -62,9 +61,9 @@ export async function deleteStorageFile(publicUrl: string) {
  * Firebase Storage'a güvenli dosya yükleme
  */
 export async function uploadToStorage(file: File, folder: string) {
-  const MAX_SIZE = 5 * 1024 * 1024; // 5 MB
+  const MAX_SIZE = 10 * 1024 * 1024; // 10 MB
   if (file.size > MAX_SIZE) {
-    throw new Error("Dosya boyutu çok büyük! Maksimum 5 MB yükleyebilirsiniz.");
+    throw new Error("Dosya boyutu çok büyük! Maksimum 10 MB yükleyebilirsiniz.");
   }
 
   const allowedTypes = ['image/jpeg', 'image/png', 'image/webp', 'image/gif', 'application/pdf'];
@@ -78,7 +77,7 @@ export async function uploadToStorage(file: File, folder: string) {
   const safeName = file.name.replace(/[^a-zA-Z0-9.-]/g, '');
   const filename = `${folder}/${uniquePrefix}-${safeName}`;
 
-  const bucketName = process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET;
+  const bucketName = process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET || 'fsm-tiyatro.firebasestorage.app';
   const bucket = adminStorage.bucket(bucketName);
   const fileRef = bucket.file(filename);
 
@@ -92,12 +91,8 @@ export async function uploadToStorage(file: File, folder: string) {
   try {
     await fileRef.makePublic();
   } catch (e: any) {
-    // ignore if already public
+    // Ignore UBLA / ACL restriction if already public
   }
 
-  if (bucketName) {
-    return `https://storage.googleapis.com/${bucketName}/${filename}`;
-  } else {
-    return fileRef.publicUrl();
-  }
+  return `https://firebasestorage.googleapis.com/v0/b/${bucketName}/o/${encodeURIComponent(filename)}?alt=media`;
 }
