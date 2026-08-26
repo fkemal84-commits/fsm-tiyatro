@@ -62,25 +62,46 @@ export async function updateSiteConfig(formData: FormData) {
   try {
     await requireAuth(['SUPERADMIN', 'ADMIN']);
 
-    const isTicketQueryActive = formData.get('isTicketQueryActive') === 'on';
-    const heroImageFile = formData.get('heroImage') as File | null;
-    const heroImageUrlInput = formData.get('heroImageUrl') as string | null;
-    const contactEmail = formData.get('contactEmail') as string | null;
-    const pinnedSlides = formData.getAll('pinnedSlides') as string[];
+    const updatePayload: Record<string, any> = {
+      updatedAt: new Date().toISOString(),
+    };
 
-    let finalHeroImageUrl = heroImageUrlInput || '';
-
-    if (heroImageFile && heroImageFile.size > 0) {
-      finalHeroImageUrl = await uploadToStorage(heroImageFile, 'hero');
+    // 1. Gişe durumu
+    const ticketQueryVal = formData.get('isTicketQueryActive');
+    if (ticketQueryVal !== null && ticketQueryVal !== undefined) {
+      updatePayload.isTicketQueryActive = ticketQueryVal === 'true' || ticketQueryVal === 'on';
     }
 
-    await adminDb.collection('settings').doc('site_config').set({
-      isTicketQueryActive,
-      heroImageUrl: finalHeroImageUrl,
-      contactEmail: contactEmail || 'fsmtiyatro@fsm.edu.tr',
-      pinnedSlides: pinnedSlides || [],
-      updatedAt: new Date().toISOString()
-    }, { merge: true });
+    // 2. Hero Görseli / Arka Plan Dosyası Yükleme (PNG, JPG, WEBP, PDF vb.)
+    const heroImageFile = formData.get('heroImage') as File | null;
+    const heroImageUrlInput = formData.get('heroImageUrl') as string | null;
+
+    if (heroImageFile && heroImageFile.size > 0) {
+      const uploadedUrl = await uploadToStorage(heroImageFile, 'hero');
+      updatePayload.heroImageUrl = uploadedUrl;
+    } else if (heroImageUrlInput !== null && heroImageUrlInput !== undefined) {
+      if (heroImageUrlInput.trim() !== '') {
+        updatePayload.heroImageUrl = heroImageUrlInput.trim();
+      }
+    }
+
+    // 3. İletişim E-Postası
+    const contactEmail = formData.get('contactEmail') as string | null;
+    if (contactEmail !== null && contactEmail !== undefined) {
+      updatePayload.contactEmail = contactEmail.trim();
+    }
+
+    // 4. Pinli slaytlar
+    const pinnedSlidesRaw = formData.get('pinnedSlides');
+    if (pinnedSlidesRaw !== null && pinnedSlidesRaw !== undefined) {
+      try {
+        updatePayload.pinnedSlides = JSON.parse(pinnedSlidesRaw as string);
+      } catch {
+        updatePayload.pinnedSlides = formData.getAll('pinnedSlides') as string[];
+      }
+    }
+
+    await adminDb.collection('settings').doc('site_config').set(updatePayload, { merge: true });
 
     revalidatePath('/');
     revalidatePath('/biletimi-bul');

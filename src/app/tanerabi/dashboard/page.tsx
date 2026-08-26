@@ -526,13 +526,55 @@ export default async function Dashboard({ searchParams }: { searchParams: Promis
                   <h2 style={{ color: 'var(--text-main)', marginBottom: '0.5rem', fontSize: '1.1rem', fontWeight: 'bold' }}>Site Yapılandırması</h2>
                   <p style={{ color: 'var(--text-muted)', fontSize: '0.8rem', marginBottom: '1.5rem' }}>Ana sayfa hero görseli, pinli slaytlar ve iletişim bilgilerini buradan güncelleyin. Değişiklikler anında canlıya yansır.</p>
 
-                  <form action={updateSiteConfig as any} style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
+                  <form action={updateSiteConfig as any} encType="multipart/form-data" style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
                     <div>
-                      <label style={labelStyle}>Hero Arka Plan Görseli URL</label>
-                      <input type="url" name="heroImageUrl" defaultValue={siteConfig?.heroImageUrl || ''} placeholder="https://firebasestorage.googleapis.com/..." style={inputStyle} />
+                      <label style={labelStyle}>Hero Arka Plan Görseli Yükle (PNG, JPG, WEBP, PDF)</label>
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+                        <input
+                          type="file"
+                          name="heroImage"
+                          accept="image/jpeg,image/png,image/webp,image/gif,application/pdf"
+                          style={{
+                            padding: '0.75rem',
+                            background: 'var(--input-bg)',
+                            border: '1px dashed var(--primary-gold-border)',
+                            borderRadius: '8px',
+                            color: 'var(--text-muted)',
+                            fontSize: '0.85rem',
+                            cursor: 'pointer'
+                          }}
+                        />
+
+                        {siteConfig?.heroImageUrl && (
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', padding: '0.75rem 1rem', background: 'var(--bg-surface-elevated)', borderRadius: '8px', border: '1px solid var(--border-subtle)' }}>
+                            <img
+                              src={siteConfig.heroImageUrl}
+                              alt="Mevcut Hero Arka Planı"
+                              style={{ width: '80px', height: '48px', objectFit: 'cover', borderRadius: '6px', border: '1px solid var(--border-medium)' }}
+                            />
+                            <div style={{ flex: 1, minWidth: 0 }}>
+                              <span style={{ fontSize: '0.75rem', color: 'var(--primary-gold)', fontWeight: 'bold', display: 'block' }}>✓ Yüklü Arka Plan Görseli Aktif</span>
+                              <span style={{ fontSize: '0.7rem', color: 'var(--text-dim)', display: 'block', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                                {siteConfig.heroImageUrl}
+                              </span>
+                            </div>
+                          </div>
+                        )}
+                      </div>
                       <p style={{ fontSize: '0.72rem', color: 'var(--text-dim)', marginTop: '0.4rem' }}>
-                        Firebase Storage Console'dan görseli yükleyip linki buraya yapıştırın. Oyunlara ve blog yazılarına görsel eklenirse onlar öncelikli gösterilir.
+                        Bilgisayarınızdan dosya seçtiğinizde görsel doğrudan Firebase Storage'a yüklenip veritabanına işlenecektir. Link kopyalamanıza gerek yoktur.
                       </p>
+                    </div>
+
+                    <div>
+                      <label style={labelStyle}>İsteğe Bağlı: Harici Görsel / Dosya Linki (URL)</label>
+                      <input
+                        type="url"
+                        name="heroImageUrl"
+                        defaultValue={siteConfig?.heroImageUrl || ''}
+                        placeholder="https://..."
+                        style={inputStyle}
+                      />
                     </div>
 
                     <div>
