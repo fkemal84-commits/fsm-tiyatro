@@ -96,9 +96,19 @@ export default async function KulupPage() {
                       </div>
                       <div>
                         <h3 className="serif-font text-base text-[var(--text-main)] leading-snug">{fullName}</h3>
-                        <span className="text-[10px] font-bold text-[var(--primary-gold)] block">
-                          {roleName}
-                        </span>
+                        {Array.isArray(user.titles) && user.titles.length > 0 ? (
+                          <div className="flex flex-wrap gap-1 mt-1">
+                            {user.titles.map((t: string, idx: number) => (
+                              <span key={idx} className="text-[10px] font-bold text-[var(--primary-gold)] bg-[var(--primary-gold-dim)] px-1.5 py-0.5 rounded border border-[var(--primary-gold-border)]">
+                                {t}
+                              </span>
+                            ))}
+                          </div>
+                        ) : (
+                          <span className="text-[10px] font-bold text-[var(--primary-gold)] block">
+                            {roleName}
+                          </span>
+                        )}
                       </div>
                     </div>
 

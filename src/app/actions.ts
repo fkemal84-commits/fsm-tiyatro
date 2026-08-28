@@ -183,3 +183,20 @@ export async function getSiteConfig() {
 export async function updateSiteConfig(formData: FormData) {
   return adminActions.updateSiteConfig(formData);
 }
+
+export async function updateUserTitles(userId: string, titles: string[]) {
+  return adminActions.updateUserTitles(userId, titles);
+}
+
+export async function addAvailableTitle(formData: FormData) {
+  return adminActions.addAvailableTitle(formData);
+}
+
+export async function removeAvailableTitle(title: string) {
+  return adminActions.removeAvailableTitle(title);
+}
+
+export async function getAvailableTitles() {
+  return adminActions.getAvailableTitles();
+}
+

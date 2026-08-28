@@ -1,6 +1,8 @@
-import { addPost, addPlay, changeUserRole, deletePost, deletePlay, approveUser, rejectUser, deleteUserRecord, addEvent, deleteEvent, updateSiteConfig } from '@/app/actions';
+import { addPost, addPlay, changeUserRole, deletePost, deletePlay, approveUser, rejectUser, deleteUserRecord, addEvent, deleteEvent, updateSiteConfig, addAvailableTitle, removeAvailableTitle } from '@/app/actions';
 import DeleteButton from '@/components/DeleteButton';
 import SiteConfigForm from '@/components/SiteConfigForm';
+import RoleSelector from '@/components/RoleSelector';
+import TitleManager from '@/components/TitleManager';
 import { adminDb } from '@/lib/firebase-admin';
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
@@ -23,18 +25,39 @@ export default async function Dashboard({ searchParams }: { searchParams: Promis
     const activeTab = sp.tab || 'overview';
 
     // Veritabanı verilerini çek
-    const [usersSnap, postsSnap, playsSnap, eventsSnap, requestsSnap, configDoc] = await Promise.all([
+    const [usersSnap, postsSnap, playsSnap, eventsSnap, requestsSnap, configDoc, titlesDoc] = await Promise.all([
       adminDb.collection('users').get(),
       adminDb.collection('posts').get(),
       adminDb.collection('plays').get(),
       adminDb.collection('events').get(),
       adminDb.collection('eventRequests').get(),
       adminDb.collection('settings').doc('site_config').get(),
+      adminDb.collection('settings').doc('titles').get(),
     ]);
+
+    const defaultTitles = [
+      'Kulüp Başkanı', 'Başkan Yardımcısı', 'Sayman', 'Genel Sekreter', 
+      'Yönetim Kurulu Üyesi', 'Denetim Kurulu Üyesi', 'Dekor & Sahne Amiri',
+      'Kostüm & Aksesuar', 'Işık & Ses', 'Sosyal Medya & Tasarım', 'Dramaturg'
+    ];
+
+    const availableTitles: string[] = titlesDoc.exists && Array.isArray(titlesDoc.data()?.list)
+      ? titlesDoc.data()!.list
+      : defaultTitles;
 
     const allUsers = usersSnap.docs.map(doc => {
       const data = doc.data();
-      return { id: doc.id, name: data.name || '', surname: data.surname || '', email: data.email || '', role: data.role || 'MEMBER', createdAt: data.createdAt || new Date().toISOString(), phone: data.phone || '', department: data.department || '' };
+      return { 
+        id: doc.id, 
+        name: data.name || '', 
+        surname: data.surname || '', 
+        email: data.email || '', 
+        role: data.role || 'MEMBER', 
+        titles: Array.isArray(data.titles) ? data.titles : [],
+        createdAt: data.createdAt || new Date().toISOString(), 
+        phone: data.phone || '', 
+        department: data.department || '' 
+      };
     }).sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
 
     const posts = postsSnap.docs.map(doc => ({ id: doc.id, ...doc.data() as any })).sort((a, b) => new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime());
@@ -206,6 +229,91 @@ export default async function Dashboard({ searchParams }: { searchParams: Promis
                   </div>
                 )}
 
+                {/* Kulüp Görev & Unvan Havuzu Yönetimi */}
+                <div style={{ background: 'var(--bg-surface)', border: '1px solid var(--border-subtle)', borderRadius: '12px', padding: '1.5rem' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1rem', flexWrap: 'wrap', gap: '0.75rem' }}>
+                    <div>
+                      <h2 style={{ color: 'var(--text-main)', fontSize: '1.05rem', fontWeight: 'bold', display: 'flex', alignItems: 'center', gap: '0.5rem', margin: 0 }}>
+                        <ion-icon name="ribbon-outline" style={{ color: 'var(--primary-gold)' }} /> Kulüp Görev & Unvan Havuzu
+                      </h2>
+                      <p style={{ color: 'var(--text-muted)', fontSize: '0.75rem', margin: '0.25rem 0 0 0' }}>
+                        Kulüp içi görev ve unvanları buradan tanımlayabilir, aşağıdaki üyelerinize birden fazla görev atayabilirsiniz.
+                      </p>
+                    </div>
+                  </div>
+
+                  {/* Tanımlı Unvan Tagleri */}
+                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem', marginBottom: '1.25rem', padding: '0.75rem', background: 'var(--bg-surface-elevated)', borderRadius: '8px', border: '1px solid var(--border-subtle)' }}>
+                    {availableTitles.map((t, i) => (
+                      <span
+                        key={i}
+                        style={{
+                          padding: '0.3rem 0.65rem',
+                          borderRadius: '999px',
+                          fontSize: '0.75rem',
+                          fontWeight: '600',
+                          background: 'rgba(212, 175, 55, 0.12)',
+                          color: 'var(--primary-gold)',
+                          border: '1px solid rgba(212, 175, 55, 0.3)',
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          gap: '0.4rem'
+                        }}
+                      >
+                        {t}
+                        <form action={async () => { 'use server'; await removeAvailableTitle(t); }} style={{ display: 'inline' }}>
+                          <button
+                            type="submit"
+                            title={`${t} unvanını havuzdan sil`}
+                            style={{
+                              background: 'transparent',
+                              border: 'none',
+                              color: 'var(--primary-gold)',
+                              cursor: 'pointer',
+                              fontSize: '0.9rem',
+                              lineHeight: 1,
+                              padding: '0',
+                              opacity: 0.7
+                            }}
+                          >
+                            ×
+                          </button>
+                        </form>
+                      </span>
+                    ))}
+                    {availableTitles.length === 0 && (
+                      <span style={{ color: 'var(--text-dim)', fontSize: '0.75rem' }}>Henüz tanımlı unvan yok.</span>
+                    )}
+                  </div>
+
+                  {/* Yeni Unvan Ekleme Formu */}
+                  <form action={addAvailableTitle as any} style={{ display: 'flex', gap: '0.6rem', alignItems: 'center', maxWidth: '480px' }}>
+                    <input
+                      type="text"
+                      name="title"
+                      placeholder="Yeni unvan yaz (Örn: Kulüp Başkanı, Sayman, Kostüm Sorumlusu)..."
+                      required
+                      style={{ ...inputStyle, padding: '0.5rem 0.85rem', fontSize: '0.8rem' }}
+                    />
+                    <button
+                      type="submit"
+                      style={{
+                        padding: '0.5rem 1.1rem',
+                        background: 'var(--primary-gold)',
+                        color: '#000',
+                        border: 'none',
+                        borderRadius: '8px',
+                        fontSize: '0.75rem',
+                        fontWeight: 'bold',
+                        cursor: 'pointer',
+                        whiteSpace: 'nowrap'
+                      }}
+                    >
+                      + Görev Ekle
+                    </button>
+                  </form>
+                </div>
+
                 {/* Tüm üyeler */}
                 <div style={{ background: 'var(--bg-surface)', border: '1px solid var(--border-subtle)', borderRadius: '12px', padding: '1.5rem' }}>
                   <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1rem', flexWrap: 'wrap', gap: '0.75rem' }}>
@@ -220,39 +328,41 @@ export default async function Dashboard({ searchParams }: { searchParams: Promis
                     <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.875rem', color: 'var(--text-main)' }}>
                       <thead>
                         <tr style={{ borderBottom: '1px solid var(--border-medium)' }}>
-                          {['Ad Soyad', 'Rol', 'E-Posta', 'Telefon', 'Bölüm', '', ''].map((h, i) => <th key={`${h}-${i}`} style={{ padding: '0.75rem', textAlign: 'left', color: 'var(--text-dim)', fontWeight: 'bold', fontSize: '0.7rem', textTransform: 'uppercase', letterSpacing: '0.1em' }}>{h}</th>)}
+                          {['Ad Soyad', 'Sistem Yetkisi (Giriş Rolü)', 'Kulüp Görev / Unvanları', 'E-Posta', 'Telefon', 'Bölüm', '', ''].map((h, i) => (
+                            <th key={`${h}-${i}`} style={{ padding: '0.75rem', textAlign: 'left', color: 'var(--text-dim)', fontWeight: 'bold', fontSize: '0.7rem', textTransform: 'uppercase', letterSpacing: '0.1em' }}>
+                              {h}
+                            </th>
+                          ))}
                         </tr>
                       </thead>
                       <tbody>
                         {approvedUsers.map((u: any) => {
                           const canEdit = (role === 'SUPERADMIN') || (role === 'ADMIN' && u.role !== 'SUPERADMIN' && u.role !== 'ADMIN');
-                          const roleColor = u.role === 'SUPERADMIN' ? '#ef4444' : u.role === 'ADMIN' ? 'var(--primary-gold)' : u.role === 'SALES' ? '#10b981' : 'var(--text-muted)';
                           const roleLabel: Record<string, string> = { SUPERADMIN: 'Süper Admin', ADMIN: 'Admin', SALES: 'Satış', EDITOR: 'Editör', DIRECTOR: 'Yönetmen', ASST_DIRECTOR: 'Yrd. Yönetmen', AKTOR: 'Aktör', MEMBER: 'Üye' };
                           return (
                             <tr key={u.id} style={{ borderBottom: '1px solid var(--border-subtle)' }}>
-                              <td style={{ padding: '0.875rem', fontWeight: '500', color: 'var(--text-main)' }}>{u.name} {u.surname}</td>
+                              <td style={{ padding: '0.875rem', fontWeight: '500', color: 'var(--text-main)', whiteSpace: 'nowrap' }}>
+                                {u.name} {u.surname}
+                              </td>
                               <td style={{ padding: '0.875rem' }}>
                                 {canEdit ? (
-                                  <form action={changeUserRole as any} style={{ display: 'flex', gap: '0.4rem', alignItems: 'center' }}>
-                                    <input type="hidden" name="userId" value={u.id} />
-                                    <select name="newRole" defaultValue={u.role} style={{ padding: '0.35rem 0.5rem', borderRadius: '6px', background: 'var(--input-bg)', color: roleColor, border: '1px solid var(--border-medium)', fontSize: '0.8rem', fontWeight: 'bold' }}>
-                                      {role === 'SUPERADMIN' && <option value="SUPERADMIN">Süper Admin</option>}
-                                      {role === 'SUPERADMIN' && <option value="ADMIN">Admin</option>}
-                                      <option value="SALES">Satış</option>
-                                      <option value="EDITOR">Editör</option>
-                                      <option value="DIRECTOR">Yönetmen</option>
-                                      <option value="ASST_DIRECTOR">Yrd. Yönetmen</option>
-                                      <option value="AKTOR">Aktör</option>
-                                      <option value="MEMBER">Üye</option>
-                                    </select>
-                                    <button type="submit" style={{ padding: '0.35rem 0.7rem', background: 'transparent', border: '1px solid var(--border-medium)', borderRadius: '6px', color: 'var(--text-muted)', fontSize: '0.75rem', cursor: 'pointer' }}>Kaydet</button>
-                                  </form>
+                                  <RoleSelector userId={u.id} currentRole={u.role} currentUserRole={role} />
                                 ) : (
-                                  <span style={{ color: roleColor, fontWeight: 'bold', fontSize: '0.8rem' }}>{roleLabel[u.role] || u.role}</span>
+                                  <span style={{ color: 'var(--text-muted)', fontWeight: 'bold', fontSize: '0.8rem' }}>
+                                    {roleLabel[u.role] || u.role}
+                                  </span>
                                 )}
                               </td>
+                              <td style={{ padding: '0.875rem' }}>
+                                <TitleManager 
+                                  userId={u.id} 
+                                  userTitles={u.titles || []} 
+                                  availableTitles={availableTitles} 
+                                  canEdit={canEdit} 
+                                />
+                              </td>
                               <td style={{ padding: '0.875rem', color: 'var(--text-muted)', fontSize: '0.8rem' }}>{u.email}</td>
-                              <td style={{ padding: '0.875rem', color: 'var(--text-dim)', fontSize: '0.8rem' }}>{u.phone || '—'}</td>
+                              <td style={{ padding: '0.875rem', color: 'var(--text-dim)', fontSize: '0.8rem', whiteSpace: 'nowrap' }}>{u.phone || '—'}</td>
                               <td style={{ padding: '0.875rem', color: 'var(--primary-gold)', fontSize: '0.8rem' }}>{u.department || '—'}</td>
                               <td style={{ padding: '0.875rem' }}>
                                 <Link href={`/tanerabi/users/${u.id}`} style={{ padding: '0.35rem 0.75rem', border: '1px solid var(--border-medium)', borderRadius: '6px', fontSize: '0.75rem', color: 'var(--text-muted)', textDecoration: 'none' }}>İncele</Link>

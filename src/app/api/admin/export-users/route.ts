@@ -29,6 +29,7 @@ export async function GET() {
         phone: d.phone || '',
         department: d.department || '',
         role: d.role || 'MEMBER',
+        titles: Array.isArray(d.titles) ? d.titles.join('; ') : '',
         createdAt: d.createdAt || '',
       };
     });
@@ -47,10 +48,10 @@ export async function GET() {
 
     // BOM for Excel UTF-8 compat
     const BOM = '\uFEFF';
-    const header = 'Ad,Soyad,E-Posta,Telefon,Bölüm,Rol,Kayıt Tarihi';
+    const header = 'Ad,Soyad,E-Posta,Telefon,Bölüm,Yetki Rolü,Kulüp Görev ve Unvanları,Kayıt Tarihi';
 
     const rows = users.map(u => {
-      const escapeCsv = (val: string) => `"${val.replace(/"/g, '""')}"`;
+      const escapeCsv = (val: string) => `"${(val || '').replace(/"/g, '""')}"`;
       const dateStr = u.createdAt ? new Date(u.createdAt).toLocaleDateString('tr-TR') : '';
       return [
         escapeCsv(u.name),
@@ -59,6 +60,7 @@ export async function GET() {
         escapeCsv(u.phone),
         escapeCsv(u.department),
         escapeCsv(roleLabels[u.role] || u.role),
+        escapeCsv(u.titles),
         escapeCsv(dateStr),
       ].join(',');
     });

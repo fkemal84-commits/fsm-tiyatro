@@ -124,3 +124,100 @@ export async function updateSiteConfig(formData: FormData) {
     return { error: error.message || "Ayarlar kaydedilirken hata oluştu." };
   }
 }
+
+export async function updateUserTitles(userId: string, titles: string[]) {
+  try {
+    await requireAuth(['SUPERADMIN', 'ADMIN']);
+    if (!userId) return { error: "Kullanıcı ID gereklidir." };
+
+    const cleanTitles = Array.isArray(titles) 
+      ? titles.map(t => typeof t === 'string' ? t.trim() : '').filter(Boolean)
+      : [];
+
+    await adminDb.collection('users').doc(userId).update({
+      titles: cleanTitles,
+      updatedAt: new Date().toISOString()
+    });
+
+    revalidatePath('/tanerabi/dashboard');
+    revalidatePath('/kulup');
+    revalidatePath(`/tanerabi/users/${userId}`);
+    return { success: true };
+  } catch (error: any) {
+    console.error("[UPDATE_USER_TITLES] Hata:", error);
+    return { error: error.message || "Unvanlar güncellenemedi." };
+  }
+}
+
+export async function addAvailableTitle(formData: FormData) {
+  try {
+    await requireAuth(['SUPERADMIN', 'ADMIN']);
+    const title = (formData.get('title') as string)?.trim();
+    if (!title) return { error: "Unvan adı boş olamaz." };
+
+    const docRef = adminDb.collection('settings').doc('titles');
+    const docSnap = await docRef.get();
+
+    const existingList: string[] = docSnap.exists ? (docSnap.data()?.list || []) : [
+      'Kulüp Başkanı', 'Başkan Yardımcısı', 'Sayman', 'Genel Sekreter', 
+      'Yönetim Kurulu Üyesi', 'Denetim Kurulu Üyesi', 'Dekor & Sahne Amiri',
+      'Kostüm & Aksesuar', 'Işık & Ses', 'Sosyal Medya & Tasarım', 'Dramaturg'
+    ];
+
+    if (!existingList.includes(title)) {
+      existingList.push(title);
+      await docRef.set({ list: existingList, updatedAt: new Date().toISOString() }, { merge: true });
+    }
+
+    revalidatePath('/tanerabi/dashboard');
+    return { success: true };
+  } catch (error: any) {
+    console.error("[ADD_AVAILABLE_TITLE] Hata:", error);
+    return { error: error.message || "Unvan eklenemedi." };
+  }
+}
+
+export async function removeAvailableTitle(title: string) {
+  try {
+    await requireAuth(['SUPERADMIN', 'ADMIN']);
+    if (!title) return { error: "Unvan seçilmedi." };
+
+    const docRef = adminDb.collection('settings').doc('titles');
+    const docSnap = await docRef.get();
+
+    if (docSnap.exists) {
+      const currentList: string[] = docSnap.data()?.list || [];
+      const updatedList = currentList.filter(t => t !== title);
+      await docRef.set({ list: updatedList, updatedAt: new Date().toISOString() }, { merge: true });
+    }
+
+    revalidatePath('/tanerabi/dashboard');
+    return { success: true };
+  } catch (error: any) {
+    console.error("[REMOVE_AVAILABLE_TITLE] Hata:", error);
+    return { error: error.message || "Unvan silinemedi." };
+  }
+}
+
+export async function getAvailableTitles(): Promise<string[]> {
+  try {
+    const docRef = adminDb.collection('settings').doc('titles');
+    const docSnap = await docRef.get();
+    if (docSnap.exists && Array.isArray(docSnap.data()?.list)) {
+      return docSnap.data()!.list;
+    }
+    return [
+      'Kulüp Başkanı', 'Başkan Yardımcısı', 'Sayman', 'Genel Sekreter', 
+      'Yönetim Kurulu Üyesi', 'Denetim Kurulu Üyesi', 'Dekor & Sahne Amiri',
+      'Kostüm & Aksesuar', 'Işık & Ses', 'Sosyal Medya & Tasarım', 'Dramaturg'
+    ];
+  } catch (e) {
+    console.error("[GET_AVAILABLE_TITLES] Hata:", e);
+    return [
+      'Kulüp Başkanı', 'Başkan Yardımcısı', 'Sayman', 'Genel Sekreter', 
+      'Yönetim Kurulu Üyesi', 'Denetim Kurulu Üyesi', 'Dekor & Sahne Amiri',
+      'Kostüm & Aksesuar', 'Işık & Ses', 'Sosyal Medya & Tasarım', 'Dramaturg'
+    ];
+  }
+}
+
