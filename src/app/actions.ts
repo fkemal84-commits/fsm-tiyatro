@@ -20,6 +20,10 @@ export async function approveUser(formData: FormData) {
   return authActions.approveUser(formData);
 }
 
+export async function rejectUser(formData: FormData) {
+  return authActions.rejectUser(formData);
+}
+
 export async function changePassword(formData: FormData) {
   return authActions.changePassword(formData);
 }

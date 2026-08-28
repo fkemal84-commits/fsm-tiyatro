@@ -16,7 +16,7 @@ export default async function KulupPage() {
 
   try {
     const snap = await adminDb.collection('users')
-      .where('role', 'in', ['SUPERADMIN', 'ADMIN', 'DIRECTOR', 'ASST_DIRECTOR', 'AKTOR', 'PLAYER', 'EDITOR', 'SALES', 'MEMBER'])
+      .where('role', 'in', ['SUPERADMIN', 'ADMIN', 'DIRECTOR', 'ASST_DIRECTOR', 'EDITOR', 'SALES'])
       .get();
 
     users = snap.docs.map(doc => ({ id: doc.id, ...doc.data() }));

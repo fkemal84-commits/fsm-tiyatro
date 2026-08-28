@@ -1,4 +1,4 @@
-import { addPost, addPlay, changeUserRole, deletePost, deletePlay, approveUser, addEvent, deleteEvent, updateSiteConfig } from '@/app/actions';
+import { addPost, addPlay, changeUserRole, deletePost, deletePlay, approveUser, rejectUser, deleteUserRecord, addEvent, deleteEvent, updateSiteConfig } from '@/app/actions';
 import DeleteButton from '@/components/DeleteButton';
 import SiteConfigForm from '@/components/SiteConfigForm';
 import { adminDb } from '@/lib/firebase-admin';
@@ -187,10 +187,16 @@ export default async function Dashboard({ searchParams }: { searchParams: Promis
                               <td style={{ padding: '0.875rem', color: 'var(--text-muted)' }}>{u.email}</td>
                               <td style={{ padding: '0.875rem', color: 'var(--text-dim)' }}>{new Date(u.createdAt).toLocaleDateString('tr-TR')}</td>
                               <td style={{ padding: '0.875rem' }}>
-                                <form action={approveUser as any} style={{ display: 'inline' }}>
-                                  <input type="hidden" name="userId" value={u.id} />
-                                  <button type="submit" style={{ padding: '0.4rem 1.1rem', background: 'var(--primary-gold)', color: '#000', border: 'none', borderRadius: '6px', fontSize: '0.75rem', fontWeight: 'bold', cursor: 'pointer' }}>Onayla</button>
-                                </form>
+                                <div style={{ display: 'flex', gap: '0.5rem' }}>
+                                  <form action={approveUser as any} style={{ display: 'inline' }}>
+                                    <input type="hidden" name="userId" value={u.id} />
+                                    <button type="submit" style={{ padding: '0.4rem 1.1rem', background: 'var(--primary-gold)', color: '#000', border: 'none', borderRadius: '6px', fontSize: '0.75rem', fontWeight: 'bold', cursor: 'pointer' }}>Onayla</button>
+                                  </form>
+                                  <form action={rejectUser as any} style={{ display: 'inline' }}>
+                                    <input type="hidden" name="userId" value={u.id} />
+                                    <button type="submit" style={{ padding: '0.4rem 1.1rem', background: 'transparent', color: '#ef4444', border: '1px solid #ef4444', borderRadius: '6px', fontSize: '0.75rem', fontWeight: 'bold', cursor: 'pointer' }}>Reddet</button>
+                                  </form>
+                                </div>
                               </td>
                             </tr>
                           ))}
@@ -202,14 +208,19 @@ export default async function Dashboard({ searchParams }: { searchParams: Promis
 
                 {/* Tüm üyeler */}
                 <div style={{ background: 'var(--bg-surface)', border: '1px solid var(--border-subtle)', borderRadius: '12px', padding: '1.5rem' }}>
-                  <h2 style={{ color: 'var(--text-main)', marginBottom: '1rem', fontSize: '1.1rem', fontWeight: 'bold', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                    <ion-icon name="people-outline" /> Üye & Personel Listesi ({approvedUsers.length})
-                  </h2>
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1rem', flexWrap: 'wrap', gap: '0.75rem' }}>
+                    <h2 style={{ color: 'var(--text-main)', fontSize: '1.1rem', fontWeight: 'bold', display: 'flex', alignItems: 'center', gap: '0.5rem', margin: 0 }}>
+                      <ion-icon name="people-outline" /> Üye & Personel Listesi ({approvedUsers.length})
+                    </h2>
+                    <a href="/api/admin/export-users" download style={{ padding: '0.5rem 1rem', background: 'var(--bg-surface-elevated)', border: '1px solid var(--border-medium)', borderRadius: '8px', fontSize: '0.75rem', fontWeight: 'bold', color: 'var(--primary-gold)', textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: '0.4rem' }}>
+                      <ion-icon name="download-outline" /> CSV İndir
+                    </a>
+                  </div>
                   <div style={{ overflowX: 'auto' }}>
                     <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.875rem', color: 'var(--text-main)' }}>
                       <thead>
                         <tr style={{ borderBottom: '1px solid var(--border-medium)' }}>
-                          {['Ad Soyad', 'Rol', 'E-Posta', 'Telefon', 'Bölüm', ''].map(h => <th key={h} style={{ padding: '0.75rem', textAlign: 'left', color: 'var(--text-dim)', fontWeight: 'bold', fontSize: '0.7rem', textTransform: 'uppercase', letterSpacing: '0.1em' }}>{h}</th>)}
+                          {['Ad Soyad', 'Rol', 'E-Posta', 'Telefon', 'Bölüm', '', ''].map((h, i) => <th key={`${h}-${i}`} style={{ padding: '0.75rem', textAlign: 'left', color: 'var(--text-dim)', fontWeight: 'bold', fontSize: '0.7rem', textTransform: 'uppercase', letterSpacing: '0.1em' }}>{h}</th>)}
                         </tr>
                       </thead>
                       <tbody>
@@ -245,6 +256,11 @@ export default async function Dashboard({ searchParams }: { searchParams: Promis
                               <td style={{ padding: '0.875rem', color: 'var(--primary-gold)', fontSize: '0.8rem' }}>{u.department || '—'}</td>
                               <td style={{ padding: '0.875rem' }}>
                                 <Link href={`/tanerabi/users/${u.id}`} style={{ padding: '0.35rem 0.75rem', border: '1px solid var(--border-medium)', borderRadius: '6px', fontSize: '0.75rem', color: 'var(--text-muted)', textDecoration: 'none' }}>İncele</Link>
+                              </td>
+                              <td style={{ padding: '0.875rem' }}>
+                                {canEdit && (
+                                  <DeleteButton action={deleteUserRecord as any} id={u.id} name={`${u.name} ${u.surname}`} confirmMessage="Bu üyeyi kalıcı olarak silmek istediğine emin misin?" idFieldName="userId" />
+                                )}
                               </td>
                             </tr>
                           );

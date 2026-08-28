@@ -83,6 +83,31 @@ export async function approveUser(formData: FormData) {
   }
 }
 
+export async function rejectUser(formData: FormData) {
+  try {
+    const userId = formData.get('userId') as string;
+    if (!userId) return { error: "Kullanıcı ID gereklidir." };
+
+    await requireAuth(['SUPERADMIN', 'ADMIN']);
+
+    const userDoc = await adminDb.collection('users').doc(userId).get();
+    if (!userDoc.exists) return { error: "Kullanıcı bulunamadı." };
+
+    const userData = userDoc.data();
+    if (userData?.role !== 'PENDING') {
+      return { error: "Sadece onay bekleyen kullanıcılar reddedilebilir." };
+    }
+
+    await adminDb.collection('users').doc(userId).delete();
+
+    revalidatePath('/tanerabi/dashboard');
+    return { success: true };
+  } catch (error: any) {
+    console.error("[REJECT_USER] Hata:", error);
+    return { error: error.message };
+  }
+}
+
 export async function changePassword(formData: FormData) {
   const currentPassword = formData.get('currentPassword') as string;
   const newPassword = formData.get('newPassword') as string;
