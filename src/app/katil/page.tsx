@@ -76,7 +76,7 @@ export default function KatilPage() {
           </div>
 
           <div className="pt-5 sm:pt-6 border-t border-[var(--border-subtle)] flex flex-col sm:flex-row items-center justify-between gap-4">
-            <span className="text-xs text-[var(--text-dim)]">Sorularınız için: tiyatro@fsm.edu.tr</span>
+            <span className="text-xs text-[var(--text-dim)]">Sorularınız için: info@fsmtiyatro.com</span>
             <Link href="/register" className="btn btn-primary text-xs font-bold px-8 py-3 w-full sm:w-auto text-center">
               Öğrenci Kaydı Oluştur
             </Link>

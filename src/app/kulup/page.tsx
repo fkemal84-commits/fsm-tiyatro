@@ -138,8 +138,8 @@ export default async function KulupPage() {
               Öğrenci prodüksiyonlarımıza, dekor/kostüm çalışmalarımıza veya festival katılımlarımıza ayni ya da kurumsal destek sağlamak için bizimle iletişime geçebilirsiniz.
             </p>
           </div>
-          <a href="mailto:tiyatro@fsm.edu.tr" className="btn btn-outline text-xs font-bold w-full sm:w-auto flex-shrink-0 text-center">
-            tiyatro@fsm.edu.tr
+          <a href="mailto:info@fsmtiyatro.com" className="btn btn-outline text-xs font-bold w-full sm:w-auto flex-shrink-0 text-center">
+            info@fsmtiyatro.com
           </a>
         </div>
 

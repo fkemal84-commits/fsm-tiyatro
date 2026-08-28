@@ -44,8 +44,8 @@ export default function Footer({ showTicketQuery = true }: { showTicketQuery?: b
         {/* Alt Satır */}
         <div className="flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-[var(--text-dim)]">
           <p>&copy; {new Date().getFullYear()} FSM Tiyatro Kulübü</p>
-          <a href="mailto:tiyatro@fsm.edu.tr" className="hover:text-[var(--primary-gold)] transition-colors">
-            tiyatro@fsm.edu.tr
+          <a href="mailto:info@fsmtiyatro.com" className="hover:text-[var(--primary-gold)] transition-colors">
+            info@fsmtiyatro.com
           </a>
         </div>
       </div>

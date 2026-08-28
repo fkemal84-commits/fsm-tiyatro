@@ -148,8 +148,8 @@ export default function SiteConfigForm({ siteConfig }: SiteConfigFormProps) {
             <input
               type="email"
               name="contactEmail"
-              defaultValue={siteConfig?.contactEmail || 'tiyatro@fsm.edu.tr'}
-              placeholder="tiyatro@fsm.edu.tr"
+              defaultValue={siteConfig?.contactEmail || 'info@fsmtiyatro.com'}
+              placeholder="info@fsmtiyatro.com"
               style={inputStyle}
             />
           </div>

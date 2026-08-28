@@ -47,7 +47,7 @@ export async function getSiteConfig() {
       return {
         heroImageUrl: '',
         isTicketQueryActive: true,
-        contactEmail: 'fsmtiyatro@fsm.edu.tr',
+        contactEmail: 'info@fsmtiyatro.com',
         pinnedSlides: []
       };
     }
