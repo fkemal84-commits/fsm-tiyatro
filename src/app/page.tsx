@@ -10,10 +10,17 @@ import { authOptions } from "@/lib/auth";
 export const dynamic = "force-dynamic";
 
 export default async function Home() {
-  const session = await getServerSession(authOptions);
-  const isLoggedIn = !!session?.user;
-  const rawName = session?.user?.name || '';
-  const cleanName = rawName.replace(/undefined/gi, '').trim() || session?.user?.email?.split('@')[0] || '';
+  let isLoggedIn = false;
+  let cleanName = '';
+
+  try {
+    const session = await getServerSession(authOptions);
+    isLoggedIn = !!session?.user;
+    const rawName = session?.user?.name || '';
+    cleanName = rawName.replace(/undefined/gi, '').trim() || session?.user?.email?.split('@')[0] || '';
+  } catch (e) {
+    console.warn("[HOME] Session fetch warning:", e);
+  }
 
   let plays: any[] = [];
   let posts: any[] = [];
@@ -22,26 +29,36 @@ export default async function Home() {
 
   try {
     const [playsSnapshot, postsSnapshot, eventsSnapshot, configDoc] = await Promise.all([
-      adminDb.collection('plays').orderBy('createdAt', 'desc').limit(4).get(),
-      adminDb.collection('posts').orderBy('createdAt', 'desc').limit(3).get(),
-      adminDb.collection('events').orderBy('createdAt', 'desc').limit(2).get(),
-      adminDb.collection('settings').doc('site_config').get(),
+      adminDb.collection('plays').get().catch(() => ({ docs: [] as any[] })),
+      adminDb.collection('posts').get().catch(() => ({ docs: [] as any[] })),
+      adminDb.collection('events').get().catch(() => ({ docs: [] as any[] })),
+      adminDb.collection('settings').doc('site_config').get().catch(() => ({ exists: false, data: () => ({}) })),
     ]);
 
-    plays = playsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-    posts = postsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-    events = eventsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-    if (configDoc.exists) siteConfig = configDoc.data();
+    plays = ((playsSnapshot as any).docs || [])
+      .map((doc: any) => ({ id: doc.id, ...doc.data() }))
+      .sort((a: any, b: any) => new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime());
+
+    posts = ((postsSnapshot as any).docs || [])
+      .map((doc: any) => ({ id: doc.id, ...doc.data() }))
+      .sort((a: any, b: any) => new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime());
+
+    events = ((eventsSnapshot as any).docs || [])
+      .map((doc: any) => ({ id: doc.id, ...doc.data() }));
+
+    if (configDoc && 'exists' in configDoc && (configDoc as any).exists) {
+      siteConfig = (configDoc as any).data();
+    }
   } catch (e) {
-    console.error("Home fetch error:", e);
+    console.error("[HOME] Data fetch error:", e);
   }
 
   // --- Hero Slaytları ---
-  const pinnedIds: string[] = siteConfig?.pinnedSlides || [];
+  const pinnedIds: string[] = Array.isArray(siteConfig?.pinnedSlides) ? siteConfig.pinnedSlides : [];
 
   const allItems: HeroSlide[] = [];
 
-  // 1. Eğer site yapılandırmasında özel bir hero arka planı yüklüyse, ana slayt olarak ekle
+  // 1. Özel Hero Banner varsa ekle
   if (siteConfig?.heroImageUrl) {
     allItems.push({
       id: 'custom_hero_banner',
@@ -56,21 +73,21 @@ export default async function Home() {
 
   // 2. Oyunlar ve Kulis Yazıları
   allItems.push(
-    ...plays.map(p => ({
+    ...plays.slice(0, 4).map(p => ({
       id: p.id,
       type: 'play' as const,
-      title: p.title,
-      subtitle: p.description?.slice(0, 140),
+      title: p.title || 'FSM Tiyatro Oyunu',
+      subtitle: p.description?.slice(0, 140) || '',
       imageUrl: p.imageUrl || p.posterUrl || siteConfig?.heroImageUrl || undefined,
       href: `/oyunlar/${p.id}`,
       tag: `${p.season || p.year || '2026'} · Oyun`,
-      date: p.showDates && p.showDates.length > 0 ? p.showDates[0].date : p.year,
+      date: Array.isArray(p.showDates) && p.showDates.length > 0 ? p.showDates[0]?.date : (p.year || ''),
     })),
-    ...posts.map(p => ({
+    ...posts.slice(0, 3).map(p => ({
       id: p.id,
       type: 'post' as const,
-      title: p.title,
-      subtitle: p.excerpt || p.content?.slice(0, 140),
+      title: p.title || 'Kulis Yazısı',
+      subtitle: p.excerpt || p.content?.slice(0, 140) || '',
       imageUrl: p.imageUrl || siteConfig?.heroImageUrl || undefined,
       href: `/kulis/${p.id}`,
       tag: 'Kulis',

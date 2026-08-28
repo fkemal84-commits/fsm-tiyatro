@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect } from 'react';
+import Link from 'next/link';
 
 export default function Error({
   error,
@@ -10,29 +11,35 @@ export default function Error({
   reset: () => void;
 }) {
   useEffect(() => {
-    console.error('CRITICAL APP ERROR:', error);
+    console.error('[NEXT_APP_ERROR]', error);
   }, [error]);
 
   return (
     <div className="flex flex-col items-center justify-center min-h-[70vh] p-6 text-center bg-[var(--bg-dark)]">
-      <div className="text-6xl mb-6">🏜️</div>
-      <h1 className="serif-font text-4xl text-[var(--primary-gold)] mb-4">Bir Hata Oluştu</h1>
-      <p className="text-[var(--text-muted)] max-w-md mb-8">
-        Üzgünüz, teknik bir aksaklık oluştu. Bu durumu ekibimize raporladık.
+      <div className="text-5xl mb-4">🎭</div>
+      <h1 className="serif-font text-3xl sm:text-4xl text-[var(--primary-gold)] mb-3">
+        Sayfa Yüklenirken Bir Sorun Oluştu
+      </h1>
+      <p className="text-[var(--text-muted)] text-sm max-w-md mb-6 leading-relaxed">
+        İçerik yüklenirken geçici bir bağlantı hatası meydana geldi. Sayfayı yenileyerek veya aşağıdaki butonu kullanarak tekrar deneyebilirsiniz.
       </p>
-      <div className="flex gap-4">
+
+      {error?.message && (
+        <div className="mb-6 p-3 bg-red-500/10 border border-red-500/20 rounded-lg text-red-400 text-xs font-mono max-w-md break-words">
+          {error.message}
+        </div>
+      )}
+
+      <div className="flex flex-wrap items-center justify-center gap-3">
         <button
           onClick={() => reset()}
-          className="btn btn-primary"
+          className="btn btn-primary text-xs px-6 py-2.5 font-bold"
         >
           Yeniden Dene
         </button>
-        <a href="/" className="btn btn-outline border-white/10 text-white">
-          Ana Sayfaya Dön
-        </a>
-      </div>
-      <div className="mt-12 p-4 bg-white/5 rounded text-xs font-mono text-white/30 truncate max-w-lg">
-        Error ID: {error.digest || 'Unknown System Fault'}
+        <Link href="/" className="btn btn-outline text-xs px-6 py-2.5">
+          Ana Sayfayı Aç
+        </Link>
       </div>
     </div>
   );
