@@ -53,11 +53,30 @@ export async function registerUser(formData: FormData) {
     const role = isSchoolEmail ? 'MEMBER' : 'PENDING';
 
     const now = new Date();
-    const currentYear = now.getFullYear().toString();
+    const currentYear = now.getFullYear();
     const currentMonth = now.getMonth() + 1; // 1-12
-    // Akademik yıl hesabı: Eylül (9) ve sonrasındaysa 2026-2027, öncesindeyse 2025-2026
-    const startYear = currentMonth >= 7 ? now.getFullYear() : now.getFullYear() - 1;
+    
+    // Tiyatro & Üniversite Sezon Takvimi:
+    // Temmuz ve sonrasındaki (Ağustos, Eylül, Ekim...) kayıtlar başlayan yeni sezonun (örn. 2026-2027 / 2027) kaydıdır.
+    const startYear = currentMonth >= 7 ? currentYear : currentYear - 1;
+    const targetSeasonYear = (startYear + 1).toString(); // örn: "2027"
     const academicYear = `${startYear}-${startYear + 1}`;
+    const season = `${startYear}-${startYear + 1} Sezonu`;
+
+    // Eğer site ayarlarında özel bir aktif sezon belirlenmişse onu da kontrol et
+    let activeSeason = season;
+    let activeSeasonYear = targetSeasonYear;
+    try {
+      const configSnap = await adminDb.collection('settings').doc('site_config').get();
+      if (configSnap.exists && configSnap.data()?.activeSeason) {
+        activeSeason = configSnap.data()!.activeSeason;
+        // Eğer format 2026-2027 ise 2027'yi seasonYear yap
+        const match = activeSeason.match(/\d{4}$/);
+        if (match) activeSeasonYear = match[0];
+      }
+    } catch {
+      // Varsayılan hesaplama geçerli
+    }
 
     await adminDb.collection('users').add({
       name: name.trim(),
@@ -70,8 +89,9 @@ export async function registerUser(formData: FormData) {
       password: hashedPassword,
       consent,
       role,
-      registrationYear: currentYear,
-      academicYear,
+      registrationYear: activeSeasonYear, // 2027
+      season: activeSeason,               // "2026-2027 Sezonu"
+      academicYear,                       // "2026-2027"
       createdAt: now.toISOString()
     });
 

@@ -27,13 +27,27 @@ export async function GET(request: Request) {
       const d = doc.data();
       const createdAt = d.createdAt || '';
       
-      // Yıl tespiti: registrationYear varsa kullan, yoksa createdAt tarihinden al
-      let userYear = d.registrationYear || '';
-      if (!userYear && createdAt) {
+      // Sezon & Yıl Tespiti (Üniversite Tiyatro Takvimi)
+      let userSeason = d.season || '';
+      let userSeasonYear = d.registrationYear || '';
+      let academicYear = d.academicYear || '';
+
+      if (createdAt) {
         try {
-          userYear = new Date(createdAt).getFullYear().toString();
+          const cd = new Date(createdAt);
+          const cYear = cd.getFullYear();
+          const cMonth = cd.getMonth() + 1; // 1-12
+          // Temmuz (7) ve sonrasındaki kayıtlar başlayan sezonundur (örn: 2026 Ağustos/Ekim -> 2026-2027 Sezonu / 2027)
+          const sStart = cMonth >= 7 ? cYear : cYear - 1;
+          const sTarget = (sStart + 1).toString();
+          
+          if (!userSeason) userSeason = `${sStart}-${sStart + 1} Sezonu`;
+          if (!userSeasonYear) userSeasonYear = sTarget; // 2027
+          if (!academicYear) academicYear = `${sStart}-${sStart + 1}`;
         } catch {
-          userYear = '2026';
+          if (!userSeason) userSeason = '2026-2027 Sezonu';
+          if (!userSeasonYear) userSeasonYear = '2027';
+          if (!academicYear) academicYear = '2026-2027';
         }
       }
 
@@ -63,15 +77,20 @@ export async function GET(request: Request) {
         department: d.department || '',
         role: d.role || 'MEMBER',
         titles: Array.isArray(d.titles) ? d.titles.join('; ') : '',
-        registrationYear: userYear,
-        academicYear: d.academicYear || `${userYear}-${Number(userYear) + 1 || 2027}`,
+        registrationYear: userSeasonYear, // 2027
+        season: userSeason,               // "2026-2027 Sezonu"
+        academicYear,                     // "2026-2027"
         createdAt,
       };
     });
 
-    // Yıla göre filtrele
+    // Yıla veya Sezona göre filtrele
     if (selectedYear && selectedYear !== 'all') {
-      users = users.filter(u => u.registrationYear === selectedYear);
+      users = users.filter(u => 
+        u.registrationYear === selectedYear || 
+        u.season === selectedYear || 
+        u.academicYear === selectedYear
+      );
     }
 
     // Tarihe göre yeniden eskiye sırala

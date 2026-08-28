@@ -50,12 +50,27 @@ export default async function Dashboard({ searchParams }: { searchParams: Promis
       const data = doc.data();
       const createdAt = data.createdAt || new Date().toISOString();
       
-      let userYear = data.registrationYear || '';
-      if (!userYear && createdAt) {
+      // Üniversite tiyatro takvimi sezon hesabı:
+      // Temmuz ve sonrasındaki kayıtlar başlayan yeni sezonundur (Örn: 2026 Ağustos/Ekim -> 2026-2027 Sezonu / 2027 Kayıtları)
+      let userSeason = data.season || '';
+      let userSeasonYear = data.registrationYear || '';
+      let academicYear = data.academicYear || '';
+
+      if (createdAt) {
         try {
-          userYear = new Date(createdAt).getFullYear().toString();
+          const cd = new Date(createdAt);
+          const cYear = cd.getFullYear();
+          const cMonth = cd.getMonth() + 1;
+          const sStart = cMonth >= 7 ? cYear : cYear - 1;
+          const sTarget = (sStart + 1).toString();
+          
+          if (!userSeason) userSeason = `${sStart}-${sStart + 1} Sezonu`;
+          if (!userSeasonYear) userSeasonYear = sTarget; // "2027"
+          if (!academicYear) academicYear = `${sStart}-${sStart + 1}`;
         } catch {
-          userYear = '2026';
+          if (!userSeason) userSeason = '2026-2027 Sezonu';
+          if (!userSeasonYear) userSeasonYear = '2027';
+          if (!academicYear) academicYear = '2026-2027';
         }
       }
 
@@ -84,8 +99,10 @@ export default async function Dashboard({ searchParams }: { searchParams: Promis
         formattedPhone: formattedDisplayPhone,
         whatsappLink,
         department: data.department || '',
-        registrationYear: userYear,
-        academicYear: data.academicYear || `${userYear}-${Number(userYear) + 1 || 2027}`
+        registrationYear: userSeasonYear, // "2027"
+        season: userSeason,               // "2026-2027 Sezonu"
+        academicYear,                     // "2026-2027"
+        seasonTag: `${userSeason} (${userSeasonYear})` // "2026-2027 Sezonu (2027)"
       };
     }).sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
 
@@ -98,10 +115,22 @@ export default async function Dashboard({ searchParams }: { searchParams: Promis
     const pendingUsers = allUsers.filter(u => u.role === 'PENDING');
     const approvedUsers = allUsers.filter(u => u.role !== 'PENDING');
 
-    // Mevcut kayıt yılları listesi
-    const availableYears = Array.from(new Set(approvedUsers.map(u => u.registrationYear).filter(Boolean))).sort().reverse();
+    // Mevcut kayıt sezonları listesi (Sezon adına göre grupla)
+    const availableSeasons = Array.from(
+      new Map(
+        approvedUsers.map(u => [
+          u.registrationYear, 
+          { 
+            key: u.registrationYear, 
+            season: u.season, 
+            label: `${u.season} (${u.registrationYear} Kayıtları)` 
+          }
+        ])
+      ).values()
+    ).sort((a, b) => Number(b.key) - Number(a.key));
+
     const displayApprovedUsers = selectedYear !== 'all' 
-      ? approvedUsers.filter(u => u.registrationYear === selectedYear)
+      ? approvedUsers.filter(u => u.registrationYear === selectedYear || u.season === selectedYear)
       : approvedUsers;
 
     // Sidebar yapısı
@@ -406,10 +435,10 @@ export default async function Dashboard({ searchParams }: { searchParams: Promis
                     </div>
                   </div>
 
-                  {/* Kayıt Yılı Filtre Butonları */}
+                  {/* Sezon Filtre Butonları */}
                   <div style={{ display: 'flex', gap: '0.4rem', alignItems: 'center', flexWrap: 'wrap', marginBottom: '1.25rem', paddingBottom: '1rem', borderBottom: '1px solid var(--border-subtle)' }}>
                     <span style={{ fontSize: '0.75rem', color: 'var(--text-dim)', fontWeight: 'bold', textTransform: 'uppercase', marginRight: '0.4rem' }}>
-                      Kayıt Yılı:
+                      Sezon:
                     </span>
                     <Link
                       href="/tanerabi/dashboard?tab=members&year=all"
@@ -424,15 +453,15 @@ export default async function Dashboard({ searchParams }: { searchParams: Promis
                         textDecoration: 'none'
                       }}
                     >
-                      Tüm Yıllar ({approvedUsers.length})
+                      Tüm Sezonlar ({approvedUsers.length})
                     </Link>
-                    {availableYears.map(y => {
-                      const count = approvedUsers.filter(u => u.registrationYear === y).length;
-                      const isSelected = selectedYear === y;
+                    {availableSeasons.map(s => {
+                      const count = approvedUsers.filter(u => u.registrationYear === s.key || u.season === s.season).length;
+                      const isSelected = selectedYear === s.key || selectedYear === s.season;
                       return (
                         <Link
-                          key={y}
-                          href={`/tanerabi/dashboard?tab=members&year=${y}`}
+                          key={s.key}
+                          href={`/tanerabi/dashboard?tab=members&year=${s.key}`}
                           style={{
                             padding: '0.35rem 0.85rem',
                             borderRadius: '6px',
@@ -444,7 +473,7 @@ export default async function Dashboard({ searchParams }: { searchParams: Promis
                             textDecoration: 'none'
                           }}
                         >
-                          {y} Kayıtları ({count})
+                          🎭 {s.season} ({count})
                         </Link>
                       );
                     })}
@@ -454,7 +483,7 @@ export default async function Dashboard({ searchParams }: { searchParams: Promis
                     <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.875rem', color: 'var(--text-main)' }}>
                       <thead>
                         <tr style={{ borderBottom: '1px solid var(--border-medium)' }}>
-                          {['Ad Soyad', 'Sistem Yetkisi', 'Kulüp Görevleri', 'Telefon & WhatsApp', 'Bölüm & Kayıt Yılı', 'E-Posta', '', ''].map((h, i) => (
+                          {['Ad Soyad', 'Sistem Yetkisi', 'Kulüp Görevleri', 'Telefon & WhatsApp', 'Bölüm & Sezon', 'E-Posta', '', ''].map((h, i) => (
                             <th key={`${h}-${i}`} style={{ padding: '0.75rem', textAlign: 'left', color: 'var(--text-dim)', fontWeight: 'bold', fontSize: '0.7rem', textTransform: 'uppercase', letterSpacing: '0.1em' }}>
                               {h}
                             </th>
@@ -517,11 +546,9 @@ export default async function Dashboard({ searchParams }: { searchParams: Promis
                                   <span style={{ color: 'var(--primary-gold)', fontSize: '0.8rem', fontWeight: '500' }}>
                                     {u.department || 'Bölüm Belirtilmedi'}
                                   </span>
-                                  {u.registrationYear && (
-                                    <span style={{ color: 'var(--text-dim)', fontSize: '0.7rem' }}>
-                                      📅 {u.registrationYear} Kaydı
-                                    </span>
-                                  )}
+                                  <span style={{ color: 'var(--text-dim)', fontSize: '0.7rem' }}>
+                                    🎭 {u.season || `${u.registrationYear} Sezonu`}
+                                  </span>
                                 </div>
                               </td>
                               <td style={{ padding: '0.875rem', color: 'var(--text-muted)', fontSize: '0.8rem' }}>{u.email}</td>
@@ -540,7 +567,7 @@ export default async function Dashboard({ searchParams }: { searchParams: Promis
                     </table>
                     {displayApprovedUsers.length === 0 && (
                       <div style={{ padding: '2rem', textAlign: 'center', color: 'var(--text-dim)', fontSize: '0.85rem' }}>
-                        Bu yıla ({selectedYear}) ait kayıtlı üye bulunamadı.
+                        Bu sezona ait kayıtlı üye bulunamadı.
                       </div>
                     )}
                   </div>
