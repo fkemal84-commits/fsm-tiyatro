@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { updateSiteConfig } from '@/app/actions';
 import { useRouter } from 'next/navigation';
+import SmartFileInput from '@/components/SmartFileInput';
 
 interface SiteConfigFormProps {
   siteConfig: any;
@@ -91,45 +92,14 @@ export default function SiteConfigForm({ siteConfig }: SiteConfigFormProps) {
 
       <form onSubmit={handleSubmit} encType="multipart/form-data" style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
         <div>
-          <label style={labelStyle}>Hero Arka Plan Görseli Yükle (PNG, JPG, WEBP, PDF)</label>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
-            <input
-              type="file"
-              name="heroImage"
-              accept="image/jpeg,image/png,image/webp,image/gif,application/pdf"
-              onChange={handleFileChange}
-              style={{
-                padding: '0.75rem',
-                background: 'var(--input-bg)',
-                border: '1px dashed var(--primary-gold-border)',
-                borderRadius: '8px',
-                color: 'var(--text-muted)',
-                fontSize: '0.85rem',
-                cursor: 'pointer'
-              }}
-            />
-
-            {previewUrl && (
-              <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', padding: '0.75rem 1rem', background: 'var(--bg-surface-elevated)', borderRadius: '8px', border: '1px solid var(--border-subtle)' }}>
-                <img
-                  src={previewUrl}
-                  alt="Hero Önizleme"
-                  style={{ width: '90px', height: '54px', objectFit: 'cover', borderRadius: '6px', border: '1px solid var(--border-medium)' }}
-                />
-                <div style={{ flex: 1, minWidth: 0 }}>
-                  <span style={{ fontSize: '0.75rem', color: 'var(--primary-gold)', fontWeight: 'bold', display: 'block' }}>
-                    ✓ Seçili / Aktif Arka Plan Görseli
-                  </span>
-                  <span style={{ fontSize: '0.7rem', color: 'var(--text-dim)', display: 'block', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                    Görsel hazır, "Kaydet ve Yayınla" butonuna bastığınızda veritabanına işlenecektir.
-                  </span>
-                </div>
-              </div>
-            )}
-          </div>
-          <p style={{ fontSize: '0.72rem', color: 'var(--text-dim)', marginTop: '0.4rem' }}>
-            Bilgisayarınızdan dosya seçtiğinizde görsel optimize edilerek doğrudan veritabanına işlenir. Link kopyalamanıza gerek yoktur.
-          </p>
+          <SmartFileInput
+            name="heroImage"
+            label="Hero Arka Plan Görseli Yükle"
+            maxWidth={1920}
+            maxHeight={1080}
+            quality={0.82}
+            helperText="Seçtiğiniz görsel otomatik olarak tam ekran boyutuna optimize edilerek işlenir."
+          />
         </div>
 
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>

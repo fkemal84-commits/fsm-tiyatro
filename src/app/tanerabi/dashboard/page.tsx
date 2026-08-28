@@ -3,6 +3,7 @@ import DeleteButton from '@/components/DeleteButton';
 import SiteConfigForm from '@/components/SiteConfigForm';
 import RoleSelector from '@/components/RoleSelector';
 import TitleManager from '@/components/TitleManager';
+import SmartFileInput from '@/components/SmartFileInput';
 import { adminDb } from '@/lib/firebase-admin';
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
@@ -629,8 +630,14 @@ export default async function Dashboard({ searchParams }: { searchParams: Promis
                       <input type="text" name="year" placeholder="Örn: 2026 Sezonu" style={inputStyle} required />
                     </div>
                     <div>
-                      <label style={labelStyle}>Oyun Afişi (maks. 2MB)</label>
-                      <input type="file" name="poster" accept="image/jpeg,image/png,image/webp" style={{ color: 'var(--text-muted)', fontSize: '0.875rem' }} />
+                      <SmartFileInput
+                        name="poster"
+                        label="Oyun Afişi"
+                        maxWidth={1200}
+                        maxHeight={1800}
+                        quality={0.82}
+                        helperText="İstediğiniz boyutta fotoğraf seçebilirsiniz; tarayıcıda anında optimize edilir."
+                      />
                     </div>
                     <div style={{ gridColumn: '1/-1' }}>
                       <label style={labelStyle}>Özet</label>
@@ -698,8 +705,14 @@ export default async function Dashboard({ searchParams }: { searchParams: Promis
                     </div>
                     <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
                       <div>
-                        <label style={labelStyle}>Kapak Fotoğrafı (JPG, PNG, WEBP)</label>
-                        <input type="file" name="image" accept="image/jpeg,image/png,image/webp" style={{ color: 'var(--text-muted)', fontSize: '0.875rem' }} />
+                        <SmartFileInput
+                          name="image"
+                          label="Kapak Fotoğrafı"
+                          maxWidth={1600}
+                          maxHeight={900}
+                          quality={0.80}
+                          helperText="Boyut sınırı yoktur; anında optimize edilir."
+                        />
                       </div>
                       <div>
                         <label style={labelStyle}>Ek PDF Belgesi (Akademik / Makale için)</label>

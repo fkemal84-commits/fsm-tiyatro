@@ -2,6 +2,7 @@
 
 import { useState, useRef } from 'react';
 import { changePassword, updateProfile, uploadAvatar } from '@/app/actions';
+import { compressImageOnClient } from '@/lib/client-compress';
 
 export default function ProfileClient({ user }: { user: any }) {
   const [profileLoading, setProfileLoading] = useState(false);
@@ -101,21 +102,25 @@ export default function ProfileClient({ user }: { user: any }) {
 
   const handleFileChange = async (file: File) => {
     if (!file) return;
-    if (file.size > 2 * 1024 * 1024) {
-      setAvatarError('Dosya boyutu 2MB üzerinde olamaz.');
-      return;
-    }
 
     setAvatarLoading(true);
     setAvatarError('');
 
     try {
+      // Tarayıcıda 500x500 WebP formatına anında sıkıştır
+      const compressedFile = await compressImageOnClient(file, {
+        maxWidth: 500,
+        maxHeight: 500,
+        quality: 0.80,
+        mimeType: 'image/webp'
+      });
+
       const reader = new FileReader();
       reader.onload = (e) => setAvatarPreview(e.target?.result as string);
-      reader.readAsDataURL(file);
+      reader.readAsDataURL(compressedFile);
 
       const formData = new FormData();
-      formData.append('photo', file);
+      formData.append('photo', compressedFile);
 
       const res = await uploadAvatar(formData);
       if (res?.error) {
