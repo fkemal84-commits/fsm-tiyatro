@@ -1,4 +1,4 @@
-import { addPost, addPlay, changeUserRole, deletePost, deletePlay, approveUser, rejectUser, deleteUserRecord, addEvent, deleteEvent, updateSiteConfig, addAvailableTitle, removeAvailableTitle } from '@/app/actions';
+import { addPost, addPlay, changeUserRole, deletePost, deletePlay, approveUser, rejectUser, deleteUserRecord, addEvent, deleteEvent, updateSiteConfig, addAvailableTitle, removeAvailableTitle, addTeamNeed, deleteTeamNeed, deleteTeamApplication } from '@/app/actions';
 import DeleteButton from '@/components/DeleteButton';
 import SiteConfigForm from '@/components/SiteConfigForm';
 import RoleSelector from '@/components/RoleSelector';
@@ -26,7 +26,7 @@ export default async function Dashboard({ searchParams }: { searchParams: Promis
     const selectedYear = sp.year || 'all';
 
     // Veritabanı verilerini çek
-    const [usersSnap, postsSnap, playsSnap, eventsSnap, requestsSnap, configDoc, titlesDoc] = await Promise.all([
+    const [usersSnap, postsSnap, playsSnap, eventsSnap, requestsSnap, configDoc, titlesDoc, teamNeedsSnap, teamAppsSnap] = await Promise.all([
       adminDb.collection('users').get(),
       adminDb.collection('posts').get(),
       adminDb.collection('plays').get(),
@@ -34,6 +34,8 @@ export default async function Dashboard({ searchParams }: { searchParams: Promis
       adminDb.collection('eventRequests').get(),
       adminDb.collection('settings').doc('site_config').get(),
       adminDb.collection('settings').doc('titles').get(),
+      adminDb.collection('teamNeeds').get(),
+      adminDb.collection('teamApplications').get(),
     ]);
 
     const defaultTitles = [
@@ -133,10 +135,14 @@ export default async function Dashboard({ searchParams }: { searchParams: Promis
       ? approvedUsers.filter(u => u.registrationYear === selectedYear || u.season === selectedYear)
       : approvedUsers;
 
+    const teamNeeds = teamNeedsSnap.docs.map(doc => ({ id: doc.id, ...doc.data() as any })).sort((a, b) => new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime());
+    const teamApplications = teamAppsSnap.docs.map(doc => ({ id: doc.id, ...doc.data() as any })).sort((a, b) => new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime());
+
     // Sidebar yapısı
     const tabs = [
       { key: 'overview', label: 'Genel Bakış', icon: 'grid-outline', roles: ['SUPERADMIN', 'ADMIN', 'EDITOR'] },
       { key: 'members', label: 'Üyeler', icon: 'people-outline', roles: ['SUPERADMIN', 'ADMIN'], badge: pendingUsers.length || undefined },
+      { key: 'needs', label: 'İş & Görev İlanları', icon: 'briefcase-outline', roles: ['SUPERADMIN', 'ADMIN'], badge: teamApplications.length || undefined },
       { key: 'plays', label: 'Oyunlar', icon: 'film-outline', roles: ['SUPERADMIN', 'ADMIN'] },
       { key: 'blog', label: 'Blog', icon: 'create-outline', roles: ['SUPERADMIN', 'ADMIN', 'EDITOR'] },
       { key: 'events', label: 'Etkinlikler', icon: 'calendar-outline', roles: ['SUPERADMIN', 'ADMIN'] },
@@ -906,6 +912,202 @@ export default async function Dashboard({ searchParams }: { searchParams: Promis
                     </div>
                   </div>
                 </div>
+              </div>
+            )}
+
+            {/* İŞ & GÖREV İLANLARI VE GELEN BAŞVURULAR SEKME İÇERİĞİ */}
+            {activeTab === 'needs' && (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}>
+                
+                {/* 1. GELEN BAŞVURULAR KARTI */}
+                <div style={{ background: 'var(--bg-surface)', border: '1px solid var(--border-subtle)', borderRadius: '12px', padding: '1.5rem' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.25rem', paddingBottom: '0.75rem', borderBottom: '1px solid var(--border-subtle)' }}>
+                    <div>
+                      <h2 style={{ color: 'var(--text-main)', fontSize: '1.2rem', fontWeight: 'bold', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                        📥 Gelen Ekip Başvuruları ({teamApplications.length})
+                      </h2>
+                      <p style={{ color: 'var(--text-muted)', fontSize: '0.8rem', marginTop: '0.25rem' }}>
+                        Üyelerin açık ekip ilanlarına yaptıkları başvurular ve motivasyon notları.
+                      </p>
+                    </div>
+                  </div>
+
+                  {teamApplications.length === 0 ? (
+                    <div style={{ padding: '2.5rem 1rem', textAlign: 'center', color: 'var(--text-dim)', fontSize: '0.875rem' }}>
+                      Henüz bir ekip ilanına başvuru yapılmamış.
+                    </div>
+                  ) : (
+                    <div style={{ overflowX: 'auto' }}>
+                      <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.85rem', color: 'var(--text-main)' }}>
+                        <thead>
+                          <tr style={{ borderBottom: '1px solid var(--border-medium)' }}>
+                            {['Aday / Üye', 'Aranan Görev', 'Bölüm', 'İletişim & WhatsApp', 'Aday Notu', 'Başvuru Tarihi', ''].map((h, i) => (
+                              <th key={`${h}-${i}`} style={{ padding: '0.75rem', textAlign: 'left', color: 'var(--text-dim)', fontWeight: 'bold', fontSize: '0.7rem', textTransform: 'uppercase', letterSpacing: '0.08em' }}>
+                                {h}
+                              </th>
+                            ))}
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {teamApplications.map((app: any) => {
+                            const rawDigits = (app.userPhone || '').replace(/\D/g, '');
+                            const waDigits = rawDigits.startsWith('90') ? rawDigits.slice(2) : (rawDigits.startsWith('0') ? rawDigits.slice(1) : rawDigits);
+                            const waLink = waDigits.length === 10 ? `https://wa.me/90${waDigits}` : '';
+
+                            return (
+                              <tr key={app.id} style={{ borderBottom: '1px solid var(--border-subtle)' }}>
+                                <td style={{ padding: '0.875rem', fontWeight: 'bold', color: 'var(--text-main)', whiteSpace: 'nowrap' }}>
+                                  {app.userName || 'İsimsiz Üye'}
+                                </td>
+                                <td style={{ padding: '0.875rem' }}>
+                                  <span style={{ padding: '0.25rem 0.6rem', background: 'var(--primary-gold-dim)', border: '1px solid var(--primary-gold-border)', borderRadius: '6px', color: 'var(--primary-gold)', fontSize: '0.75rem', fontWeight: 'bold' }}>
+                                    🎯 {app.roleName}
+                                  </span>
+                                </td>
+                                <td style={{ padding: '0.875rem', color: 'var(--text-muted)', fontSize: '0.8rem' }}>
+                                  {app.userDepartment || '—'}
+                                </td>
+                                <td style={{ padding: '0.875rem', whiteSpace: 'nowrap' }}>
+                                  <div style={{ display: 'flex', flexDirection: 'column', gap: '0.2rem' }}>
+                                    <span style={{ fontSize: '0.8rem', color: 'var(--text-main)' }}>{app.userPhone || app.userEmail}</span>
+                                    {waLink && (
+                                      <a
+                                        href={waLink}
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        style={{ color: '#10b981', fontSize: '0.72rem', fontWeight: '600', textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: '0.25rem' }}
+                                      >
+                                        <ion-icon name="logo-whatsapp" /> WhatsApp Sohbeti Aç →
+                                      </a>
+                                    )}
+                                  </div>
+                                </td>
+                                <td style={{ padding: '0.875rem', maxWidth: '280px', color: 'var(--text-muted)', fontSize: '0.8rem' }}>
+                                  {app.note ? (
+                                    <span style={{ fontStyle: 'italic', color: 'var(--text-main)' }}>&ldquo;{app.note}&rdquo;</span>
+                                  ) : (
+                                    <span style={{ color: 'var(--text-dim)' }}>Not eklenmedi</span>
+                                  )}
+                                </td>
+                                <td style={{ padding: '0.875rem', color: 'var(--text-dim)', fontSize: '0.75rem', whiteSpace: 'nowrap' }}>
+                                  {app.createdAt ? new Date(app.createdAt).toLocaleDateString('tr-TR', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' }) : '—'}
+                                </td>
+                                <td style={{ padding: '0.875rem', textAlign: 'right' }}>
+                                  <form action={deleteTeamApplication as any}>
+                                    <input type="hidden" name="appId" value={app.id} />
+                                    <button
+                                      type="submit"
+                                      title="Başvuruyu Kaldır"
+                                      style={{ padding: '0.35rem 0.65rem', border: '1px solid rgba(239, 68, 68, 0.3)', borderRadius: '6px', background: 'transparent', color: '#f87171', fontSize: '0.75rem', cursor: 'pointer' }}
+                                    >
+                                      Kaldır
+                                    </button>
+                                  </form>
+                                </td>
+                              </tr>
+                            );
+                          })}
+                        </tbody>
+                      </table>
+                    </div>
+                  )}
+                </div>
+
+                {/* 2. İLAN YAYINLAMA VE MEVCUT İLANLAR KARTI */}
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: '1.5rem' }}>
+                  
+                  {/* Yeni İlan Ekle Formu */}
+                  <div style={{ background: 'var(--bg-surface)', border: '1px solid var(--border-subtle)', borderRadius: '12px', padding: '1.5rem' }}>
+                    <h3 style={{ color: 'var(--text-main)', fontSize: '1.1rem', fontWeight: 'bold', marginBottom: '0.5rem' }}>
+                      + Yeni Ekip / Görev İlanı Yayınla
+                    </h3>
+                    <p style={{ color: 'var(--text-muted)', fontSize: '0.8rem', marginBottom: '1.25rem' }}>
+                      Kulüp üyelerinin başvurabileceği açık görev ve personel ilanları oluşturun.
+                    </p>
+
+                    <form action={addTeamNeed as any} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                      <div>
+                        <label style={labelStyle}>Aranan Görev / Yetenek Adı</label>
+                        <input
+                          type="text"
+                          name="roleName"
+                          placeholder="Örn: Dekor Amiri, Işık Masası Sorumlusu, Afiş Tasarımcısı"
+                          required
+                          style={inputStyle}
+                        />
+                      </div>
+                      <div>
+                        <label style={labelStyle}>İlan Açıklaması & Beklentiler</label>
+                        <textarea
+                          name="description"
+                          rows={4}
+                          placeholder="Görev kapsamı, çalışma saatleri ve aranan özellikler..."
+                          required
+                          style={{ ...inputStyle, resize: 'vertical' }}
+                        />
+                      </div>
+                      <button
+                        type="submit"
+                        className="btn btn-primary"
+                        style={{ padding: '0.75rem 1.5rem', fontWeight: 'bold', fontSize: '0.875rem' }}
+                      >
+                        İlanı Yayınla
+                      </button>
+                    </form>
+                  </div>
+
+                  {/* Mevcut Açık İlanlar */}
+                  <div style={{ background: 'var(--bg-surface)', border: '1px solid var(--border-subtle)', borderRadius: '12px', padding: '1.5rem' }}>
+                    <h3 style={{ color: 'var(--text-main)', fontSize: '1.1rem', fontWeight: 'bold', marginBottom: '0.5rem' }}>
+                      Açık İlanlar ({teamNeeds.length})
+                    </h3>
+                    <p style={{ color: 'var(--text-muted)', fontSize: '0.8rem', marginBottom: '1.25rem' }}>
+                      Şu an Üye Panosu'nda aktif olarak yayında olan ilanlar.
+                    </p>
+
+                    {teamNeeds.length === 0 ? (
+                      <p style={{ color: 'var(--text-dim)', fontSize: '0.85rem' }}>Henüz açık bir ilan bulunmuyor.</p>
+                    ) : (
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+                        {teamNeeds.map((need: any) => (
+                          <div
+                            key={need.id}
+                            style={{
+                              padding: '1rem',
+                              background: 'var(--bg-surface-elevated)',
+                              border: '1px solid var(--border-subtle)',
+                              borderRadius: '8px',
+                              display: 'flex',
+                              flexDirection: 'column',
+                              gap: '0.5rem'
+                            }}
+                          >
+                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '1rem' }}>
+                              <h4 style={{ color: 'var(--primary-gold)', fontWeight: 'bold', fontSize: '0.95rem', margin: 0 }}>
+                                🎯 {need.roleName}
+                              </h4>
+                              <form action={deleteTeamNeed as any}>
+                                <input type="hidden" name="needId" value={need.id} />
+                                <button
+                                  type="submit"
+                                  title="İlanı Sil"
+                                  style={{ padding: '0.25rem 0.5rem', border: '1px solid rgba(239, 68, 68, 0.3)', borderRadius: '4px', background: 'transparent', color: '#f87171', fontSize: '0.7rem', cursor: 'pointer' }}
+                                >
+                                  İlanı Kapat / Sil
+                                </button>
+                              </form>
+                            </div>
+                            <p style={{ color: 'var(--text-muted)', fontSize: '0.8rem', margin: 0, lineHeight: '1.4' }}>
+                              {need.description}
+                            </p>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+
+                </div>
+
               </div>
             )}
 

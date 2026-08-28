@@ -1,12 +1,13 @@
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { adminDb } from "@/lib/firebase-admin";
-import { addTeamNeed, addEvent } from "@/app/actions";
+import { addTeamNeed, deleteTeamNeed, addEvent } from "@/app/actions";
 import { getWhatsAppEventLink } from "@/lib/utils";
 import { Metadata } from "next";
 import JoinEventButton from "../../components/JoinEventButton";
 import ScriptVault from "@/components/ScriptVault";
 import ScrollReveal from "@/components/ScrollReveal";
+import TeamNeedApplyButton from "@/components/TeamNeedApplyButton";
 
 export const dynamic = "force-dynamic";
 
@@ -22,6 +23,19 @@ export default async function MembersDashboard() {
 
   const rawName = session?.user?.name || '';
   const cleanName = rawName.replace(/undefined/gi, '').trim() || session?.user?.email?.split('@')[0] || 'Üye';
+
+  const userEmail = session?.user?.email;
+  let userApplications: string[] = [];
+  if (userEmail) {
+    try {
+      const appsSnap = await adminDb.collection('teamApplications')
+        .where('userEmail', '==', userEmail)
+        .get();
+      userApplications = appsSnap.docs.map(doc => doc.data().needId);
+    } catch {
+      userApplications = [];
+    }
+  }
 
   const rehearsalsSnapshot = await adminDb.collection('events').get();
   const events = rehearsalsSnapshot.docs
@@ -161,13 +175,30 @@ export default async function MembersDashboard() {
             <p className="text-[var(--text-dim)] text-sm">Şu an için açık bir ekip personel ilanı yok.</p>
           ) : (
             <ul className="space-y-4">
-              {teamNeeds.map((t: any) => (
-                <li key={t.id} className="p-5 bg-[var(--bg-surface-elevated)] border border-[var(--primary-gold-border)] rounded-xl transition-all">
-                  <h4 className="text-[var(--text-main)] font-bold text-xl mb-2">🎯 {t.roleName} Aranıyor!</h4>
-                  <p className="text-sm text-[var(--text-muted)] leading-relaxed mb-4">{t.description}</p>
-                  <button className="btn btn-outline w-full text-xs py-2">Ekibe Katılmak İçin Başvur</button>
-                </li>
-              ))}
+              {teamNeeds.map((t: any) => {
+                const hasApplied = userApplications.includes(t.id);
+                return (
+                  <li key={t.id} className="p-5 bg-[var(--bg-surface-elevated)] border border-[var(--primary-gold-border)] rounded-xl transition-all">
+                    <div className="flex items-start justify-between gap-3 mb-2">
+                      <h4 className="text-[var(--text-main)] font-bold text-xl">🎯 {t.roleName} Aranıyor!</h4>
+                      {canAdd && (
+                        <form action={deleteTeamNeed as any}>
+                          <input type="hidden" name="needId" value={t.id} />
+                          <button
+                            type="submit"
+                            title="İlanı Sil"
+                            className="text-red-400 hover:text-red-300 text-xs px-2 py-1 rounded border border-red-500/30 hover:border-red-500"
+                          >
+                            İlanı Kaldır
+                          </button>
+                        </form>
+                      )}
+                    </div>
+                    <p className="text-sm text-[var(--text-muted)] leading-relaxed mb-4">{t.description}</p>
+                    <TeamNeedApplyButton needId={t.id} roleName={t.roleName} hasApplied={hasApplied} />
+                  </li>
+                );
+              })}
             </ul>
           )}
         </div>

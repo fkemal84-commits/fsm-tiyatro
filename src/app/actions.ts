@@ -172,6 +172,18 @@ export async function addTeamNeed(formData: FormData) {
   return adminActions.addTeamNeed(formData);
 }
 
+export async function deleteTeamNeed(formData: FormData) {
+  return adminActions.deleteTeamNeed(formData);
+}
+
+export async function applyForTeamNeed(formData: FormData) {
+  return adminActions.applyForTeamNeed(formData);
+}
+
+export async function deleteTeamApplication(formData: FormData) {
+  return adminActions.deleteTeamApplication(formData);
+}
+
 export async function updateUserPlays(userId: string, playIds: string[]) {
   return adminActions.updateUserPlays(userId, playIds);
 }

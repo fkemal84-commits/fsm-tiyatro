@@ -10,16 +10,98 @@ export async function addTeamNeed(formData: FormData) {
 
   if (!roleName || !description) return;
 
-  await requireAuth(['SUPERADMIN', 'ADMIN']);
+  await requireAuth(['SUPERADMIN', 'ADMIN', 'DIRECTOR']);
 
   await adminDb.collection('teamNeeds').add({
-    roleName,
-    description,
+    roleName: roleName.trim(),
+    description: description.trim(),
     isActive: true,
     createdAt: new Date().toISOString()
   });
 
   revalidatePath('/members');
+  revalidatePath('/tanerabi/dashboard');
+}
+
+export async function deleteTeamNeed(formData: FormData) {
+  try {
+    await requireAuth(['SUPERADMIN', 'ADMIN', 'DIRECTOR']);
+    const needId = formData.get('needId') as string;
+    if (!needId) return { error: "İlan ID gereklidir." };
+
+    await adminDb.collection('teamNeeds').doc(needId).delete();
+
+    revalidatePath('/members');
+    revalidatePath('/tanerabi/dashboard');
+    return { success: true };
+  } catch (error: any) {
+    console.error("[DELETE_TEAM_NEED] Hata:", error);
+    return { error: error.message };
+  }
+}
+
+export async function applyForTeamNeed(formData: FormData) {
+  try {
+    const { user, uid } = await requireAuth([
+      'MEMBER', 'AKTOR', 'PLAYER', 'EDITOR', 'SALES', 
+      'DIRECTOR', 'ASST_DIRECTOR', 'ADMIN', 'SUPERADMIN'
+    ]);
+
+    const needId = formData.get('needId') as string;
+    const roleName = (formData.get('roleName') as string) || 'Ekip Görevi';
+    const note = (formData.get('note') as string) || '';
+
+    if (!needId) return { error: "İlan bilgisi bulunamadı." };
+
+    // Daha önce başvurmuş mu kontrol et
+    const existing = await adminDb.collection('teamApplications')
+      .where('needId', '==', needId)
+      .where('userId', '==', uid)
+      .limit(1)
+      .get();
+
+    if (!existing.empty) {
+      return { error: "Bu ilana daha önce zaten başvurdunuz." };
+    }
+
+    const fullName = [user.name, user.surname].filter(Boolean).join(' ') || user.email;
+
+    await adminDb.collection('teamApplications').add({
+      needId,
+      roleName,
+      userId: uid,
+      userName: fullName,
+      userEmail: user.email,
+      userPhone: user.formattedPhone || user.phone || '',
+      userDepartment: user.department || '',
+      note: note.trim(),
+      status: 'PENDING',
+      createdAt: new Date().toISOString()
+    });
+
+    revalidatePath('/members');
+    revalidatePath('/tanerabi/dashboard');
+    return { success: true };
+  } catch (error: any) {
+    console.error("[APPLY_TEAM_NEED] Hata:", error);
+    return { error: error.message || "Başvuru gönderilirken hata oluştu." };
+  }
+}
+
+export async function deleteTeamApplication(formData: FormData) {
+  try {
+    await requireAuth(['SUPERADMIN', 'ADMIN', 'DIRECTOR']);
+    const appId = formData.get('appId') as string;
+    if (!appId) return { error: "Başvuru ID gereklidir." };
+
+    await adminDb.collection('teamApplications').doc(appId).delete();
+
+    revalidatePath('/tanerabi/dashboard');
+    return { success: true };
+  } catch (error: any) {
+    console.error("[DELETE_TEAM_APP] Hata:", error);
+    return { error: error.message };
+  }
 }
 
 export async function updateUserPlays(userId: string, playIds: string[]) {
