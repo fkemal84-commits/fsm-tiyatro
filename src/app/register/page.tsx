@@ -100,20 +100,21 @@ export default function Register() {
             
             {error && <div className="bg-red-500/15 text-red-400 p-3 rounded-lg mb-4 border border-red-500/30 text-sm text-center">{error}</div>}
  
-            <form onSubmit={handleRegister} className="flex flex-col gap-4">
-              <div className="flex flex-col md:flex-row gap-4">
+            <form onSubmit={handleRegister} className="flex flex-col gap-3.5 w-full">
+              {/* Ad ve Soyad (Taşmayı önleyen responsive grid) */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5 w-full">
                 <input 
                   type="text" 
                   name="name" 
                   placeholder="Adınız" 
-                  className="flex-1 p-3.5 rounded-xl border border-[var(--border-medium)] bg-[var(--input-bg)] text-[var(--text-main)] outline-none focus:border-[var(--primary-gold)] transition-all text-sm" 
+                  className="w-full min-w-0 p-3.5 rounded-xl border border-[var(--border-medium)] bg-[var(--input-bg)] text-[var(--text-main)] outline-none focus:border-[var(--primary-gold)] transition-all text-sm" 
                   required 
                 />
                 <input 
                   type="text" 
                   name="surname" 
                   placeholder="Soyadınız" 
-                  className="flex-1 p-3.5 rounded-xl border border-[var(--border-medium)] bg-[var(--input-bg)] text-[var(--text-main)] outline-none focus:border-[var(--primary-gold)] transition-all text-sm" 
+                  className="w-full min-w-0 p-3.5 rounded-xl border border-[var(--border-medium)] bg-[var(--input-bg)] text-[var(--text-main)] outline-none focus:border-[var(--primary-gold)] transition-all text-sm" 
                   required 
                 />
               </div>
@@ -122,47 +123,45 @@ export default function Register() {
                 type="email" 
                 name="email" 
                 placeholder="Okul (@stu.fsm.edu.tr) veya Kişisel E-posta" 
-                className="w-full p-3.5 rounded-xl border border-[var(--border-medium)] bg-[var(--input-bg)] text-[var(--text-main)] outline-none focus:border-[var(--primary-gold)] transition-all text-sm" 
+                className="w-full min-w-0 p-3.5 rounded-xl border border-[var(--border-medium)] bg-[var(--input-bg)] text-[var(--text-main)] outline-none focus:border-[var(--primary-gold)] transition-all text-sm" 
                 required 
               />
               
-              <div className="flex gap-2">
-                <input 
-                  type="tel" 
-                  name="phone" 
-                  value={phoneDisplay}
-                  onChange={handlePhoneChange}
-                  placeholder="Telefon: 0 (5XX) XXX XX XX" 
-                  className="flex-1 p-3.5 rounded-xl border border-[var(--border-medium)] bg-[var(--input-bg)] text-[var(--text-main)] outline-none focus:border-[var(--primary-gold)] transition-all text-sm" 
-                  required 
-                />
-              </div>
+              <input 
+                type="tel" 
+                name="phone" 
+                value={phoneDisplay}
+                onChange={handlePhoneChange}
+                placeholder="Telefon: 0 (5XX) XXX XX XX" 
+                className="w-full min-w-0 p-3.5 rounded-xl border border-[var(--border-medium)] bg-[var(--input-bg)] text-[var(--text-main)] outline-none focus:border-[var(--primary-gold)] transition-all text-sm" 
+                required 
+              />
 
               <input 
                 type="text" 
                 name="department" 
-                placeholder="Bölümünüz (Örn: Hukuk, Mimarlık, Bilgisayar Müh.)" 
-                className="w-full p-3.5 rounded-xl border border-[var(--border-medium)] bg-[var(--input-bg)] text-[var(--text-main)] outline-none focus:border-[var(--primary-gold)] transition-all text-sm" 
+                placeholder="Bölümünüz (Örn: Hukuk, Mimarlık, Psikoloji)" 
+                className="w-full min-w-0 p-3.5 rounded-xl border border-[var(--border-medium)] bg-[var(--input-bg)] text-[var(--text-main)] outline-none focus:border-[var(--primary-gold)] transition-all text-sm" 
               />
 
               <input 
                 type="password" 
                 name="password" 
                 placeholder="Güçlü bir şifre belirleyin" 
-                className="w-full p-3.5 rounded-xl border border-[var(--border-medium)] bg-[var(--input-bg)] text-[var(--text-main)] outline-none focus:border-[var(--primary-gold)] transition-all text-sm" 
+                className="w-full min-w-0 p-3.5 rounded-xl border border-[var(--border-medium)] bg-[var(--input-bg)] text-[var(--text-main)] outline-none focus:border-[var(--primary-gold)] transition-all text-sm" 
                 required 
               />
 
-              <div className="flex items-start gap-3 my-2 text-left">
-                <input type="checkbox" name="consent" id="consent" required className="mt-1 accent-[var(--primary-gold)]" />
-                <label htmlFor="consent" className="text-xs text-[var(--text-muted)] cursor-pointer leading-relaxed">
+              <div className="flex items-start gap-3 my-1 text-left">
+                <input type="checkbox" name="consent" id="consent" required className="mt-1 accent-[var(--primary-gold)] flex-shrink-0 cursor-pointer" />
+                <label htmlFor="consent" className="text-xs text-[var(--text-muted)] cursor-pointer leading-relaxed select-none">
                   Kulüp içi prova duyuruları, etkinlik takvimi ve koordinasyon iletişimlerinin tarafıma iletilmesini onaylıyorum.
                 </label>
               </div>
 
               <button 
                 type="submit" 
-                className="btn btn-primary w-full py-4 text-sm font-bold tracking-wider" 
+                className="btn btn-primary w-full py-3.5 text-sm font-bold tracking-wider mt-1" 
                 disabled={loading}
               >
                 {loading ? 'Kaydınız İşleniyor...' : 'Kayıt Ol'}
