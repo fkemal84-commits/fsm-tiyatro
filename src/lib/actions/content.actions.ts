@@ -229,6 +229,29 @@ export async function deletePlay(formData: FormData) {
   }
 }
 
+export async function updatePlayStatus(formData: FormData) {
+  try {
+    await requireAuth(['SUPERADMIN', 'ADMIN', 'DIRECTOR']);
+    const playId = formData.get('playId') as string;
+    const newStatus = formData.get('status') as string;
+
+    if (!playId || !newStatus) return;
+
+    await adminDb.collection('plays').doc(playId).update({
+      status: newStatus,
+      updatedAt: new Date().toISOString()
+    });
+
+    revalidatePath('/');
+    revalidatePath('/oyunlar');
+    revalidatePath('/tanerabi/dashboard');
+    return { success: true };
+  } catch (error: any) {
+    console.error("[UPDATE_PLAY_STATUS] Hata:", error);
+    return { error: error.message };
+  }
+}
+
 export async function toggleLike(postId: string) {
   try {
     const { session } = await requireAuth(['MEMBER', 'AKTOR', 'EDITOR', 'DIRECTOR', 'ASST_DIRECTOR', 'ADMIN', 'SUPERADMIN']);

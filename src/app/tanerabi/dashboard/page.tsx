@@ -4,6 +4,7 @@ import SiteConfigForm from '@/components/SiteConfigForm';
 import RoleSelector from '@/components/RoleSelector';
 import TitleManager from '@/components/TitleManager';
 import SmartFileInput from '@/components/SmartFileInput';
+import PlayStatusChanger from '@/components/PlayStatusChanger';
 import { adminDb } from '@/lib/firebase-admin';
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
@@ -621,22 +622,38 @@ export default async function Dashboard({ searchParams }: { searchParams: Promis
                 <div style={{ background: 'var(--bg-surface)', border: '1px solid var(--border-subtle)', borderRadius: '12px', padding: '1.5rem' }}>
                   <h2 style={{ color: 'var(--text-main)', marginBottom: '1.25rem', fontSize: '1.1rem', fontWeight: 'bold' }}>Yeni Oyun Ekle</h2>
                   <form action={addPlay as any} encType="multipart/form-data" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
-                    <div style={{ gridColumn: '1/-1' }}>
+                    <div>
                       <label style={labelStyle}>Oyun Adı</label>
                       <input type="text" name="title" placeholder="Örn: Hamlet" style={inputStyle} required />
                     </div>
                     <div>
+                      <label style={labelStyle}>Oyun Durumu</label>
+                      <select name="status" style={inputStyle} defaultValue="ACTIVE">
+                        <option value="ACTIVE">🎭 Sahnede (Bu Sezon)</option>
+                        <option value="UPCOMING">✨ Yakında (Hazırlanıyor)</option>
+                        <option value="ARCHIVED">🏛️ Geçmiş Oyun (Arşiv)</option>
+                      </select>
+                    </div>
+                    <div>
                       <label style={labelStyle}>Sezon</label>
-                      <input type="text" name="year" placeholder="Örn: 2026 Sezonu" style={inputStyle} required />
+                      <input type="text" name="year" placeholder="Örn: 2026-2027 Sezonu" style={inputStyle} required />
+                    </div>
+                    <div>
+                      <label style={labelStyle}>Yazar / Oyun Yazarı</label>
+                      <input type="text" name="playwright" placeholder="Örn: William Shakespeare" style={inputStyle} />
+                    </div>
+                    <div>
+                      <label style={labelStyle}>Yönetmen / Reji</label>
+                      <input type="text" name="director" placeholder="Örn: Kulüp Yönetmeni" style={inputStyle} />
                     </div>
                     <div>
                       <SmartFileInput
                         name="poster"
-                        label="Oyun Afişi"
+                        label="Dikey Oyun Afişi"
                         maxWidth={1200}
                         maxHeight={1800}
                         quality={0.82}
-                        helperText="İstediğiniz boyutta fotoğraf seçebilirsiniz; tarayıcıda anında optimize edilir."
+                        helperText="Dikey tiyatro afişinizi seçin; otomatik optimize edilir."
                       />
                     </div>
                     <div style={{ gridColumn: '1/-1' }}>
@@ -655,14 +672,15 @@ export default async function Dashboard({ searchParams }: { searchParams: Promis
 
                 <div style={{ background: 'var(--bg-surface)', border: '1px solid var(--border-subtle)', borderRadius: '12px', padding: '1.5rem' }}>
                   <h2 style={{ color: 'var(--text-main)', marginBottom: '1rem', fontSize: '1.1rem', fontWeight: 'bold' }}>Mevcut Oyunlar ({plays.length})</h2>
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '0.6rem' }}>
                     {plays.map((p: any) => (
-                      <div key={p.id} style={{ padding: '0.875rem 1rem', background: 'var(--bg-surface-elevated)', borderRadius: '8px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '1rem', border: '1px solid var(--border-subtle)' }}>
-                        <div>
-                          <span style={{ color: 'var(--text-main)', fontSize: '0.875rem', fontWeight: '500' }}>{p.title}</span>
-                          {p.year && <span style={{ color: 'var(--text-dim)', fontSize: '0.75rem', marginLeft: '0.75rem' }}>{p.year}</span>}
+                      <div key={p.id} style={{ padding: '0.875rem 1rem', background: 'var(--bg-surface-elevated)', borderRadius: '8px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '1rem', border: '1px solid var(--border-subtle)', flexWrap: 'wrap' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                          <span style={{ color: 'var(--text-main)', fontSize: '0.875rem', fontWeight: 'bold' }}>{p.title}</span>
+                          {p.year && <span style={{ color: 'var(--text-dim)', fontSize: '0.75rem' }}>{p.year}</span>}
                         </div>
-                        <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center', flexShrink: 0 }}>
+                        <div style={{ display: 'flex', gap: '0.6rem', alignItems: 'center', flexShrink: 0 }}>
+                          <PlayStatusChanger playId={p.id} initialStatus={p.status || 'ACTIVE'} />
                           <Link href={`/oyunlar/${p.id}`} target="_blank" style={{ padding: '0.35rem 0.75rem', border: '1px solid var(--border-medium)', borderRadius: '6px', fontSize: '0.75rem', color: 'var(--text-muted)', textDecoration: 'none' }}>Görüntüle</Link>
                           <DeleteButton action={deletePlay as any} id={p.id} name={p.title} confirmMessage="Bu oyunu silmek istediğine emin misin?" idFieldName="playId" />
                         </div>

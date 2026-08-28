@@ -69,6 +69,10 @@ export async function deletePlay(formData: FormData) {
   return contentActions.deletePlay(formData);
 }
 
+export async function updatePlayStatus(formData: FormData) {
+  return contentActions.updatePlayStatus(formData);
+}
+
 export async function toggleLike(postId: string) {
   return contentActions.toggleLike(postId);
 }

@@ -40,134 +40,172 @@ export default function HeroCarousel({ slides, showTicketQuery = true }: HeroCar
   if (!slides || slides.length === 0) return null;
 
   const slide = slides[current];
+  const hasPoster = !!slide.imageUrl;
 
   return (
     <div
-      className="relative w-full overflow-hidden"
+      className="relative w-full overflow-hidden min-h-[85vh] sm:min-h-[90vh] flex flex-col justify-between bg-[var(--bg-dark)]"
       onMouseEnter={() => setPaused(true)}
       onMouseLeave={() => setPaused(false)}
     >
-      {/* Arka plan görseli */}
-      <div className="absolute inset-0 z-0 transition-all duration-700">
+      {/* 1. SİNEMATİK ARKA PLAN ATMOSFERİ */}
+      <div className="absolute inset-0 z-0 overflow-hidden pointer-events-none">
         {slide.imageUrl ? (
-          <Image
-            src={slide.imageUrl}
-            alt={slide.title}
-            fill
-            className="object-cover object-top transition-opacity duration-700"
-            priority
-            sizes="100vw"
-          />
+          <div className="relative w-full h-full">
+            <Image
+              src={slide.imageUrl}
+              alt={slide.title}
+              fill
+              className="object-cover scale-125 blur-3xl opacity-20 transition-all duration-1000"
+              priority
+              sizes="100vw"
+            />
+            {/* Karartma katmanları */}
+            <div className="absolute inset-0 bg-gradient-to-t from-[var(--bg-dark)] via-[var(--bg-dark)]/85 to-[var(--bg-dark)]/90" />
+            <div className="absolute inset-0 bg-gradient-to-r from-[var(--bg-dark)] via-[var(--bg-dark)]/70 to-[var(--bg-dark)]/90" />
+          </div>
         ) : (
-          <div className="absolute inset-0 bg-gradient-to-br from-[var(--bg-dark)] via-[#111] to-[#0a0a0a]" />
+          <div className="absolute inset-0 bg-gradient-to-br from-[var(--bg-dark)] via-[#121216] to-[#070709]" />
         )}
-        {/* Karanlık overlay — metin okunabilirliği */}
-        <div className="absolute inset-0 bg-gradient-to-r from-[var(--bg-dark)] via-[var(--bg-dark)]/80 to-transparent" />
-        <div className="absolute inset-0 bg-gradient-to-t from-[var(--bg-dark)] via-transparent to-transparent" />
       </div>
 
-      {/* İçerik */}
-      <div className="relative z-10 pt-28 pb-14 sm:pt-36 sm:pb-24 px-[5%] max-w-[1380px] mx-auto min-h-[80vh] sm:min-h-[88vh] flex flex-col justify-center">
-        <div className="max-w-3xl animate-fadeIn" key={slide.id}>
+      {/* 2. ÖN PLAN İÇERİK — 2 KOLONLU DİKEY AFİŞ & METİN DÜZENİ */}
+      <div className="relative z-10 pt-28 pb-8 sm:pt-36 sm:pb-12 px-[5%] max-w-[1380px] mx-auto w-full my-auto">
+        <div 
+          key={slide.id} 
+          className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 items-center animate-fadeIn"
+        >
           
-          {/* Etiket */}
-          <div className="inline-flex items-center gap-2 mb-4 px-3 py-1 rounded-full border border-[var(--primary-gold-border)] bg-[var(--primary-gold-dim)] text-[var(--primary-gold)] text-[10px] sm:text-[11px] font-bold tracking-[0.18em] uppercase">
-            <span className="w-1.5 h-1.5 rounded-full bg-[var(--primary-gold)] animate-pulse" />
-            {slide.tag}
-          </div>
+          {/* SOL ALAN: METİNLER & BUTONLAR */}
+          <div className={`${hasPoster ? 'lg:col-span-7' : 'lg:col-span-12 max-w-3xl'} flex flex-col justify-center`}>
+            
+            {/* Sezon & Tür Etiketi */}
+            <div className="inline-flex items-center gap-2 mb-4 px-3 py-1 rounded-full border border-[var(--primary-gold-border)] bg-[var(--primary-gold-dim)] text-[var(--primary-gold)] text-[10px] sm:text-[11px] font-bold tracking-[0.18em] uppercase self-start">
+              <span className="w-1.5 h-1.5 rounded-full bg-[var(--primary-gold)] animate-pulse" />
+              {slide.tag}
+            </div>
 
-          {/* Başlık */}
-          <h1 className="serif-font text-3xl sm:text-5xl md:text-6xl lg:text-7xl text-[var(--text-main)] leading-[1.1] mb-4 break-words">
-            {slide.title}
-          </h1>
+            {/* Oyun / Yazı Başlığı */}
+            <h1 className="serif-font text-3xl sm:text-5xl md:text-6xl lg:text-7xl text-[var(--text-main)] leading-[1.08] mb-4 break-words">
+              {slide.title}
+            </h1>
 
-          {/* Alt başlık */}
-          {slide.subtitle && (
-            <p className="text-sm sm:text-base md:text-lg text-[var(--text-muted)] max-w-xl font-light leading-relaxed mb-6 sm:mb-8">
-              {slide.subtitle}
-            </p>
-          )}
-
-          {/* CTA */}
-          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 sm:gap-4">
-            <Link
-              href={slide.href}
-              className="btn btn-primary px-6 py-3 text-xs sm:text-sm font-bold tracking-wider text-center"
-            >
-              {slide.type === 'post' ? 'Yazıyı Oku' : slide.type === 'play' ? 'Oyun Detayları' : 'Daha Fazla'}
-            </Link>
-            {showTicketQuery ? (
-              <Link href="/biletimi-bul" className="btn btn-outline px-6 py-3 text-xs sm:text-sm tracking-wider text-center">
-                Biletimi Sorgula
-              </Link>
-            ) : (
-              <Link href="/oyunlar" className="btn btn-outline px-6 py-3 text-xs sm:text-sm tracking-wider text-center">
-                Oyunları İncele
-              </Link>
+            {/* Alt Başlık / Özet */}
+            {slide.subtitle && (
+              <p className="text-xs sm:text-sm md:text-base text-[var(--text-muted)] max-w-xl font-light leading-relaxed mb-6 sm:mb-8">
+                {slide.subtitle}
+              </p>
             )}
-          </div>
-        </div>
 
-        {/* Alt bar: meta bilgileri */}
-        <div className="mt-8 sm:mt-12 pt-4 sm:pt-6 border-t border-[var(--border-subtle)] flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-          <div className="flex flex-wrap gap-4 sm:gap-6 text-left text-xs">
-            <div>
-              <span className="block text-[9px] sm:text-[10px] text-[var(--text-dim)] uppercase font-bold tracking-widest">TOPLULUK</span>
-              <span className="text-xs sm:text-sm font-semibold text-[var(--text-main)]">FSM Tiyatro Kulübü</span>
+            {/* Butonlar */}
+            <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 sm:gap-4 mb-6">
+              <Link
+                href={slide.href}
+                className="btn btn-primary px-7 py-3 text-xs sm:text-sm font-bold tracking-wider text-center"
+              >
+                {slide.type === 'post' ? 'Yazıyı Oku →' : slide.type === 'play' ? 'Oyun Detayları →' : 'İncele →'}
+              </Link>
+              {showTicketQuery ? (
+                <Link href="/biletimi-bul" className="btn btn-outline px-6 py-3 text-xs sm:text-sm tracking-wider text-center">
+                  🎟️ Biletimi Bul
+                </Link>
+              ) : (
+                <Link href="/oyunlar" className="btn btn-outline px-6 py-3 text-xs sm:text-sm tracking-wider text-center">
+                  Tüm Oyunlar
+                </Link>
+              )}
             </div>
-            <div>
-              <span className="block text-[9px] sm:text-[10px] text-[var(--text-dim)] uppercase font-bold tracking-widest">YERLEŞKE</span>
-              <span className="text-xs sm:text-sm font-semibold text-[var(--text-main)]">Haliç Yerleşkesi</span>
-            </div>
-            {slide.date && (
+
+            {/* Meta Detayları */}
+            <div className="flex flex-wrap gap-4 sm:gap-6 text-left text-xs pt-4 border-t border-[var(--border-subtle)]">
               <div>
-                <span className="block text-[9px] sm:text-[10px] text-[var(--text-dim)] uppercase font-bold tracking-widest">TARİH</span>
-                <span className="text-xs sm:text-sm font-semibold text-[var(--text-main)]">{slide.date}</span>
+                <span className="block text-[9px] sm:text-[10px] text-[var(--text-dim)] uppercase font-bold tracking-widest">TOPLULUK</span>
+                <span className="text-xs sm:text-sm font-semibold text-[var(--text-main)]">FSM Tiyatro</span>
               </div>
-            )}
+              <div>
+                <span className="block text-[9px] sm:text-[10px] text-[var(--text-dim)] uppercase font-bold tracking-widest">YERLEŞKE</span>
+                <span className="text-xs sm:text-sm font-semibold text-[var(--text-main)]">Haliç Yerleşkesi</span>
+              </div>
+              {slide.date && (
+                <div>
+                  <span className="block text-[9px] sm:text-[10px] text-[var(--text-dim)] uppercase font-bold tracking-widest">DÖNEM / TARİH</span>
+                  <span className="text-xs sm:text-sm font-semibold text-[var(--primary-gold)]">{slide.date}</span>
+                </div>
+              )}
+            </div>
+
           </div>
 
-          {/* Slayt navigasyonu */}
-          {slides.length > 1 && (
-            <div className="flex items-center gap-3 self-end sm:self-auto">
-              <button
-                onClick={prev}
-                className="w-8 h-8 rounded-full border border-[var(--border-medium)] flex items-center justify-center text-[var(--text-muted)] hover:border-[var(--primary-gold)] hover:text-[var(--primary-gold)] transition-all cursor-pointer"
-                aria-label="Önceki slayt"
+          {/* SAĞ ALAN: DİKEY TİYATRO AFİŞİ KARTI (KESİLMEDEN TAM DİKEY ORAN) */}
+          {hasPoster && (
+            <div className="lg:col-span-5 flex justify-center lg:justify-end">
+              <Link 
+                href={slide.href}
+                className="group relative block w-full max-w-[260px] sm:max-w-[310px] md:max-w-[340px] aspect-[2/3] rounded-2xl overflow-hidden border border-[var(--primary-gold-border)] shadow-2xl shadow-black/90 transition-transform duration-500 hover:scale-[1.02] bg-[var(--bg-surface-elevated)]"
               >
-                <ion-icon name="chevron-back-outline" style={{ fontSize: '0.9rem' }} />
-              </button>
-
-              <div className="flex gap-1.5">
-                {slides.map((_, i) => (
-                  <button
-                    key={i}
-                    onClick={() => goTo(i)}
-                    className={`rounded-full transition-all duration-300 cursor-pointer ${
-                      i === current
-                        ? 'w-5 h-1.5 bg-[var(--primary-gold)]'
-                        : 'w-1.5 h-1.5 bg-[var(--border-medium)] hover:bg-[var(--text-dim)]'
-                    }`}
-                    aria-label={`Slayt ${i + 1}`}
-                  />
-                ))}
-              </div>
-
-              <button
-                onClick={next}
-                className="w-8 h-8 rounded-full border border-[var(--border-medium)] flex items-center justify-center text-[var(--text-muted)] hover:border-[var(--primary-gold)] hover:text-[var(--primary-gold)] transition-all cursor-pointer"
-                aria-label="Sonraki slayt"
-              >
-                <ion-icon name="chevron-forward-outline" style={{ fontSize: '0.9rem' }} />
-              </button>
-
-              <span className="text-[10px] text-[var(--text-dim)] font-mono ml-1">
-                {current + 1}/{slides.length}
-              </span>
+                <Image
+                  src={slide.imageUrl!}
+                  alt={slide.title}
+                  fill
+                  className="object-cover transition-transform duration-700 group-hover:scale-105"
+                  priority
+                  sizes="(max-width: 768px) 80vw, 360px"
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent opacity-60 group-hover:opacity-30 transition-opacity" />
+                <div className="absolute bottom-3 left-3 right-3 flex items-center justify-between text-[11px] font-bold text-white/90">
+                  <span className="px-2.5 py-1 rounded bg-black/60 backdrop-blur-md border border-white/10">
+                    {slide.tag}
+                  </span>
+                  <span className="text-[var(--primary-gold)] flex items-center gap-1">
+                    İncele <ion-icon name="arrow-forward-outline" />
+                  </span>
+                </div>
+              </Link>
             </div>
           )}
+
         </div>
       </div>
+
+      {/* 3. SLAYT NAVİGASYON ÇUBUĞU (ALT ÇUBUK) */}
+      {slides.length > 1 && (
+        <div className="relative z-10 pb-6 px-[5%] max-w-[1380px] mx-auto w-full flex items-center justify-between border-t border-[var(--border-subtle)] pt-4">
+          <div className="flex items-center gap-2">
+            {slides.map((s, i) => (
+              <button
+                key={s.id || i}
+                onClick={() => goTo(i)}
+                className={`transition-all duration-300 cursor-pointer ${
+                  i === current
+                    ? 'w-7 h-2 rounded-full bg-[var(--primary-gold)]'
+                    : 'w-2 h-2 rounded-full bg-[var(--border-medium)] hover:bg-[var(--text-dim)]'
+                }`}
+                aria-label={`Slayt ${i + 1}`}
+              />
+            ))}
+          </div>
+
+          <div className="flex items-center gap-3">
+            <button
+              onClick={prev}
+              className="w-8 h-8 rounded-full border border-[var(--border-medium)] flex items-center justify-center text-[var(--text-muted)] hover:border-[var(--primary-gold)] hover:text-[var(--primary-gold)] transition-all cursor-pointer"
+              aria-label="Önceki slayt"
+            >
+              <ion-icon name="chevron-back-outline" style={{ fontSize: '0.9rem' }} />
+            </button>
+            <span className="text-[11px] text-[var(--text-dim)] font-mono">
+              {current + 1} / {slides.length}
+            </span>
+            <button
+              onClick={next}
+              className="w-8 h-8 rounded-full border border-[var(--border-medium)] flex items-center justify-center text-[var(--text-muted)] hover:border-[var(--primary-gold)] hover:text-[var(--primary-gold)] transition-all cursor-pointer"
+              aria-label="Sonraki slayt"
+            >
+              <ion-icon name="chevron-forward-outline" style={{ fontSize: '0.9rem' }} />
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

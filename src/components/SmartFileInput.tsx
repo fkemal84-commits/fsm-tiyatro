@@ -128,7 +128,7 @@ export default function SmartFileInput({
           }}
         >
           <ion-icon name="cloud-upload-outline" style={{ fontSize: '1.25rem' }} />
-          <span>Görsel Seç veya Sürükle (Boyut sınırı yok, otomatik sıkıştırılır)</span>
+          <span>Görsel Seç veya Sürükle</span>
           <input
             type="file"
             accept={accept}
@@ -142,7 +142,7 @@ export default function SmartFileInput({
             display: 'flex',
             alignItems: 'center',
             gap: '1rem',
-            padding: '0.75rem',
+            padding: '0.75rem 1rem',
             background: 'var(--bg-surface-elevated)',
             border: '1px solid var(--border-subtle)',
             borderRadius: '10px',
@@ -151,8 +151,8 @@ export default function SmartFileInput({
           {/* Küçük Önizleme */}
           <div
             style={{
-              width: '56px',
-              height: '56px',
+              width: '50px',
+              height: '50px',
               borderRadius: '8px',
               overflow: 'hidden',
               flexShrink: 0,
@@ -169,7 +169,7 @@ export default function SmartFileInput({
             />
           </div>
 
-          {/* Durum ve Boyut Bilgisi */}
+          {/* Dosya Bilgisi */}
           <div style={{ flex: 1, minWidth: 0 }}>
             <div
               style={{
@@ -183,21 +183,9 @@ export default function SmartFileInput({
             >
               {fileName}
             </div>
-
-            {compressing ? (
-              <div style={{ fontSize: '0.72rem', color: 'var(--primary-gold)', marginTop: '0.2rem' }}>
-                ⚡ Optimize ediliyor...
-              </div>
-            ) : (
-              <div style={{ fontSize: '0.72rem', color: '#10b981', marginTop: '0.2rem', display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
-                <span>{originalSize}</span>
-                <span>➔</span>
-                <span style={{ fontWeight: 'bold' }}>{compressedSize}</span>
-                <span style={{ background: 'rgba(16, 185, 129, 0.15)', padding: '0.1rem 0.4rem', borderRadius: '4px', fontSize: '0.65rem' }}>
-                  Otomatik Optimize Edildi ✅
-                </span>
-              </div>
-            )}
+            <div style={{ fontSize: '0.72rem', color: '#10b981', marginTop: '0.15rem' }}>
+              ✓ Görsel seçildi
+            </div>
           </div>
 
           {/* Kaldır Butonu */}
@@ -214,7 +202,7 @@ export default function SmartFileInput({
               cursor: 'pointer',
             }}
           >
-            Kaldır
+            Değiştir
           </button>
         </div>
       )}
