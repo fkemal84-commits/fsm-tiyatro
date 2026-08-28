@@ -1,13 +1,22 @@
 import { Metadata } from 'next';
 import Link from 'next/link';
 import { BreadcrumbsJsonLd } from '@/components/JsonLd';
+import { getServerSession } from "next-auth";
+import { authOptions } from "@/lib/auth";
+
+export const dynamic = "force-dynamic";
 
 export const metadata: Metadata = {
   title: 'Kulübe Katıl | FSM Tiyatro',
   description: 'FSM Tiyatro öğrenci kulübüne katılın. Oyunculuk, sahne arkası, reji, ışık, ses ve organizasyon.',
 };
 
-export default function KatilPage() {
+export default async function KatilPage() {
+  const session = await getServerSession(authOptions);
+  const isLoggedIn = !!session?.user;
+  const rawName = session?.user?.name || '';
+  const cleanName = rawName.replace(/undefined/gi, '').trim() || session?.user?.email?.split('@')[0] || 'Kulüp Üyesi';
+
   const baseUrl = process.env.NEXTAUTH_URL || 'https://fsmtiyatro.com';
 
   const areas = [
@@ -29,6 +38,26 @@ export default function KatilPage() {
       />
 
       <div className="max-w-3xl mx-auto px-4 sm:px-6 space-y-10 sm:space-y-12">
+        
+        {/* Zaten Üye Olan Kullanıcılar İçin Bilgi Kartı */}
+        {isLoggedIn && (
+          <div className="p-5 sm:p-6 bg-[var(--primary-gold-dim)] border border-[var(--primary-gold-border)] rounded-2xl flex flex-col sm:flex-row items-center justify-between gap-4">
+            <div>
+              <span className="text-[10px] font-bold uppercase tracking-wider text-[var(--primary-gold)] block mb-1">
+                KULÜP PORTALI
+              </span>
+              <h2 className="serif-font text-xl text-[var(--text-main)] font-bold">
+                Zaten Kulüp Üyesisiniz, {cleanName}!
+              </h2>
+              <p className="text-xs text-[var(--text-muted)] mt-1">
+                Prova takviminizi incelemek, açık ekip ilanlarına başvurmak ve senaryolara erişmek için panonuzu açın.
+              </p>
+            </div>
+            <Link href="/members" className="btn btn-primary text-xs font-bold px-6 py-3 whitespace-nowrap flex-shrink-0">
+              Üye Panosunu Aç →
+            </Link>
+          </div>
+        )}
         
         {/* Başlık ve Ana Mesaj */}
         <div>
@@ -77,9 +106,15 @@ export default function KatilPage() {
 
           <div className="pt-5 sm:pt-6 border-t border-[var(--border-subtle)] flex flex-col sm:flex-row items-center justify-between gap-4">
             <span className="text-xs text-[var(--text-dim)]">Sorularınız için: info@fsmtiyatro.com</span>
-            <Link href="/register" className="btn btn-primary text-xs font-bold px-8 py-3 w-full sm:w-auto text-center">
-              Öğrenci Kaydı Oluştur
-            </Link>
+            {isLoggedIn ? (
+              <Link href="/members" className="btn btn-primary text-xs font-bold px-8 py-3 w-full sm:w-auto text-center">
+                Üye Panosuna Git →
+              </Link>
+            ) : (
+              <Link href="/register" className="btn btn-primary text-xs font-bold px-8 py-3 w-full sm:w-auto text-center">
+                Öğrenci Kaydı Oluştur
+              </Link>
+            )}
           </div>
         </div>
 

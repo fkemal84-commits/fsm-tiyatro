@@ -3,6 +3,8 @@ import { Metadata } from 'next';
 import Image from 'next/image';
 import Link from 'next/link';
 import { BreadcrumbsJsonLd } from '@/components/JsonLd';
+import { getServerSession } from "next-auth";
+import { authOptions } from "@/lib/auth";
 
 export const dynamic = "force-dynamic";
 
@@ -12,6 +14,8 @@ export const metadata: Metadata = {
 };
 
 export default async function KulupPage() {
+  const session = await getServerSession(authOptions);
+  const isLoggedIn = !!session?.user;
   let users: any[] = [];
 
   try {
@@ -70,9 +74,15 @@ export default async function KulupPage() {
               <h2 className="serif-font text-2xl sm:text-3xl text-[var(--text-main)]">Topluluk & Ekip</h2>
               <p className="text-xs text-[var(--text-muted)] mt-1 font-light">Sahnede ve perde arkasında emek veren ekip arkadaşlarımız</p>
             </div>
-            <Link href="/katil" className="btn btn-primary !py-2 !px-4 text-xs font-bold w-full sm:w-auto text-center">
-              Ekibe Katıl
-            </Link>
+            {isLoggedIn ? (
+              <Link href="/members" className="btn btn-outline !py-2 !px-4 text-xs font-bold w-full sm:w-auto text-center">
+                🎭 Üye Panosu
+              </Link>
+            ) : (
+              <Link href="/katil" className="btn btn-primary !py-2 !px-4 text-xs font-bold w-full sm:w-auto text-center">
+                Ekibe Katıl
+              </Link>
+            )}
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-6">

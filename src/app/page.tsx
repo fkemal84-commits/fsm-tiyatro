@@ -4,10 +4,17 @@ import { adminDb } from "@/lib/firebase-admin";
 import Image from "next/image";
 import Link from "next/link";
 import { OrganizationJsonLd } from "@/components/JsonLd";
+import { getServerSession } from "next-auth";
+import { authOptions } from "@/lib/auth";
 
 export const dynamic = "force-dynamic";
 
 export default async function Home() {
+  const session = await getServerSession(authOptions);
+  const isLoggedIn = !!session?.user;
+  const rawName = session?.user?.name || '';
+  const cleanName = rawName.replace(/undefined/gi, '').trim() || session?.user?.email?.split('@')[0] || '';
+
   let plays: any[] = [];
   let posts: any[] = [];
   let events: any[] = [];
@@ -214,21 +221,40 @@ export default async function Home() {
         </div>
       </section>
 
-      {/* 5. KULÜBE KATIL (NET VE SICAK ÇAĞRI) */}
+      {/* 5. KULÜBE KATIL / ÜYE PANOSU ÇAĞRISI */}
       <section className="section max-w-4xl mx-auto py-16 text-center px-[5%]">
         <ScrollReveal className="space-y-4">
-          <span className="editorial-tag text-[var(--primary-gold)] block text-[10px]">SEN DE BİZE KATIL</span>
-          <h2 className="serif-font text-3xl sm:text-4xl text-[var(--text-main)]">
-            Sahnede veya Perde Arkasında Yerini Al.
-          </h2>
-          <p className="text-xs sm:text-sm text-[var(--text-muted)] font-light max-w-lg mx-auto leading-relaxed">
-            Oyunculuk, reji, ışık, ses, dekor, kostüm, afiş ve sahne arkası... Önceden tiyatro deneyiminizin olması gerekmez.
-          </p>
-          <div className="pt-3">
-            <Link href="/katil" className="btn btn-primary text-xs font-bold px-8 py-3">
-              Kulübe Katılın
-            </Link>
-          </div>
+          {isLoggedIn ? (
+            <>
+              <span className="editorial-tag text-[var(--primary-gold)] block text-[10px]">FSM TİYATRO PORTALI</span>
+              <h2 className="serif-font text-3xl sm:text-4xl text-[var(--text-main)]">
+                Hoş Geldiniz, {cleanName}
+              </h2>
+              <p className="text-xs sm:text-sm text-[var(--text-muted)] font-light max-w-lg mx-auto leading-relaxed">
+                Prova takviminiz, açık ekip ihtiyaç ilanları ve sahne metinlerinize Üye Panosu üzerinden hemen ulaşabilirsiniz.
+              </p>
+              <div className="pt-3">
+                <Link href="/members" className="btn btn-primary text-xs font-bold px-8 py-3">
+                  Üye Panosuna Git →
+                </Link>
+              </div>
+            </>
+          ) : (
+            <>
+              <span className="editorial-tag text-[var(--primary-gold)] block text-[10px]">SEN DE BİZE KATIL</span>
+              <h2 className="serif-font text-3xl sm:text-4xl text-[var(--text-main)]">
+                Sahnede veya Perde Arkasında Yerini Al.
+              </h2>
+              <p className="text-xs sm:text-sm text-[var(--text-muted)] font-light max-w-lg mx-auto leading-relaxed">
+                Oyunculuk, reji, ışık, ses, dekor, kostüm, afiş ve sahne arkası... Önceden tiyatro deneyiminizin olması gerekmez.
+              </p>
+              <div className="pt-3">
+                <Link href="/katil" className="btn btn-primary text-xs font-bold px-8 py-3">
+                  Kulübe Katılın
+                </Link>
+              </div>
+            </>
+          )}
         </ScrollReveal>
       </section>
 

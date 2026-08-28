@@ -114,7 +114,9 @@ export default function Navbar({ session: initialSession, initialTicketQueryActi
     { label: 'Etkinlikler', href: '/etkinlikler' },
     { label: 'Kulis', href: '/kulis' },
     { label: 'Kulüp', href: '/kulup' },
-    { label: 'Katıl', href: '/katil', highlight: true },
+    ...(currentSession?.user 
+      ? [{ label: 'Üye Panosu', href: '/members', highlight: true }] 
+      : [{ label: 'Katıl', href: '/katil', highlight: true }]),
   ];
 
   return (
@@ -246,9 +248,15 @@ export default function Navbar({ session: initialSession, initialTicketQueryActi
             <Link href="/kulup" onClick={() => setIsMenuOpen(false)} className="serif-font text-2xl text-[var(--text-main)]">
               🏛️ Kulüp & Ekip
             </Link>
-            <Link href="/katil" onClick={() => setIsMenuOpen(false)} className="serif-font text-2xl text-[var(--primary-gold)] font-bold">
-              ✨ Kulübe Katıl
-            </Link>
+            {currentSession?.user ? (
+              <Link href="/members" onClick={() => setIsMenuOpen(false)} className="serif-font text-2xl text-[var(--primary-gold)] font-bold">
+                🎭 Üye Panosu
+              </Link>
+            ) : (
+              <Link href="/katil" onClick={() => setIsMenuOpen(false)} className="serif-font text-2xl text-[var(--primary-gold)] font-bold">
+                ✨ Kulübe Katıl
+              </Link>
+            )}
             {isTicketQueryActive && (
               <Link href="/biletimi-bul" onClick={() => setIsMenuOpen(false)} className="text-sm font-bold text-[var(--primary-gold)] flex items-center gap-1 mt-2">
                 🎟️ Biletimi Bul / Gişe
