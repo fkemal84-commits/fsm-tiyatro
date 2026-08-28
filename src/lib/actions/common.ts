@@ -77,13 +77,34 @@ export async function uploadToStorage(file: File, folder: string): Promise<strin
   let buffer = Buffer.from(bytes);
   let mimeType = file.type;
 
-  // Görselleri Sharp ile otomatik optimize et (WebP 80 kalite, max 1920px genişlik)
+  // Görselleri Sharp ile otomatik akıllı optimize et (WebP formatı ve klasöre özel boyutlandırma)
   if (file.type.startsWith('image/')) {
     try {
-      buffer = await sharp(buffer)
-        .resize({ width: 1920, height: 1080, fit: 'inside', withoutEnlargement: true })
-        .webp({ quality: 80 })
-        .toBuffer();
+      let transformer = sharp(buffer);
+
+      if (folder.startsWith('avatars')) {
+        // Profil fotoğrafları: 500x500 kare kırpma (~20-35 KB)
+        transformer = transformer
+          .resize({ width: 500, height: 500, fit: 'cover', position: 'center' })
+          .webp({ quality: 80, effort: 4 });
+      } else if (folder.includes('posters')) {
+        // Oyun Afişleri: 1000x1500 dikey oran (~80-140 KB)
+        transformer = transformer
+          .resize({ width: 1000, height: 1500, fit: 'inside', withoutEnlargement: true })
+          .webp({ quality: 82, effort: 4 });
+      } else if (folder.startsWith('posts') || folder.startsWith('plays')) {
+        // Blog yazıları ve oyun görselleri: 1600x900 (~100-200 KB)
+        transformer = transformer
+          .resize({ width: 1600, height: 900, fit: 'inside', withoutEnlargement: true })
+          .webp({ quality: 80, effort: 4 });
+      } else {
+        // Hero ve genel görseller: max 1920x1080 (~180-280 KB)
+        transformer = transformer
+          .resize({ width: 1920, height: 1080, fit: 'inside', withoutEnlargement: true })
+          .webp({ quality: 82, effort: 4 });
+      }
+
+      buffer = await transformer.toBuffer();
       mimeType = 'image/webp';
     } catch (err) {
       console.warn("[UPLOAD] Sharp optimizasyon uyarısı, orijinal dosya kullanılacak:", err);

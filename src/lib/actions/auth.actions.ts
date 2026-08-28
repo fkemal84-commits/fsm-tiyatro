@@ -233,6 +233,11 @@ export async function uploadAvatar(formData: FormData) {
     const email = user.email.toLowerCase();
     const folder = `avatars/${email.replace(/[@.]/g, '_')}`;
 
+    // Eski profil fotoğrafı varsa kotayı korumak için Firebase Storage'dan sil
+    if (user.photoUrl) {
+      await deleteStorageFile(user.photoUrl);
+    }
+
     const publicUrl = await uploadToStorage(file, folder);
 
     await adminDb.collection('users').doc(uid).update({ photoUrl: publicUrl });
@@ -259,9 +264,12 @@ export async function deleteUserRecord(formData: FormData) {
   const targetData = targetDoc.data()!;
   const targetRole = targetData.role;
 
-  if (currentUserRole === 'ADMIN' && (targetRole === 'SUPERADMIN' || targetRole === 'ADMIN')) return;
-  if (targetRole === 'SUPERADMIN' && currentUserRole !== 'SUPERADMIN') return;
+  // SUPERADMIN silinemez
+  if (targetRole === 'SUPERADMIN') return;
+  // ADMIN sadece SUPERADMIN tarafından silinebilir
+  if (targetRole === 'ADMIN' && currentUserRole !== 'SUPERADMIN') return;
 
+  // Kullanıcının profil fotoğrafı varsa Storage'dan temizle
   if (targetData.photoUrl) {
     await deleteStorageFile(targetData.photoUrl);
   }
