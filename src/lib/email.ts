@@ -39,7 +39,7 @@ export async function sendPasswordResetEmail(to: string, resetLink: string) {
           </p>
           <hr style="border: 0; border-top: 1px solid rgba(255,255,255,0.1); margin-bottom: 20px;">
           <p style="font-size: 11px; text-align: center; color: #D4AF37;">
-            © 2026 FSM Tiyatro | Sanatı Birlikte Yaşayalım
+            © 2026 FSM Tiyatro
           </p>
         </div>
       `,

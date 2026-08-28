@@ -193,7 +193,7 @@ export default async function RehearsalsPage(props: { searchParams: Promise<{ vi
         <div className="flex justify-between items-center mb-8 flex-wrap gap-6 max-w-4xl mx-auto">
           <div className="text-left">
             <h1 className="serif-font text-4xl sm:text-5xl text-[var(--text-main)] mb-2">Prova <span className="text-[var(--primary-gold)]">Takvimi</span></h1>
-            <p className="text-[var(--text-muted)] text-sm mb-4">Disiplin, sahnenin ruhudur.</p>
+            <p className="text-[var(--text-muted)] text-sm mb-4">Planlanan ve tamamlanan provalar.</p>
             
             {/* GÖRÜNÜM DEĞİŞTİRİCİ */}
             <div className="inline-flex p-1 bg-[var(--bg-surface-elevated)] rounded-xl border border-[var(--border-subtle)]">

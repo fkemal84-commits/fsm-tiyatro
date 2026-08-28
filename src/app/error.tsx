@@ -16,9 +16,9 @@ export default function Error({
   return (
     <div className="flex flex-col items-center justify-center min-h-[70vh] p-6 text-center bg-[var(--bg-dark)]">
       <div className="text-6xl mb-6">🏜️</div>
-      <h1 className="serif-font text-4xl text-[var(--primary-gold)] mb-4">Bir Perde Hatası Oluştu</h1>
+      <h1 className="serif-font text-4xl text-[var(--primary-gold)] mb-4">Bir Hata Oluştu</h1>
       <p className="text-[var(--text-muted)] max-w-md mb-8">
-        Üzgünüz, teknik bir aksaklık nedeniyle sahneye ara vermek zorunda kaldık. Bu durumu ekibimize raporladık.
+        Üzgünüz, teknik bir aksaklık oluştu. Bu durumu ekibimize raporladık.
       </p>
       <div className="flex gap-4">
         <button

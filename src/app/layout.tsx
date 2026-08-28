@@ -36,14 +36,14 @@ export const dynamic = "force-dynamic";
 export const metadata: Metadata = {
   metadataBase: new URL("https://fsmtiyatro.com"),
   title: {
-    default: "FSM Tiyatro | Sahnenin Büyüsü",
+    default: "FSM Tiyatro | Sinema ve Tiyatro Kulübü",
     template: "%s | FSM Tiyatro"
   },
-  description: "Fatih Sultan Mehmet Vakıf Üniversitesi Sinema ve Tiyatro Kulübü Resmi Web Sitesi. Sanatın, tutkunun ve hikayelerin buluşma noktası.",
+  description: "Fatih Sultan Mehmet Vakıf Üniversitesi Sinema ve Tiyatro Kulübü Resmi Web Sitesi.",
   keywords: ["FSM Tiyatro", "FSMVU Tiyatro", "Fatih Sultan Mehmet Vakıf Üniversitesi", "Sinema Kulübü", "Tiyatro Kulübü", "İstanbul Tiyatro", "Üniversite Tiyatrosu"],
   authors: [{ name: "FSM Tiyatro Ekibi" }],
   openGraph: {
-    title: "FSM Tiyatro | Sahnenin Büyüsü",
+    title: "FSM Tiyatro | Sinema ve Tiyatro Kulübü",
     description: "Fatih Sultan Mehmet Vakıf Üniversitesi Sinema ve Tiyatro Kulübü Resmi Web Sitesi.",
     url: "https://fsmtiyatro.com",
     siteName: "FSM Tiyatro",
@@ -52,7 +52,7 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: "summary_large_image",
-    title: "FSM Tiyatro | Sahnenin Büyüsü",
+    title: "FSM Tiyatro | Sinema ve Tiyatro Kulübü",
     description: "Fatih Sultan Mehmet Vakıf Üniversitesi Sinema ve Tiyatro Kulübü Resmi Web Sitesi.",
   },
   robots: {

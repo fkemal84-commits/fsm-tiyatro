@@ -139,7 +139,7 @@ export default function SiteConfigForm({ siteConfig }: SiteConfigFormProps) {
               type="text"
               name="heroTitle"
               defaultValue={siteConfig?.heroTitle || ''}
-              placeholder="Provalardan Sahneye."
+              placeholder="FSM Tiyatro"
               style={inputStyle}
             />
           </div>

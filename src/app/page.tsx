@@ -39,8 +39,8 @@ export default async function Home() {
     allItems.push({
       id: 'custom_hero_banner',
       type: 'pinned',
-      title: siteConfig.heroTitle || 'Provalardan Sahneye.',
-      subtitle: siteConfig.heroSubtitle || 'Fatih Sultan Mehmet Vakıf Üniversitesi Tiyatro Kulübü. Klasiklerden çağdaş sahnelemelere, üniversite ruhuyla sahnede üretiyoruz.',
+      title: siteConfig.heroTitle || 'FSM Tiyatro',
+      subtitle: siteConfig.heroSubtitle || 'Fatih Sultan Mehmet Vakıf Üniversitesi Sinema ve Tiyatro Kulübü.',
       imageUrl: siteConfig.heroImageUrl,
       href: '/oyunlar',
       tag: 'FSM Tiyatro',
@@ -79,8 +79,8 @@ export default async function Home() {
     slides.push({
       id: 'default',
       type: 'pinned',
-      title: 'Provalardan Sahneye.',
-      subtitle: 'Fatih Sultan Mehmet Vakıf Üniversitesi Tiyatro Kulübü. Klasiklerden çağdaş sahnelemelere, üniversite ruhuyla sahnede üretiyoruz.',
+      title: 'FSM Tiyatro',
+      subtitle: 'Fatih Sultan Mehmet Vakıf Üniversitesi Sinema ve Tiyatro Kulübü.',
       imageUrl: siteConfig?.heroImageUrl || undefined,
       href: '/oyunlar',
       tag: 'FSM Tiyatro',
