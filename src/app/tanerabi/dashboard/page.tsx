@@ -11,7 +11,7 @@ import Link from 'next/link';
 
 export const dynamic = "force-dynamic";
 
-export default async function Dashboard({ searchParams }: { searchParams: Promise<{ tab?: string }> }) {
+export default async function Dashboard({ searchParams }: { searchParams: Promise<{ tab?: string; year?: string }> }) {
   try {
     const session = await getServerSession(authOptions);
     if (!session) redirect('/login');
@@ -23,6 +23,7 @@ export default async function Dashboard({ searchParams }: { searchParams: Promis
 
     const sp = await searchParams;
     const activeTab = sp.tab || 'overview';
+    const selectedYear = sp.year || 'all';
 
     // Veritabanı verilerini çek
     const [usersSnap, postsSnap, playsSnap, eventsSnap, requestsSnap, configDoc, titlesDoc] = await Promise.all([
@@ -47,6 +48,30 @@ export default async function Dashboard({ searchParams }: { searchParams: Promis
 
     const allUsers = usersSnap.docs.map(doc => {
       const data = doc.data();
+      const createdAt = data.createdAt || new Date().toISOString();
+      
+      let userYear = data.registrationYear || '';
+      if (!userYear && createdAt) {
+        try {
+          userYear = new Date(createdAt).getFullYear().toString();
+        } catch {
+          userYear = '2026';
+        }
+      }
+
+      let rawDigits = (data.rawPhone || data.phone || '').replace(/\D/g, '');
+      if (rawDigits.startsWith('90') && rawDigits.length === 12) {
+        rawDigits = rawDigits.slice(2);
+      } else if (rawDigits.startsWith('0') && rawDigits.length === 11) {
+        rawDigits = rawDigits.slice(1);
+      }
+
+      const whatsappNumber = rawDigits.length === 10 ? `+90${rawDigits}` : (data.phone || '');
+      const formattedDisplayPhone = rawDigits.length === 10 
+        ? `0${rawDigits.slice(0, 3)} ${rawDigits.slice(3, 6)} ${rawDigits.slice(6, 8)} ${rawDigits.slice(8, 10)}`
+        : (data.phone || '');
+      const whatsappLink = rawDigits.length === 10 ? `https://wa.me/90${rawDigits}` : '';
+
       return { 
         id: doc.id, 
         name: data.name || '', 
@@ -54,9 +79,13 @@ export default async function Dashboard({ searchParams }: { searchParams: Promis
         email: data.email || '', 
         role: data.role || 'MEMBER', 
         titles: Array.isArray(data.titles) ? data.titles : [],
-        createdAt: data.createdAt || new Date().toISOString(), 
-        phone: data.phone || '', 
-        department: data.department || '' 
+        createdAt, 
+        phone: whatsappNumber, 
+        formattedPhone: formattedDisplayPhone,
+        whatsappLink,
+        department: data.department || '',
+        registrationYear: userYear,
+        academicYear: data.academicYear || `${userYear}-${Number(userYear) + 1 || 2027}`
       };
     }).sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
 
@@ -68,6 +97,12 @@ export default async function Dashboard({ searchParams }: { searchParams: Promis
 
     const pendingUsers = allUsers.filter(u => u.role === 'PENDING');
     const approvedUsers = allUsers.filter(u => u.role !== 'PENDING');
+
+    // Mevcut kayıt yılları listesi
+    const availableYears = Array.from(new Set(approvedUsers.map(u => u.registrationYear).filter(Boolean))).sort().reverse();
+    const displayApprovedUsers = selectedYear !== 'all' 
+      ? approvedUsers.filter(u => u.registrationYear === selectedYear)
+      : approvedUsers;
 
     // Sidebar yapısı
     const tabs = [
@@ -316,19 +351,110 @@ export default async function Dashboard({ searchParams }: { searchParams: Promis
 
                 {/* Tüm üyeler */}
                 <div style={{ background: 'var(--bg-surface)', border: '1px solid var(--border-subtle)', borderRadius: '12px', padding: '1.5rem' }}>
-                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1rem', flexWrap: 'wrap', gap: '0.75rem' }}>
-                    <h2 style={{ color: 'var(--text-main)', fontSize: '1.1rem', fontWeight: 'bold', display: 'flex', alignItems: 'center', gap: '0.5rem', margin: 0 }}>
-                      <ion-icon name="people-outline" /> Üye & Personel Listesi ({approvedUsers.length})
-                    </h2>
-                    <a href="/api/admin/export-users" download style={{ padding: '0.5rem 1rem', background: 'var(--bg-surface-elevated)', border: '1px solid var(--border-medium)', borderRadius: '8px', fontSize: '0.75rem', fontWeight: 'bold', color: 'var(--primary-gold)', textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: '0.4rem' }}>
-                      <ion-icon name="download-outline" /> CSV İndir
-                    </a>
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1.25rem', flexWrap: 'wrap', gap: '0.75rem' }}>
+                    <div>
+                      <h2 style={{ color: 'var(--text-main)', fontSize: '1.1rem', fontWeight: 'bold', display: 'flex', alignItems: 'center', gap: '0.5rem', margin: 0 }}>
+                        <ion-icon name="people-outline" /> Üye & Personel Listesi ({displayApprovedUsers.length})
+                      </h2>
+                      {selectedYear !== 'all' && (
+                        <p style={{ color: 'var(--primary-gold)', fontSize: '0.75rem', margin: '0.2rem 0 0 0' }}>
+                          Filtrelenen Dönem: <strong>{selectedYear} Kayıtları</strong> ({displayApprovedUsers.length} kişi)
+                        </p>
+                      )}
+                    </div>
+
+                    <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
+                      <a 
+                        href={`/api/admin/export-users?year=${selectedYear}&format=csv`} 
+                        download 
+                        style={{ 
+                          padding: '0.5rem 1rem', 
+                          background: 'var(--bg-surface-elevated)', 
+                          border: '1px solid var(--border-medium)', 
+                          borderRadius: '8px', 
+                          fontSize: '0.75rem', 
+                          fontWeight: 'bold', 
+                          color: 'var(--primary-gold)', 
+                          textDecoration: 'none', 
+                          display: 'inline-flex', 
+                          alignItems: 'center', 
+                          gap: '0.4rem' 
+                        }}
+                      >
+                        <ion-icon name="download-outline" /> CSV İndir {selectedYear !== 'all' ? `(${selectedYear})` : '(Tümü)'}
+                      </a>
+                      <a 
+                        href={`/api/admin/export-users?year=${selectedYear}&format=vcf`} 
+                        download 
+                        title="Tüm stand kayıtlarını doğrudan telefon rehberinize aktarmak için vCard dosyası indirin"
+                        style={{ 
+                          padding: '0.5rem 1rem', 
+                          background: 'rgba(16, 185, 129, 0.12)', 
+                          border: '1px solid rgba(16, 185, 129, 0.3)', 
+                          borderRadius: '8px', 
+                          fontSize: '0.75rem', 
+                          fontWeight: 'bold', 
+                          color: '#10b981', 
+                          textDecoration: 'none', 
+                          display: 'inline-flex', 
+                          alignItems: 'center', 
+                          gap: '0.4rem' 
+                        }}
+                      >
+                        <ion-icon name="person-add-outline" /> 📇 Rehbere Aktar (.vcf)
+                      </a>
+                    </div>
                   </div>
+
+                  {/* Kayıt Yılı Filtre Butonları */}
+                  <div style={{ display: 'flex', gap: '0.4rem', alignItems: 'center', flexWrap: 'wrap', marginBottom: '1.25rem', paddingBottom: '1rem', borderBottom: '1px solid var(--border-subtle)' }}>
+                    <span style={{ fontSize: '0.75rem', color: 'var(--text-dim)', fontWeight: 'bold', textTransform: 'uppercase', marginRight: '0.4rem' }}>
+                      Kayıt Yılı:
+                    </span>
+                    <Link
+                      href="/tanerabi/dashboard?tab=members&year=all"
+                      style={{
+                        padding: '0.35rem 0.85rem',
+                        borderRadius: '6px',
+                        fontSize: '0.75rem',
+                        fontWeight: selectedYear === 'all' ? 'bold' : 'normal',
+                        background: selectedYear === 'all' ? 'var(--primary-gold)' : 'var(--bg-surface-elevated)',
+                        color: selectedYear === 'all' ? '#000' : 'var(--text-muted)',
+                        border: selectedYear === 'all' ? '1px solid var(--primary-gold)' : '1px solid var(--border-subtle)',
+                        textDecoration: 'none'
+                      }}
+                    >
+                      Tüm Yıllar ({approvedUsers.length})
+                    </Link>
+                    {availableYears.map(y => {
+                      const count = approvedUsers.filter(u => u.registrationYear === y).length;
+                      const isSelected = selectedYear === y;
+                      return (
+                        <Link
+                          key={y}
+                          href={`/tanerabi/dashboard?tab=members&year=${y}`}
+                          style={{
+                            padding: '0.35rem 0.85rem',
+                            borderRadius: '6px',
+                            fontSize: '0.75rem',
+                            fontWeight: isSelected ? 'bold' : 'normal',
+                            background: isSelected ? 'var(--primary-gold)' : 'var(--bg-surface-elevated)',
+                            color: isSelected ? '#000' : 'var(--text-muted)',
+                            border: isSelected ? '1px solid var(--primary-gold)' : '1px solid var(--border-subtle)',
+                            textDecoration: 'none'
+                          }}
+                        >
+                          {y} Kayıtları ({count})
+                        </Link>
+                      );
+                    })}
+                  </div>
+
                   <div style={{ overflowX: 'auto' }}>
                     <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.875rem', color: 'var(--text-main)' }}>
                       <thead>
                         <tr style={{ borderBottom: '1px solid var(--border-medium)' }}>
-                          {['Ad Soyad', 'Sistem Yetkisi (Giriş Rolü)', 'Kulüp Görev / Unvanları', 'E-Posta', 'Telefon', 'Bölüm', '', ''].map((h, i) => (
+                          {['Ad Soyad', 'Sistem Yetkisi', 'Kulüp Görevleri', 'Telefon & WhatsApp', 'Bölüm & Kayıt Yılı', 'E-Posta', '', ''].map((h, i) => (
                             <th key={`${h}-${i}`} style={{ padding: '0.75rem', textAlign: 'left', color: 'var(--text-dim)', fontWeight: 'bold', fontSize: '0.7rem', textTransform: 'uppercase', letterSpacing: '0.1em' }}>
                               {h}
                             </th>
@@ -336,7 +462,7 @@ export default async function Dashboard({ searchParams }: { searchParams: Promis
                         </tr>
                       </thead>
                       <tbody>
-                        {approvedUsers.map((u: any) => {
+                        {displayApprovedUsers.map((u: any) => {
                           const canEdit = (role === 'SUPERADMIN') || (role === 'ADMIN' && u.role !== 'SUPERADMIN' && u.role !== 'ADMIN');
                           const roleLabel: Record<string, string> = { SUPERADMIN: 'Süper Admin', ADMIN: 'Admin', SALES: 'Satış', EDITOR: 'Editör', DIRECTOR: 'Yönetmen', ASST_DIRECTOR: 'Yrd. Yönetmen', AKTOR: 'Aktör', MEMBER: 'Üye' };
                           return (
@@ -361,9 +487,44 @@ export default async function Dashboard({ searchParams }: { searchParams: Promis
                                   canEdit={canEdit} 
                                 />
                               </td>
+                              <td style={{ padding: '0.875rem', whiteSpace: 'nowrap' }}>
+                                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.2rem' }}>
+                                  <span style={{ color: 'var(--text-main)', fontSize: '0.8rem' }}>
+                                    {u.formattedPhone || u.phone || '—'}
+                                  </span>
+                                  {u.whatsappLink && (
+                                    <a
+                                      href={u.whatsappLink}
+                                      target="_blank"
+                                      rel="noopener noreferrer"
+                                      style={{
+                                        color: '#10b981',
+                                        fontSize: '0.72rem',
+                                        fontWeight: '600',
+                                        textDecoration: 'none',
+                                        display: 'inline-flex',
+                                        alignItems: 'center',
+                                        gap: '0.25rem'
+                                      }}
+                                    >
+                                      <ion-icon name="logo-whatsapp" /> WhatsApp Aç →
+                                    </a>
+                                  )}
+                                </div>
+                              </td>
+                              <td style={{ padding: '0.875rem' }}>
+                                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
+                                  <span style={{ color: 'var(--primary-gold)', fontSize: '0.8rem', fontWeight: '500' }}>
+                                    {u.department || 'Bölüm Belirtilmedi'}
+                                  </span>
+                                  {u.registrationYear && (
+                                    <span style={{ color: 'var(--text-dim)', fontSize: '0.7rem' }}>
+                                      📅 {u.registrationYear} Kaydı
+                                    </span>
+                                  )}
+                                </div>
+                              </td>
                               <td style={{ padding: '0.875rem', color: 'var(--text-muted)', fontSize: '0.8rem' }}>{u.email}</td>
-                              <td style={{ padding: '0.875rem', color: 'var(--text-dim)', fontSize: '0.8rem', whiteSpace: 'nowrap' }}>{u.phone || '—'}</td>
-                              <td style={{ padding: '0.875rem', color: 'var(--primary-gold)', fontSize: '0.8rem' }}>{u.department || '—'}</td>
                               <td style={{ padding: '0.875rem' }}>
                                 <Link href={`/tanerabi/users/${u.id}`} style={{ padding: '0.35rem 0.75rem', border: '1px solid var(--border-medium)', borderRadius: '6px', fontSize: '0.75rem', color: 'var(--text-muted)', textDecoration: 'none' }}>İncele</Link>
                               </td>
@@ -377,6 +538,11 @@ export default async function Dashboard({ searchParams }: { searchParams: Promis
                         })}
                       </tbody>
                     </table>
+                    {displayApprovedUsers.length === 0 && (
+                      <div style={{ padding: '2rem', textAlign: 'center', color: 'var(--text-dim)', fontSize: '0.85rem' }}>
+                        Bu yıla ({selectedYear}) ait kayıtlı üye bulunamadı.
+                      </div>
+                    )}
                   </div>
                 </div>
 

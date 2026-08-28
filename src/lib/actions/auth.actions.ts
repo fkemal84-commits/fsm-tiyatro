@@ -13,30 +13,36 @@ export async function registerUser(formData: FormData) {
     const name = formData.get('name') as string;
     const surname = formData.get('surname') as string;
     const email = formData.get('email') as string;
-    const countryCode = formData.get('countryCode') as string;
-    const rawPhoneWithSpaces = formData.get('phone') as string;
-    const rawPhone = rawPhoneWithSpaces ? rawPhoneWithSpaces.replace(/\s/g, '') : '';
+    const rawInputPhone = (formData.get('phone') as string || '').trim();
+    const department = (formData.get('department') as string || '').trim();
     const password = formData.get('password') as string;
     const consent = formData.get('consent') ? true : false;
 
-    if (!email || !password || !rawPhone || !name || !surname) {
+    if (!email || !password || !rawInputPhone || !name || !surname) {
       return { error: "Tüm alanlar zorunludur." };
     }
 
     if (name.length > 50 || surname.length > 50) return { error: "İsim veya soyisim çok uzun." };
     if (email.length > 100) return { error: "E-posta adresi çok uzun." };
     if (password.length > 512) return { error: "Geçersiz şifre formatı." };
-    if (rawPhone.length > 15) return { error: "Telefon numarası çok uzun." };
 
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(email)) return { error: "Geçersiz e-posta formatı." };
 
-    const phoneRegex = /^[0-9]{10}$/;
-    if (!phoneRegex.test(rawPhone)) {
-      return { error: "Lütfen geçerli bir telefon numarası giriniz (10 hane, başında 0 olmadan)." };
+    // Akıllı Telefon Temizleme: +90, 90, 0 veya boşlukları temizleyip 10 haneli (5xxxxxxxxx) elde et
+    let cleanDigits = rawInputPhone.replace(/\D/g, '');
+    if (cleanDigits.startsWith('90') && cleanDigits.length === 12) {
+      cleanDigits = cleanDigits.slice(2);
+    } else if (cleanDigits.startsWith('0') && cleanDigits.length === 11) {
+      cleanDigits = cleanDigits.slice(1);
     }
 
-    const phone = `${countryCode || '+90'}${rawPhone}`;
+    if (cleanDigits.length !== 10 || !cleanDigits.startsWith('5')) {
+      return { error: "Lütfen geçerli bir cep telefonu numarası giriniz (Örn: 5xx xxx xx xx)." };
+    }
+
+    const phone = `+90${cleanDigits}`;
+    const formattedPhone = `0${cleanDigits.slice(0, 3)} ${cleanDigits.slice(3, 6)} ${cleanDigits.slice(6, 8)} ${cleanDigits.slice(8, 10)}`;
 
     const existingUsers = await adminDb.collection('users').where('email', '==', email.toLowerCase()).limit(1).get();
     if (!existingUsers.empty) return { error: "Bu e-posta adresiyle zaten kayıt olunmuş." };
@@ -46,15 +52,27 @@ export async function registerUser(formData: FormData) {
     const isSchoolEmail = email.toLowerCase().endsWith('@stu.fsm.edu.tr');
     const role = isSchoolEmail ? 'MEMBER' : 'PENDING';
 
+    const now = new Date();
+    const currentYear = now.getFullYear().toString();
+    const currentMonth = now.getMonth() + 1; // 1-12
+    // Akademik yıl hesabı: Eylül (9) ve sonrasındaysa 2026-2027, öncesindeyse 2025-2026
+    const startYear = currentMonth >= 7 ? now.getFullYear() : now.getFullYear() - 1;
+    const academicYear = `${startYear}-${startYear + 1}`;
+
     await adminDb.collection('users').add({
-      name,
-      surname,
-      email: email.toLowerCase(),
+      name: name.trim(),
+      surname: surname.trim(),
+      email: email.toLowerCase().trim(),
       phone,
+      formattedPhone,
+      rawPhone: cleanDigits,
+      department,
       password: hashedPassword,
       consent,
       role,
-      createdAt: new Date().toISOString()
+      registrationYear: currentYear,
+      academicYear,
+      createdAt: now.toISOString()
     });
 
     return { success: true, pending: !isSchoolEmail };

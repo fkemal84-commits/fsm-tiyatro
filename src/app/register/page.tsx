@@ -14,7 +14,12 @@ export default function Register() {
   const [successMessage, setSuccessMessage] = useState('');
 
   const formatPhoneNumber = (value: string) => {
-    const numbers = value.replace(/\D/g, '').slice(0, 10);
+    let numbers = value.replace(/\D/g, '');
+    // Eğer kullanıcı 0 ile başlarsa (örn 0532), 0'ı atıp 532'den başlat
+    if (numbers.startsWith('0')) {
+      numbers = numbers.slice(1);
+    }
+    numbers = numbers.slice(0, 10);
     setRawPhone(numbers);
     
     if (numbers.length === 0) return '';
@@ -122,30 +127,23 @@ export default function Register() {
               />
               
               <div className="flex gap-2">
-                <select 
-                  name="countryCode" 
-                  className="w-[90px] p-3.5 rounded-xl border border-[var(--border-medium)] bg-[var(--input-bg)] text-[var(--text-main)] outline-none focus:border-[var(--primary-gold)] transition-all text-xs"
-                  defaultValue="+90"
-                >
-                  <option value="+90">TR +90</option>
-                  <option value="+1">US +1</option>
-                  <option value="+44">UK +44</option>
-                  <option value="+49">DE +49</option>
-                  <option value="+33">FR +33</option>
-                  <option value="+31">NL +31</option>
-                  <option value="+971">UAE +971</option>
-                  <option value="+966">SA +966</option>
-                </select>
                 <input 
                   type="tel" 
                   name="phone" 
                   value={phoneDisplay}
                   onChange={handlePhoneChange}
-                  placeholder="(5XX) XXX XX XX" 
+                  placeholder="Telefon: 0 (5XX) XXX XX XX" 
                   className="flex-1 p-3.5 rounded-xl border border-[var(--border-medium)] bg-[var(--input-bg)] text-[var(--text-main)] outline-none focus:border-[var(--primary-gold)] transition-all text-sm" 
                   required 
                 />
               </div>
+
+              <input 
+                type="text" 
+                name="department" 
+                placeholder="Bölümünüz (Örn: Hukuk, Mimarlık, Bilgisayar Müh.)" 
+                className="w-full p-3.5 rounded-xl border border-[var(--border-medium)] bg-[var(--input-bg)] text-[var(--text-main)] outline-none focus:border-[var(--primary-gold)] transition-all text-sm" 
+              />
 
               <input 
                 type="password" 
