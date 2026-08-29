@@ -11,12 +11,25 @@ export interface AIAnalysisResult {
   rawSummary?: string;
 }
 
+import { adminDb } from './firebase-admin';
+
 export async function analyzeArticleWithAI(
   title: string,
   content: string,
   category: string
 ): Promise<{ success?: boolean; data?: AIAnalysisResult; error?: string }> {
-  const apiKey = process.env.OPENROUTER_API_KEY;
+  let apiKey = process.env.OPENROUTER_API_KEY;
+
+  if (!apiKey) {
+    try {
+      const snap = await adminDb.collection('settings').doc('integrations').get();
+      if (snap.exists && snap.data()?.openrouterApiKey) {
+        apiKey = snap.data()!.openrouterApiKey;
+      }
+    } catch (e) {
+      console.warn("[AI] Firestore settings/integrations okuma hatası:", e);
+    }
+  }
 
   if (!apiKey) {
     return {
