@@ -6,7 +6,7 @@ import bcrypt from 'bcryptjs';
 import { sendPasswordResetEmail } from "@/lib/email";
 import crypto from 'crypto';
 import { headers } from 'next/headers';
-import { requireAuth, deleteStorageFile, uploadToStorage } from './common';
+import { requireAuth, deleteStorageFile, uploadToStorage, handleServerError } from './common';
 
 export async function registerUser(formData: FormData) {
   try {
@@ -96,9 +96,8 @@ export async function registerUser(formData: FormData) {
     });
 
     return { success: true, pending: !isSchoolEmail };
-  } catch (error: any) {
-    console.error("[REGISTER] Hata:", error);
-    return { error: "Kayıt sırasında teknik bir hata oluştu." };
+  } catch (error) {
+    return handleServerError(error, "REGISTER");
   }
 }
 
@@ -115,9 +114,8 @@ export async function approveUser(formData: FormData) {
 
     revalidatePath('/tanerabi/dashboard');
     return { success: true };
-  } catch (error: any) {
-    console.error("[APPROVE_USER] Hata:", error);
-    return { error: error.message };
+  } catch (error) {
+    return handleServerError(error, "APPROVE_USER");
   }
 }
 
@@ -140,9 +138,8 @@ export async function rejectUser(formData: FormData) {
 
     revalidatePath('/tanerabi/dashboard');
     return { success: true };
-  } catch (error: any) {
-    console.error("[REJECT_USER] Hata:", error);
-    return { error: error.message };
+  } catch (error) {
+    return handleServerError(error, "REJECT_USER");
   }
 }
 
@@ -165,8 +162,8 @@ export async function changePassword(formData: FormData) {
     await adminDb.collection('users').doc(uid).update({ password: hashedPassword });
 
     return { success: true };
-  } catch (error: any) {
-    return { error: error.message };
+  } catch (error) {
+    return handleServerError(error, "CHANGE_PASSWORD");
   }
 }
 
@@ -193,8 +190,8 @@ export async function updateProfile(formData: FormData) {
 
     revalidatePath('/profile');
     return { success: true };
-  } catch (error: any) {
-    return { error: error.message };
+  } catch (error) {
+    return handleServerError(error, "UPDATE_PROFILE");
   }
 }
 
@@ -245,9 +242,8 @@ export async function uploadAvatar(formData: FormData) {
     revalidatePath('/profile');
     revalidatePath('/tanerabi/dashboard');
     return { success: true, photoUrl: publicUrl };
-  } catch (error: any) {
-    console.error("[AVATAR] Hata:", error);
-    return { error: error.message || "Fotoğraf yüklenemedi." };
+  } catch (error) {
+    return handleServerError(error, "UPLOAD_AVATAR");
   }
 }
 
@@ -307,13 +303,8 @@ export async function requestPasswordReset(formData: FormData) {
     await sendPasswordResetEmail(email, resetLink);
 
     return { success: true, message: "Şifre sıfırlama linki e-postanıza gönderildi." };
-  } catch (error: any) {
-    console.error("[PWD_RESET_REQ] Hata:", error);
-    const errorMessage = error.message?.includes("Resend")
-      ? "E-posta servisi bağlantı hatası verdi."
-      : error.message || "Bilinmeyen bir hata oluştu.";
-
-    return { error: `İşlem başarısız: ${errorMessage}` };
+  } catch (error) {
+    return handleServerError(error, "PWD_RESET_REQ");
   }
 }
 
@@ -349,8 +340,7 @@ export async function completePasswordReset(formData: FormData) {
     await resetDoc.ref.delete();
 
     return { success: true, message: "Şifreniz güncellendi." };
-  } catch (error: any) {
-    console.error("[PWD_RESET_COMPLETE] Hata:", error);
-    return { error: "Hata oluştu." };
+  } catch (error) {
+    return handleServerError(error, "PWD_RESET_COMPLETE");
   }
 }

@@ -39,8 +39,8 @@ export default function BlogInteractions({
     setIsLiking(true);
     const res = await toggleLike(postId);
     
-    if (res?.success && res.likes) {
-      setLikes(res.likes);
+    if ((res as any)?.success && (res as any).likes) {
+      setLikes((res as any).likes);
     }
     setIsLiking(false);
   }
@@ -54,7 +54,7 @@ export default function BlogInteractions({
     const formData = new FormData(e.currentTarget);
     const res = await addComment(formData);
     
-    if (res?.error) setCommentError(res.error);
+    if (res && 'error' in res && res.error) setCommentError(res.error);
     else (e.target as HTMLFormElement).reset();
     
     setCommentLoading(false);
@@ -117,7 +117,7 @@ export default function BlogInteractions({
           ) : (
             initialComments.map((c) => {
               const name = c.authorName || c.author || c.authorEmail.split('@')[0];
-              const photo = c.authorPhoto || c.photoUrl || "/default-avatar.svg";
+              const photo = c.authorPhoto || ('error' in c ? undefined : (c as any).photoUrl) || "/default-avatar.svg";
               return (
                 <div key={c.id} className="flex gap-3.5 group">
                   <div className="w-10 h-10 rounded-full overflow-hidden flex-shrink-0 border border-[var(--primary-gold-border)]">

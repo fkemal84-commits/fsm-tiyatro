@@ -57,9 +57,9 @@ export default function TicketClientView({ initialTickets }: { initialTickets: T
     formData.set('reference', newReference);
     
     const res = await updateTicketReference(formData);
-    if (res.error) {
+    if ('error' in res && res.error) {
       setMessage({ type: 'error', text: res.error });
-    } else if (res.success) {
+    } else if ('success' in res && res.success) {
       setEditingRefId(null);
       router.refresh();
     }
@@ -78,9 +78,9 @@ export default function TicketClientView({ initialTickets }: { initialTickets: T
     
     try {
       const res = await addTicket(formData);
-      if (res.error) {
+      if ('error' in res && res.error) {
         setMessage({ type: 'error', text: res.error });
-      } else if (res.success) {
+      } else if ('success' in res && res.success) {
         setMessage({ type: 'success', text: 'Bilet başarıyla oluşturuldu ve sisteme eklendi!' });
         (e.target as HTMLFormElement).reset();
         setSelectedSeat(null);

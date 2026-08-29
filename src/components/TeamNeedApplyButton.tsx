@@ -36,7 +36,7 @@ export default function TeamNeedApplyButton({ needId, roleName, hasApplied = fal
       formData.append('note', note);
 
       const res = await applyForTeamNeed(formData);
-      if (res?.error) {
+      if (res && 'error' in res && res.error) {
         setError(res.error);
       } else {
         setApplied(true);

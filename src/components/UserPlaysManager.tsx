@@ -24,11 +24,11 @@ export default function UserPlaysManager({
   const handleSave = async () => {
     setLoading(true);
     const res = await updateUserPlays(userId, selectedIds);
-    if (res?.success) {
+    if (res && 'success' in res && res.success) {
       setMessage('✅ Kadro başarıyla güncellendi!');
       setTimeout(() => setMessage(''), 3000);
     } else {
-      setMessage('❌ Hata: ' + (res?.error || 'Bilinmeyen hata'));
+      setMessage('❌ Hata: ' + ((res as any)?.error || 'Bilinmeyen hata'));
     }
     setLoading(false);
   };

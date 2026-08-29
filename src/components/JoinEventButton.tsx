@@ -15,7 +15,7 @@ export default function JoinEventButton({ eventId, eventTitle }: { eventId: stri
 
     try {
       const res = await joinEvent(formData);
-      if (res?.success) {
+      if (res && 'success' in res && res.success) {
         setSuccess(true);
       }
     } catch (err) {

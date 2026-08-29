@@ -106,7 +106,7 @@ export default function AttendanceManager({
     if (!selectedActorId || !excuseNote) return;
     setLoading(true);
     const res = await addManualAttendance(rehearsalId, selectedActorId, 'MAZERETLİ', excuseNote);
-    if (res.success) {
+    if ('success' in res && res.success) {
       setAttendance(prev => ({ ...prev, [selectedActorId]: 'MAZERETLİ' }));
       setExcuseNote('');
       setShowExcuseForm(false);

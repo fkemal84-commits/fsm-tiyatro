@@ -50,10 +50,10 @@ export default function TicketScannerPage() {
 
     try {
       const res = await verifyTicket(decodedText);
-      if (res.error) {
+      if ('error' in res && res.error) {
         setVerification({ type: 'error', text: res.error });
-      } else if (res.success) {
-        setVerification({ type: 'success', text: res.message || 'Giriş Onaylandı!' });
+      } else if ('success' in res && res.success) {
+        setVerification({ type: 'success', text: ('error' in res ? undefined : (res as any).message) || 'Giriş Onaylandı!' });
       }
     } catch (err) {
       setVerification({ type: 'error', text: 'Bağlantı hatası nedeniyle doğrulama yapılamadı.' });

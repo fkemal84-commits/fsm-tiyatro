@@ -9,7 +9,7 @@ export default function TestPushButton() {
   const handleTest = async () => {
     setLoading(true);
     const res = await testPushToSelf();
-    if (res.error) {
+    if ('error' in res && res.error) {
       alert("Hata: " + res.error);
     } else {
       alert("Test bildirimi gönderildi! Lütfen telefonunuzu kontrol edin.");

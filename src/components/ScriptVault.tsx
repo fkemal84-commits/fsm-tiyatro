@@ -23,7 +23,7 @@ export default function ScriptVault({ initialScripts, canManage }: { initialScri
     const formData = new FormData(e.currentTarget);
     const res = await uploadScript(formData);
     
-    if (res?.error) setError(res.error);
+    if (res && 'error' in res && res.error) setError(res.error);
     else (e.target as HTMLFormElement).reset();
     
     setLoading(false);

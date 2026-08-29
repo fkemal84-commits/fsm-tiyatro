@@ -62,7 +62,7 @@ export default function Register() {
       formData.set('password', hashedPassword);
 
       const res = await registerUser(formData);
-      if (res?.error) {
+      if (res && 'error' in res && res.error) {
         setError(res.error);
         setLoading(false);
         return;
@@ -74,7 +74,7 @@ export default function Register() {
         window.location.href = '/login?registered=true';
       }
     } catch (err: any) {
-      setError("Beklenmedik bir hata oluştu: " + err.message);
+      setError("Beklenmedik bir hata oluştu: " + ('error' in err ? undefined : (err as any).message));
       setLoading(false);
     }
   };

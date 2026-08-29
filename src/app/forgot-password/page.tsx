@@ -21,10 +21,10 @@ export default function ForgotPassword() {
 
     const result = await requestPasswordReset(formData);
 
-    if (result.error) {
+    if ('error' in result && result.error) {
       setMessage({ type: 'error', text: result.error });
     } else {
-      setMessage({ type: 'success', text: result.message || 'Sıfırlama linki gönderildi.' });
+      setMessage({ type: 'success', text: ((result as any).message) || 'Sıfırlama linki gönderildi.' });
     }
     setLoading(false);
   };

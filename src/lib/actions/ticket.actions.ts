@@ -2,7 +2,7 @@
 
 import { adminDb } from '@/lib/firebase-admin';
 import { revalidatePath } from 'next/cache';
-import { requireAuth } from './common';
+import { requireAuth, handleServerError } from './common';
 
 export async function addTicket(formData: FormData) {
   const name = formData.get('name') as string;
@@ -47,8 +47,8 @@ export async function addTicket(formData: FormData) {
     revalidatePath('/members/tickets');
     revalidatePath('/biletimi-bul');
     return { success: true, ticketId: docRef.id };
-  } catch (error: any) {
-    return { error: error.message };
+  } catch (error) {
+    return handleServerError(error, "ADD_TICKET");
   }
 }
 
@@ -67,8 +67,8 @@ export async function updateTicketReference(formData: FormData) {
 
     revalidatePath('/members/tickets');
     return { success: true };
-  } catch (error: any) {
-    return { error: error.message };
+  } catch (error) {
+    return handleServerError(error, "UPDATE_TICKET_REFERENCE");
   }
 }
 
@@ -110,9 +110,8 @@ export async function findTicket(formData: FormData) {
     }
 
     return { success: true, tickets: matchedTickets };
-  } catch (error: any) {
-    console.error('[FIND_TICKET] Hata:', error);
-    return { error: 'Bilet sorgulanırken bir hata oluştu. Lütfen tekrar deneyiniz.' };
+  } catch (error) {
+    return handleServerError(error, "FIND_TICKET");
   }
 }
 
@@ -143,8 +142,8 @@ export async function verifyTicket(ticketId: string) {
       success: true, 
       message: `Giriş Onaylandı! Hoş geldiniz, ${data.name} ${data.surname}. ${data.row ? `Sıra: ${data.row}, Koltuk: ${data.seatNumber}` : ''}`
     };
-  } catch (error: any) {
-    return { error: error.message };
+  } catch (error) {
+    return handleServerError(error, "VERIFY_TICKET");
   }
 }
 
@@ -158,8 +157,8 @@ export async function deleteTicket(formData: FormData) {
     revalidatePath('/members/tickets');
     revalidatePath('/biletimi-bul');
     return { success: true };
-  } catch (error: any) {
-    return { error: error.message };
+  } catch (error) {
+    return handleServerError(error, "DELETE_TICKET");
   }
 }
 
@@ -182,8 +181,7 @@ export async function getOccupiedSeats() {
     });
 
     return { success: true, seats };
-  } catch (error: any) {
-    console.error('[GET_OCCUPIED_SEATS] Hata:', error);
-    return { error: error.message };
+  } catch (error) {
+    return handleServerError(error, "GET_OCCUPIED_SEATS");
   }
 }

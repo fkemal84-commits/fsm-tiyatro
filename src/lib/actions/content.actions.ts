@@ -3,7 +3,7 @@
 import { adminDb } from '@/lib/firebase-admin';
 import { revalidatePath } from 'next/cache';
 import { redirect } from 'next/navigation';
-import { requireAuth, deleteStorageFile, uploadToStorage } from './common';
+import { requireAuth, deleteStorageFile, uploadToStorage, handleServerError } from './common';
 
 export async function addPost(formData: FormData) {
   try {
@@ -63,9 +63,8 @@ export async function addPost(formData: FormData) {
     revalidatePath('/');
     revalidatePath('/kulis');
     revalidatePath('/sitemap.xml');
-  } catch (error: any) {
-    console.error("[ADD_POST] Hata:", error);
-    return { error: error.message || "Yazı eklenirken hata oluştu." };
+  } catch (error) {
+    return handleServerError(error, "ADD_POST");
   }
   redirect('/kulis');
 }
@@ -96,8 +95,8 @@ export async function deletePost(formData: FormData) {
     revalidatePath('/');
     revalidatePath('/kulis');
     revalidatePath('/sitemap.xml');
-  } catch (error: any) {
-    console.error("[DELETE_POST] Hata:", error);
+  } catch (error) {
+    handleServerError(error, "DELETE_POST");
   }
 }
 
@@ -156,13 +155,13 @@ export async function addPlay(formData: FormData) {
     let showDates = [];
 
     if (rawCast) {
-      try { cast = JSON.parse(rawCast); } catch (e) {}
+      try { cast = JSON.parse(rawCast); } catch (e) { return { error: "Oyuncu listesi (Cast) geçerli bir JSON değil." }; }
     }
     if (rawCrew) {
-      try { crew = JSON.parse(rawCrew); } catch (e) {}
+      try { crew = JSON.parse(rawCrew); } catch (e) { return { error: "Ekip listesi (Crew) geçerli bir JSON değil." }; }
     }
     if (rawDates) {
-      try { showDates = JSON.parse(rawDates); } catch (e) {}
+      try { showDates = JSON.parse(rawDates); } catch (e) { return { error: "Oyun tarihleri geçerli bir JSON değil." }; }
     }
 
     await adminDb.collection('plays').add({
@@ -190,9 +189,8 @@ export async function addPlay(formData: FormData) {
     revalidatePath('/');
     revalidatePath('/oyunlar');
     revalidatePath('/sitemap.xml');
-  } catch (error: any) {
-    console.error("[ADD_PLAY] Hata:", error);
-    return { error: error.message || "Oyun eklenirken bir hata oluştu." };
+  } catch (error) {
+    return handleServerError(error, "ADD_PLAY");
   }
   redirect('/oyunlar');
 }
@@ -224,8 +222,8 @@ export async function deletePlay(formData: FormData) {
     revalidatePath('/');
     revalidatePath('/oyunlar');
     revalidatePath('/sitemap.xml');
-  } catch (error: any) {
-    console.error("[DELETE_PLAY] Hata:", error);
+  } catch (error) {
+    handleServerError(error, "DELETE_PLAY");
   }
 }
 
@@ -246,9 +244,8 @@ export async function updatePlayStatus(formData: FormData) {
     revalidatePath('/oyunlar');
     revalidatePath('/tanerabi/dashboard');
     return { success: true };
-  } catch (error: any) {
-    console.error("[UPDATE_PLAY_STATUS] Hata:", error);
-    return { error: error.message };
+  } catch (error) {
+    return handleServerError(error, "UPDATE_PLAY_STATUS");
   }
 }
 
@@ -275,8 +272,8 @@ export async function toggleLike(postId: string) {
     revalidatePath(`/blog/${postId}`);
     revalidatePath(`/yayin/${postId}`);
     return { success: true, likes: updatedLikes };
-  } catch (error: any) {
-    return { error: error.message };
+  } catch (error) {
+    return handleServerError(error, "TOGGLE_LIKE");
   }
 }
 
@@ -304,8 +301,8 @@ export async function addComment(formData: FormData) {
     revalidatePath(`/blog/${postId}`);
     revalidatePath(`/yayin/${postId}`);
     return { success: true };
-  } catch (error: any) {
-    return { error: error.message };
+  } catch (error) {
+    return handleServerError(error, "ADD_COMMENT");
   }
 }
 
@@ -331,8 +328,8 @@ export async function uploadScript(formData: FormData) {
     revalidatePath('/members');
     revalidatePath('/members/scripts');
     return { success: true };
-  } catch (error: any) {
-    return { error: error.message };
+  } catch (error) {
+    return handleServerError(error, "UPLOAD_SCRIPT");
   }
 }
 
@@ -353,7 +350,7 @@ export async function deleteScript(formData: FormData) {
     await scriptDoc.ref.delete();
     revalidatePath('/members');
     revalidatePath('/members/scripts');
-  } catch (error: any) {
-    console.error("[DELETE_SCRIPT] Hata:", error);
+  } catch (error) {
+    handleServerError(error, "DELETE_SCRIPT");
   }
 }

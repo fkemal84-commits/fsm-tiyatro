@@ -2,7 +2,7 @@
 
 import { adminDb, adminMessaging } from '@/lib/firebase-admin';
 import { revalidatePath } from 'next/cache';
-import { requireAuth } from './common';
+import { requireAuth, handleServerError } from './common';
 
 export async function addRehearsal(formData: FormData) {
   const title = formData.get('title') as string;
@@ -115,8 +115,8 @@ export async function joinEvent(formData: FormData) {
 
     revalidatePath('/members');
     return { success: true };
-  } catch (error: any) {
-    return { error: error.message };
+  } catch (error) {
+    return handleServerError(error, "JOIN_EVENT");
   }
 }
 
@@ -133,8 +133,8 @@ export async function startPulseCheck(rehearsalId: string) {
     });
 
     return { success: true, expiresAt };
-  } catch (err: any) {
-    return { error: err.message };
+  } catch (error) {
+    return handleServerError(error, "START_PULSE_CHECK");
   }
 }
 
@@ -161,8 +161,8 @@ export async function respondToPulse(rehearsalId: string) {
     }
 
     return { success: true };
-  } catch (err: any) {
-    return { error: err.message };
+  } catch (error) {
+    return handleServerError(error, "RESPOND_TO_PULSE");
   }
 }
 
@@ -188,8 +188,8 @@ export async function addManualAttendance(rehearsalId: string, userId: string, s
 
     revalidatePath('/members/rehearsals');
     return { success: true };
-  } catch (err: any) {
-    return { error: err.message };
+  } catch (error) {
+    return handleServerError(error, "ADD_MANUAL_ATTENDANCE");
   }
 }
 
@@ -204,8 +204,8 @@ export async function finalizeAttendance(rehearsalId: string, attendanceData: an
 
     revalidatePath('/members/rehearsals');
     return { success: true };
-  } catch (err: any) {
-    return { error: err.message };
+  } catch (error) {
+    return handleServerError(error, "FINALIZE_ATTENDANCE");
   }
 }
 
@@ -230,8 +230,8 @@ export async function startInstantAttendance(formData?: FormData) {
 
     revalidatePath('/members/rehearsals');
     return { success: true, rehearsalId: docRef.id };
-  } catch (err: any) {
-    return { error: err.message };
+  } catch (error) {
+    return handleServerError(error, "START_INSTANT_ATTENDANCE");
   }
 }
 
@@ -248,8 +248,8 @@ export async function activateRehearsalPulse(rehearsalId: string) {
 
     revalidatePath('/members/rehearsals');
     return { success: true, expiresAt };
-  } catch (err: any) {
-    return { error: err.message };
+  } catch (error) {
+    return handleServerError(error, "ACTIVATE_REHEARSAL_PULSE");
   }
 }
 
@@ -267,8 +267,8 @@ export async function saveFCMToken(token: string) {
       }
     }
     return { success: true };
-  } catch (error: any) {
-    return { error: error.message };
+  } catch (error) {
+    return handleServerError(error, "SAVE_FCM_TOKEN");
   }
 }
 
@@ -301,8 +301,8 @@ export async function nudgePlayers(targetUserIds?: string[]) {
 
     const response = await adminMessaging.sendEachForMulticast(payload);
     return { success: true, sentCount: response.successCount, failureCount: response.failureCount };
-  } catch (error: any) {
-    return { error: error.message };
+  } catch (error) {
+    return handleServerError(error, "NUDGE_PLAYERS");
   }
 }
 
@@ -324,7 +324,7 @@ export async function testPushToSelf() {
 
     const response = await adminMessaging.sendEachForMulticast(payload);
     return { success: true, sentCount: response.successCount };
-  } catch (err: any) {
-    return { error: err.message };
+  } catch (error) {
+    return handleServerError(error, "TEST_PUSH_TO_SELF");
   }
 }

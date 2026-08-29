@@ -2,7 +2,7 @@
 
 import { adminDb } from '@/lib/firebase-admin';
 import { revalidatePath } from 'next/cache';
-import { requireAuth, uploadToStorage } from './common';
+import { requireAuth, uploadToStorage, handleServerError } from './common';
 
 export async function addTeamNeed(formData: FormData) {
   const roleName = formData.get('roleName') as string;
@@ -34,9 +34,8 @@ export async function deleteTeamNeed(formData: FormData) {
     revalidatePath('/members');
     revalidatePath('/tanerabi/dashboard');
     return { success: true };
-  } catch (error: any) {
-    console.error("[DELETE_TEAM_NEED] Hata:", error);
-    return { error: error.message };
+  } catch (error) {
+    return handleServerError(error, "DELETE_TEAM_NEED");
   }
 }
 
@@ -82,9 +81,8 @@ export async function applyForTeamNeed(formData: FormData) {
     revalidatePath('/members');
     revalidatePath('/tanerabi/dashboard');
     return { success: true };
-  } catch (error: any) {
-    console.error("[APPLY_TEAM_NEED] Hata:", error);
-    return { error: error.message || "Başvuru gönderilirken hata oluştu." };
+  } catch (error) {
+    return handleServerError(error, "APPLY_TEAM_NEED");
   }
 }
 
@@ -98,9 +96,8 @@ export async function deleteTeamApplication(formData: FormData) {
 
     revalidatePath('/tanerabi/dashboard');
     return { success: true };
-  } catch (error: any) {
-    console.error("[DELETE_TEAM_APP] Hata:", error);
-    return { error: error.message };
+  } catch (error) {
+    return handleServerError(error, "DELETE_TEAM_APP");
   }
 }
 
@@ -116,9 +113,8 @@ export async function updateUserPlays(userId: string, playIds: string[]) {
     revalidatePath('/members/team');
     revalidatePath(`/tanerabi/users/${userId}`);
     return { success: true };
-  } catch (error: any) {
-    console.error("[UPDATE_USER_PLAYS] Hata:", error);
-    return { error: error.message };
+  } catch (error) {
+    return handleServerError(error, "UPDATE_USER_PLAYS");
   }
 }
 
@@ -134,8 +130,8 @@ export async function getSiteConfig() {
       };
     }
     return doc.data();
-  } catch (e: any) {
-    console.error("Site config fetch error:", e);
+  } catch (error) {
+    console.error("Site config fetch error:", error);
     return null;
   }
 }
@@ -201,9 +197,8 @@ export async function updateSiteConfig(formData: FormData) {
     revalidatePath('/biletimi-bul');
     revalidatePath('/tanerabi/dashboard');
     return { success: true };
-  } catch (error: any) {
-    console.error("[UPDATE_SITE_CONFIG] Hata:", error);
-    return { error: error.message || "Ayarlar kaydedilirken hata oluştu." };
+  } catch (error) {
+    return handleServerError(error, "UPDATE_SITE_CONFIG");
   }
 }
 
@@ -225,9 +220,8 @@ export async function updateUserTitles(userId: string, titles: string[]) {
     revalidatePath('/kulup');
     revalidatePath(`/tanerabi/users/${userId}`);
     return { success: true };
-  } catch (error: any) {
-    console.error("[UPDATE_USER_TITLES] Hata:", error);
-    return { error: error.message || "Unvanlar güncellenemedi." };
+  } catch (error) {
+    return handleServerError(error, "UPDATE_USER_TITLES");
   }
 }
 
@@ -253,9 +247,8 @@ export async function addAvailableTitle(formData: FormData) {
 
     revalidatePath('/tanerabi/dashboard');
     return { success: true };
-  } catch (error: any) {
-    console.error("[ADD_AVAILABLE_TITLE] Hata:", error);
-    return { error: error.message || "Unvan eklenemedi." };
+  } catch (error) {
+    return handleServerError(error, "ADD_AVAILABLE_TITLE");
   }
 }
 
@@ -275,9 +268,8 @@ export async function removeAvailableTitle(title: string) {
 
     revalidatePath('/tanerabi/dashboard');
     return { success: true };
-  } catch (error: any) {
-    console.error("[REMOVE_AVAILABLE_TITLE] Hata:", error);
-    return { error: error.message || "Unvan silinemedi." };
+  } catch (error) {
+    return handleServerError(error, "REMOVE_AVAILABLE_TITLE");
   }
 }
 

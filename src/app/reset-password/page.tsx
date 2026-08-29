@@ -62,7 +62,7 @@ function ResetPasswordForm() {
 
     const result = await completePasswordReset(formData);
 
-    if (result.error) {
+    if ('error' in result && result.error) {
       setMessage({ type: 'error', text: result.error });
       setLoading(false);
     } else {

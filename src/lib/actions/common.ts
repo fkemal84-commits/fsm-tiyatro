@@ -57,15 +57,42 @@ export async function deleteStorageFile(publicUrl: string) {
   }
 }
 
+/**
+ * Beklenmeyen sunucu hatalarını güvenli bir şekilde yakalar ve loglar.
+ * İstemciye (frontend) sadece Error ID içeren güvenli bir hata mesajı döndürür.
+ */
+export function handleServerError(error: unknown, context: string): { error: string } {
+  const errorId = crypto.randomUUID();
+  console.error(`[SERVER_ERROR] [${errorId}] [${context}]`, error);
+  
+  if (error instanceof Error) {
+    // Özel yetki hatalarını veya bizim bilerek fırlattığımız hataları direkt gösterebiliriz
+    // Sadece hassas olmayan bilindik hatalar:
+    if (
+      error.message.includes("Yetkisiz erişim") || 
+      error.message.includes("Kullanıcı kaydı") || 
+      error.message.includes("Dosya boyutu") ||
+      error.message.includes("Geçersiz dosya") ||
+      error.message.includes("Sadece kendi") ||
+      error.message.includes("Bu işlemi yapmaya yetkiniz yok")
+    ) {
+      return { error: error.message };
+    }
+  }
+
+  return { error: `Beklenmeyen bir hata oluştu. Hata Kodu: ${errorId}` };
+}
+
 import sharp from 'sharp';
 
 /**
  * Firebase Storage'a güvenli dosya yükleme (Sharp optimizasyonu ve Data URI Fallback destekli)
  */
 export async function uploadToStorage(file: File, folder: string): Promise<string> {
-  const MAX_SIZE = 12 * 1024 * 1024; // 12 MB
+  // Vercel Serverless payload limiti (4.5 MB) aşılmamalıdır
+  const MAX_SIZE = 4.5 * 1024 * 1024; // 4.5 MB
   if (file.size > MAX_SIZE) {
-    throw new Error("Dosya boyutu çok büyük! Maksimum 12 MB yükleyebilirsiniz.");
+    throw new Error("Dosya boyutu çok büyük! Maksimum 4.5 MB yükleyebilirsiniz. Lütfen dosyanızı küçültün.");
   }
 
   const allowedTypes = ['image/jpeg', 'image/png', 'image/webp', 'image/gif', 'application/pdf'];

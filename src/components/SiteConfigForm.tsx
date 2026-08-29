@@ -32,7 +32,7 @@ export default function SiteConfigForm({ siteConfig }: SiteConfigFormProps) {
 
     try {
       const res = await updateSiteConfig(formData);
-      if (res?.error) {
+      if (res && 'error' in res && res.error) {
         setMessage({ type: 'error', text: res.error });
       } else {
         setMessage({ type: 'success', text: '✓ Hero arka plan görseli ve site yapılandırması başarıyla kaydedildi!' });

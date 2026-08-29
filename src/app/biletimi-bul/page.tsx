@@ -35,8 +35,8 @@ export default function BiletimiBulPage() {
     if (!isTicketQueryActive) return;
     const loadSeats = async () => {
       const res = await getOccupiedSeats();
-      if (res.success && res.seats) {
-        setOccupiedSeats(res.seats);
+      if ((res as any).success && (res as any).seats) {
+        setOccupiedSeats((res as any).seats);
       }
     };
     loadSeats();
@@ -52,10 +52,10 @@ export default function BiletimiBulPage() {
     
     try {
       const res = await findTicket(formData);
-      if (res.error) {
+      if ('error' in res && res.error) {
         setError(res.error);
-      } else if (res.success && res.tickets) {
-        setTickets(res.tickets);
+      } else if ((res as any).success && (res as any).tickets) {
+        setTickets((res as any).tickets);
       }
     } catch (err: any) {
       setError("Bağlantı hatası oluştu. Lütfen tekrar deneyin.");

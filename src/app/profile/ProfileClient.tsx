@@ -53,7 +53,7 @@ export default function ProfileClient({ user }: { user: any }) {
 
     const formData = new FormData(e.currentTarget);
     const res = await updateProfile(formData);
-    if (res?.success) {
+    if (res && 'success' in res && res.success) {
       setProfileMsg('Portfolyo bilgileriniz başarıyla güncellendi.');
     }
     setProfileLoading(false);
@@ -91,7 +91,7 @@ export default function ProfileClient({ user }: { user: any }) {
     payload.append('newPassword', hashedNew);
 
     const res = await changePassword(payload);
-    if (res?.error) {
+    if (res && 'error' in res && res.error) {
       setError(res.error);
     } else {
       setMessage('Şifreniz başarıyla değiştirildi.');
@@ -123,12 +123,12 @@ export default function ProfileClient({ user }: { user: any }) {
       formData.append('photo', compressedFile);
 
       const res = await uploadAvatar(formData);
-      if (res?.error) {
+      if (res && 'error' in res && res.error) {
         setAvatarError(res.error);
         setAvatarPreview(user?.photoUrl || null);
       }
     } catch (err: any) {
-      setAvatarError(err.message || 'Yükleme başarısız.');
+      setAvatarError(('error' in err ? undefined : (err as any).message) || 'Yükleme başarısız.');
       setAvatarPreview(user?.photoUrl || null);
     } finally {
       setAvatarLoading(false);
