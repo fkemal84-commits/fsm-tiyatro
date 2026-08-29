@@ -12,6 +12,20 @@ interface AIReviewHelperProps {
   onApplyKeywords?: (keywords: string) => void;
 }
 
+function safeText(val: any): string {
+  if (val === null || val === undefined) return '';
+  if (typeof val === 'string') return val;
+  if (typeof val === 'number' || typeof val === 'boolean') return String(val);
+  if (typeof val === 'object') {
+    if (val.description) return safeText(val.description);
+    if (val.suggestion) return safeText(val.suggestion);
+    if (val.title) return safeText(val.title);
+    if (val.text) return safeText(val.text);
+    return JSON.stringify(val);
+  }
+  return String(val);
+}
+
 export default function AIReviewHelper({
   getTitle,
   getContent,
@@ -119,20 +133,26 @@ export default function AIReviewHelper({
 
           {analysis && !isPending && (
             <div className="space-y-4 text-xs">
-              {/* 1. Edebi Skorlar & Baş Dramaturg Özeti */}
-              {analysis.overallScores && (
+              {/* 1. Edebi Skorlar */}
+              {analysis.overallScores && typeof analysis.overallScores === 'object' && (
                 <div className="grid grid-cols-3 gap-2 p-3 bg-[var(--bg-card)] rounded-xl border border-[var(--border-subtle)]">
                   <div className="text-center p-2 rounded-lg bg-[var(--bg-surface)]">
                     <span className="text-[10px] text-[var(--text-dim)] block mb-0.5">Edebi Kalite</span>
-                    <span className="text-base font-bold text-[var(--primary-gold)] font-mono">{analysis.overallScores.literaryQuality} / 10</span>
+                    <span className="text-base font-bold text-[var(--primary-gold)] font-mono">
+                      {safeText(analysis.overallScores.literaryQuality || 8)} / 10
+                    </span>
                   </div>
                   <div className="text-center p-2 rounded-lg bg-[var(--bg-surface)]">
                     <span className="text-[10px] text-[var(--text-dim)] block mb-0.5">Dramatik Derinlik</span>
-                    <span className="text-base font-bold text-amber-400 font-mono">{analysis.overallScores.dramaticDepth} / 10</span>
+                    <span className="text-base font-bold text-amber-400 font-mono">
+                      {safeText(analysis.overallScores.dramaticDepth || 7)} / 10
+                    </span>
                   </div>
                   <div className="text-center p-2 rounded-lg bg-[var(--bg-surface)]">
                     <span className="text-[10px] text-[var(--text-dim)] block mb-0.5">Akış & Ritim</span>
-                    <span className="text-base font-bold text-emerald-400 font-mono">{analysis.overallScores.flowAndRhythm} / 10</span>
+                    <span className="text-base font-bold text-emerald-400 font-mono">
+                      {safeText(analysis.overallScores.flowAndRhythm || 8)} / 10
+                    </span>
                   </div>
                 </div>
               )}
@@ -143,29 +163,29 @@ export default function AIReviewHelper({
                   <span className="font-bold text-[var(--primary-gold)] flex items-center gap-1.5 text-[11px] uppercase tracking-wider">
                     <span>👑</span> Baş Dramaturg Görüşü:
                   </span>
-                  <p className="text-[var(--text-main)] leading-relaxed italic">
-                    "{analysis.executiveSummary}"
+                  <p className="text-[var(--text-main)] leading-relaxed italic m-0">
+                    "{safeText(analysis.executiveSummary)}"
                   </p>
                   {analysis.structureAndPacing && (
-                    <p className="text-[var(--text-muted)] text-[11px] leading-relaxed pt-2 border-t border-[var(--border-subtle)]">
-                      <strong className="text-[var(--text-main)]">Tempo & Ritim:</strong> {analysis.structureAndPacing}
+                    <p className="text-[var(--text-muted)] text-[11px] leading-relaxed pt-2 border-t border-[var(--border-subtle)] m-0">
+                      <strong className="text-[var(--text-main)]">Tempo & Ritim:</strong> {safeText(analysis.structureAndPacing)}
                     </p>
                   )}
                 </div>
               )}
 
               {/* 2. Dramaturji & Sahneleme Vizyonu */}
-              {analysis.dramaturgicalInsights && analysis.dramaturgicalInsights.length > 0 && (
+              {Array.isArray(analysis.dramaturgicalInsights) && analysis.dramaturgicalInsights.length > 0 && (
                 <div className="p-3.5 bg-[var(--bg-card)] rounded-xl border border-[var(--border-subtle)] space-y-3">
                   <span className="font-bold text-[var(--primary-gold)] flex items-center gap-1.5 text-[11px] uppercase tracking-wider">
                     <span>🎭</span> Dramaturji & Sahneleme Vizyonu:
                   </span>
                   <div className="space-y-2.5">
                     {analysis.dramaturgicalInsights.map((insight: any, idx: number) => {
-                      const isObj = typeof insight === 'object';
-                      const title = isObj ? insight.title : `Öneri ${idx + 1}`;
-                      const desc = isObj ? insight.description : insight;
-                      const tip = isObj ? insight.actionableTip : null;
+                      const isObj = typeof insight === 'object' && insight !== null;
+                      const title = isObj && insight.title ? safeText(insight.title) : `Dramaturgi Notu #${idx + 1}`;
+                      const desc = isObj && insight.description ? safeText(insight.description) : safeText(insight);
+                      const tip = isObj && insight.actionableTip ? safeText(insight.actionableTip) : null;
 
                       return (
                         <div key={idx} className="p-2.5 rounded-lg bg-[var(--bg-surface)] border border-[var(--border-subtle)] space-y-1">
@@ -184,29 +204,36 @@ export default function AIReviewHelper({
               )}
 
               {/* 3. Metin İyileştirmeleri & Nokta Atışı Düzeltmeler */}
-              {analysis.textCorrections && analysis.textCorrections.length > 0 && (
+              {Array.isArray(analysis.textCorrections) && analysis.textCorrections.length > 0 && (
                 <div className="p-3.5 bg-[var(--bg-card)] rounded-xl border border-[var(--border-subtle)] space-y-2.5">
                   <span className="font-bold text-emerald-400 flex items-center gap-1.5 text-[11px] uppercase tracking-wider">
                     <span>✍️</span> Nokta Atışı Metin İyileştirmeleri:
                   </span>
                   <div className="space-y-2">
-                    {analysis.textCorrections.map((corr: any, idx: number) => (
-                      <div key={idx} className="p-2.5 rounded-lg bg-[var(--bg-surface)] border border-[var(--border-subtle)] space-y-1.5">
-                        {corr.originalSnippet && (
-                          <div className="text-[11px] text-red-300/80 line-through">
-                            ❌ {corr.originalSnippet}
+                    {analysis.textCorrections.map((corr: any, idx: number) => {
+                      const isObj = typeof corr === 'object' && corr !== null;
+                      const snippet = isObj && corr.originalSnippet ? safeText(corr.originalSnippet) : '';
+                      const suggestion = isObj && corr.suggestion ? safeText(corr.suggestion) : safeText(corr);
+                      const reason = isObj && corr.reason ? safeText(corr.reason) : '';
+
+                      return (
+                        <div key={idx} className="p-2.5 rounded-lg bg-[var(--bg-surface)] border border-[var(--border-subtle)] space-y-1.5">
+                          {snippet && (
+                            <div className="text-[11px] text-red-300/80 line-through">
+                              ❌ {snippet}
+                            </div>
+                          )}
+                          <div className="text-[11px] text-emerald-300 font-medium">
+                            ✓ {suggestion}
                           </div>
-                        )}
-                        <div className="text-[11px] text-emerald-300 font-medium">
-                          ✓ {corr.suggestion}
+                          {reason && (
+                            <div className="text-[10px] text-[var(--text-dim)]">
+                              ℹ️ {reason}
+                            </div>
+                          )}
                         </div>
-                        {corr.reason && (
-                          <div className="text-[10px] text-[var(--text-dim)]">
-                            ℹ️ {corr.reason}
-                          </div>
-                        )}
-                      </div>
-                    ))}
+                      );
+                    })}
                   </div>
                 </div>
               )}
@@ -220,7 +247,7 @@ export default function AIReviewHelper({
                         🎣 Çarpıcı Giriş Kancası:
                       </span>
                       <p className="text-[var(--text-main)] italic leading-relaxed m-0">
-                        "{analysis.hookAndClosingEnhancement.openingHookSuggestion}"
+                        "{safeText(analysis.hookAndClosingEnhancement.openingHookSuggestion)}"
                       </p>
                     </div>
                   )}
@@ -230,7 +257,7 @@ export default function AIReviewHelper({
                         🎯 Vurucu Kapanış Cümlesi:
                       </span>
                       <p className="text-[var(--text-main)] italic leading-relaxed m-0">
-                        "{analysis.hookAndClosingEnhancement.closingPunchlineSuggestion}"
+                        "{safeText(analysis.hookAndClosingEnhancement.closingPunchlineSuggestion)}"
                       </p>
                     </div>
                   )}
@@ -238,15 +265,16 @@ export default function AIReviewHelper({
               )}
 
               {/* 5. Alternatif Başlıklar */}
-              {analysis.titleSuggestions && analysis.titleSuggestions.length > 0 && (
+              {Array.isArray(analysis.titleSuggestions) && analysis.titleSuggestions.length > 0 && (
                 <div className="p-3.5 bg-[var(--bg-card)] rounded-xl border border-[var(--border-subtle)] space-y-2">
                   <span className="font-bold text-[var(--text-main)] flex items-center justify-between text-[11px] uppercase tracking-wider">
                     <span>💡 Alternatif Başlık Önerileri (Tıkla ve Başlığa Uygula):</span>
                   </span>
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                     {analysis.titleSuggestions.map((item: any, idx: number) => {
-                      const titleStr = typeof item === 'object' ? item.title : item;
-                      const styleStr = typeof item === 'object' ? item.style : 'Alternatif';
+                      const isObj = typeof item === 'object' && item !== null;
+                      const titleStr = isObj && item.title ? safeText(item.title) : safeText(item);
+                      const styleStr = isObj && item.style ? safeText(item.style) : 'Alternatif';
 
                       return (
                         <button
@@ -269,7 +297,7 @@ export default function AIReviewHelper({
               )}
 
               {/* 6. Anahtar Kelimeler */}
-              {analysis.keywords && analysis.keywords.length > 0 && (
+              {Array.isArray(analysis.keywords) && analysis.keywords.length > 0 && (
                 <div className="p-3 bg-[var(--bg-card)] rounded-xl border border-[var(--border-subtle)] space-y-1.5">
                   <div className="flex items-center justify-between">
                     <span className="font-bold text-[var(--text-dim)] uppercase tracking-wider text-[10px]">
@@ -278,7 +306,7 @@ export default function AIReviewHelper({
                     {onApplyKeywords && (
                       <button
                         type="button"
-                        onClick={() => onApplyKeywords(analysis.keywords.join(', '))}
+                        onClick={() => onApplyKeywords(analysis.keywords.map(k => safeText(k)).join(', '))}
                         className="text-[10px] text-[var(--primary-gold)] hover:underline font-bold"
                       >
                         Hepsini Ekle +
@@ -286,12 +314,12 @@ export default function AIReviewHelper({
                     )}
                   </div>
                   <div className="flex flex-wrap gap-1.5">
-                    {analysis.keywords.map((kw, idx) => (
+                    {analysis.keywords.map((kw: any, idx: number) => (
                       <span
                         key={idx}
                         className="px-2 py-0.5 rounded-md bg-[var(--bg-surface)] border border-[var(--border-subtle)] text-[var(--text-muted)] text-[11px]"
                       >
-                        #{kw}
+                        #{safeText(kw)}
                       </span>
                     ))}
                   </div>
