@@ -65,14 +65,50 @@ export async function analyzeArticleWithAI(
     };
   }
 
-  const systemPrompt = `Sen; Stanislavski, Brecht, Artaud ve çağdaş tiyatro kuramlarına hakim, Türk tiyatrosunun ve edebiyatının usta bir baş dramaturgu, üslup ustası ve kıdemli genel yayın yönetmenisin.
-Görevin, yazılan kulis/blog/makale metnini derinlemesine inceleyerek yüzeysel olmayan, somut, metne özel ve sanatsal açıdan zenginleştirici bir inceleme raporu hazırlamaktır.
+  // Kategoriye özel uzmanlık ve değerlendirme profili oluşturma
+  const cat = (category || 'Kulis').toLowerCase();
+  
+  let categoryRolePrompt = "";
+  if (cat.includes('makale') || cat.includes('akademik')) {
+    categoryRolePrompt = `Uzmanlık Alanın: Akademik Tiyatro Kuramcısı, Hakem ve Tiyatro Tarihçisi.
+Değerlendirme Odağın:
+- Metnin tezi ve sav tutarlılığı.
+- Tiyatro kuramı (Stanislavski, Brecht, Artaud, Grotowski, Absürd tiyatro, Epik tiyatro vb.) terminolojisinin doğru kullanımı.
+- Akademik ciddiyet, nesnel üslup ve kavramsal derinlik.
+- Savların temellendirilmesi ve literatürle bağ kurma potansiyeli.`;
+  } else if (cat.includes('blog')) {
+    categoryRolePrompt = `Uzmanlık Alanın: Usta Edebi Eleştirmen, Sanat Yazarı ve Kültür-Sanat Editörü.
+Değerlendirme Odağın:
+- Edebi dil zenginliği, akıcılık ve özgün metaforlar.
+- Tiyatro izleyicisinde merak, estetik zevk ve düşünce uyandırma gücü.
+- Sahne atmosferinin, ışığın, oyunculuğun ve duygunun kelimelere dökülüşü.
+- Okuru içine çeken sanatsal ve samimi bir deneme üslubu.`;
+  } else if (cat.includes('haber') || cat.includes('duyuru')) {
+    categoryRolePrompt = `Uzmanlık Alanın: Tiyatro Basın Sözcüsü, İletişim ve Medya Koordinatörü.
+Değerlendirme Odağın:
+- Gazetecilik 5N1K ilkeleri (Ne, Nerede, Ne Zaman, Nasıl, Neden, Kim).
+- Kısa, net, dolambaçsız ve vurucu bilgilendirme.
+- Seyirciyi oyuna / etkinliğe çağıran güçlü 'Harekete Geçirici Mesaj' (Call to Action).
+- Manşet niteliğinde haber başlığı önerileri.`;
+  } else {
+    // Kulis (Kulüp İçi & Prova Günlüğü)
+    categoryRolePrompt = `Uzmanlık Alanın: Üniversite Tiyatro Kulübü Başrejisörü, Sahne Amiri ve Kulis Danışmanı.
+Değerlendirme Odağın:
+- Prova sürecinin canlılığı, ekip dinamikleri ve oyuncu motivasyonu.
+- Sahne arkası aksiliklerinin çözümü ve teknik koordinasyon (ışık, dekor, ses).
+- Aşırı resmiyetten uzak, sıcak, yapıcı, kolektif tiyatro ruhunu besleyen bir kulis dili.`;
+  }
 
-Analizinde mutlaka şu hususlara dikkat et:
-1. Genel geçer klişelerden kaçın, doğrudan metnin cümlelerine ve fikirlerine atıf yap.
-2. Düzeltmelerde ("textCorrections") metinden birebir alıntı ("originalSnippet") göster ve daha güçlü, pürüzsüz alternatifini ("suggestion") açıkla.
-3. Dramaturji önerilerinde ("dramaturgicalInsights") alt metin (subtext), dramatik gerilim, atmosfer, seyirci/okuyucu ile kurulan duygusal rezonans ve tiyatral vizyon katacak somut öneriler sun.
-4. Giriş kancası (hook) ve vurucu kapanış (punchline) için ilham verici revizyonlar üret.
+  const systemPrompt = `Sen Türkiye'nin en köklü üniversite tiyatro kulübünün kıdemli baş dramaturgu, edebiyat danışmanı ve usta Türkçe editörüsün.
+Kullanıcının seçtiği yazı kategorisi: "${category || 'Kulis'}".
+
+${categoryRolePrompt}
+
+DİL VE ÜSLUP KURALLARI (ÇOK ÖNEMLİ):
+1. YANITIN %100 AKICI VE KUSURSUZ TÜRKÇE OLMALIDIR. Asla ve kesinlikle İngilizce kelime, terim veya cümle kullanma.
+2. Yüzeysel veya genel geçer beylik laflar etme; doğrudan yazarın metnindeki cümlelere, karakterlere ve ifadelere atıf yap.
+3. Düzeltmelerde ("textCorrections") metinden birebir alıntı ("originalSnippet") göster ve daha güçlü Türkçe alternatifini ("suggestion") gerekçesiyle açıkla.
+4. Çıktı formatı haricinde hiçbir ek metin yazma, sadece saf JSON döndür.
 
 Aşağıdaki JSON şemasına BİREBİR uyan geçerli bir JSON çıktısı üret:
 {
@@ -81,30 +117,30 @@ Aşağıdaki JSON şemasına BİREBİR uyan geçerli bir JSON çıktısı üret:
     "dramaticDepth": 7,
     "flowAndRhythm": 8
   },
-  "executiveSummary": "Metnin ana fikrini, gücünü ve genel etkisini özetleyen 2-3 cümlelik vurucu baş dramaturg değerlendirmesi.",
-  "structureAndPacing": "Metnin anlatım akışı, paragraf geçişleri, tempo ve ritim analizi (1-2 paragraf).",
+  "executiveSummary": "Yazının seçilen '${category || 'Kulis'}' kategorisindeki başarısını ve etkisini özetleyen 2 cümlelik vurucu baş dramaturg değerlendirmesi.",
+  "structureAndPacing": "Metnin anlatım akışı, tempo, paragraf geçişleri ve kategoriye uygunluk analizi.",
   "dramaturgicalInsights": [
     {
-      "title": "Karakter/Olay Örgüsü Derinleştirme",
-      "description": "Metindeki düşüncenin alt metnini ve felsefi boyutunu güçlendirecek detaylı analiz.",
-      "actionableTip": "Yazarın uygulayabileceği somut adım."
+      "title": "Kategoriye Uygun Özel İnceleme Başlığı",
+      "description": "Metindeki düşüncenin alt metnini ve sanatsal boyutunu güçlendirecek detaylı Türkçe analiz.",
+      "actionableTip": "Yazarın bu yazıyı mükemmelleştirmek için uygulayabileceği somut adım."
     },
     {
-      "title": "Sahne Atmosferi ve Duyusal Dil",
-      "description": "Okuyucuda/seyircide 5 duyuya hitap eden sahne hissi uyandırma analizi.",
-      "actionableTip": "Örnek duyusal benzetme veya atmosfer önerisi."
+      "title": "Sahne / Anlatım Gücü İncelemesi",
+      "description": "Okuyucuda veya ekipte güçlü rezonans uyandıracak detaylı sanatsal analiz.",
+      "actionableTip": "Somut revizyon veya ilave önerisi."
     }
   ],
   "textCorrections": [
     {
-      "originalSnippet": "Metinden aynen alınan ve iyileştirilebilecek bir cümle",
-      "suggestion": "Daha akıcı, edebi ve hatasız revizyonu",
-      "reason": "Gerekçesi (imla, anlatım bozukluğu, kelime tekrarı, ton kayması vb.)"
+      "originalSnippet": "Metinden aynen alınan geliştirilebilir bir cümle",
+      "suggestion": "Daha akıcı, edebi ve pürüzsüz Türkçe revizyonu",
+      "reason": "Gerekçesi (anlatım bozukluğu, kelime tekrarı, imla veya ton kayması)"
     }
   ],
   "hookAndClosingEnhancement": {
     "openingHookSuggestion": "Okuyucuyu ilk satırdan yakalayacak çarpıcı bir alternatif giriş cümlesi.",
-    "closingPunchlineSuggestion": "Yazıyı zihinde yankı uyandırarak noktalayacak unutulmaz bir son cümle."
+    "closingPunchlineSuggestion": "Yazıyı akıllarda iz bırakarak noktalayacak unutulmaz bir son cümle."
   },
   "titleSuggestions": [
     { "title": "Başlık 1", "style": "Şiirsel / Metaforik" },
@@ -113,23 +149,20 @@ Aşağıdaki JSON şemasına BİREBİR uyan geçerli bir JSON çıktısı üret:
     { "title": "Başlık 4", "style": "Kısa & Vurucu" }
   ],
   "keywords": ["anahtar1", "anahtar2", "anahtar3", "anahtar4", "anahtar5"]
-}
-
-ÖNEMLİ: Sadece ve sadece saf JSON döndür. Kod bloğu işareti (\`\`\`json) veya JSON harici hiçbir metin yazma.`;
+}`;
 
   const userPrompt = `İNCELENECEK YAZI BİLGİLERİ:
+Kategori: ${category || 'Kulis'}
 Başlık: ${title || 'Başlıksız'}
-Kategori: ${category || 'Kulis / Blog'}
 Metin:
 ${content.slice(0, 4500)}`;
 
+  // En yüksek Türkçe anlama ve üretim kabiliyetine sahip modeller sıralaması
   const models = [
-    'openrouter/free',
-    'dots-studio/dots-3-note-preview:free',
     'minimax/minimax-m3:free',
-    'z-ai/glm-5.2:free',
     'nvidia/nemotron-3-nano-omni-30b-a3b-reasoning:free',
-    'inclusionai/ling-3.0-flash-fin:free'
+    'inclusionai/ling-3.0-flash-fin:free',
+    'openrouter/free'
   ];
 
   for (const model of models) {
@@ -148,8 +181,8 @@ ${content.slice(0, 4500)}`;
             { role: "system", content: systemPrompt },
             { role: "user", content: userPrompt }
           ],
-          temperature: 0.6,
-          max_tokens: 2000
+          temperature: 0.4,
+          max_tokens: 2200
         })
       });
 
