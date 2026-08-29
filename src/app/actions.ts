@@ -65,6 +65,14 @@ export async function addPlay(formData: FormData) {
   return contentActions.addPlay(formData);
 }
 
+export async function updatePlay(formData: FormData) {
+  return contentActions.updatePlay(formData);
+}
+
+export async function getAIAnalysis(title: string, content: string, category: string) {
+  return contentActions.getAIAnalysis(title, content, category);
+}
+
 export async function deletePlay(formData: FormData) {
   return contentActions.deletePlay(formData);
 }
@@ -100,6 +108,10 @@ export async function deleteRehearsal(formData: FormData) {
 
 export async function addEvent(formData: FormData) {
   return rehearsalActions.addEvent(formData);
+}
+
+export async function updateEvent(formData: FormData) {
+  return rehearsalActions.updateEvent(formData);
 }
 
 export async function deleteEvent(formData: FormData) {
@@ -186,6 +198,10 @@ export async function getOccupiedSeats() {
 // 5. Yönetim & Site Yapılandırma Eylemleri
 export async function addTeamNeed(formData: FormData) {
   return adminActions.addTeamNeed(formData);
+}
+
+export async function updateTeamNeed(formData: FormData) {
+  return adminActions.updateTeamNeed(formData);
 }
 
 export async function deleteTeamNeed(formData: FormData) {

@@ -94,6 +94,34 @@ export default async function MembersDashboard() {
   const totalLikes = editorPosts.reduce((acc, p) => acc + (p.likes?.length || 0), 0);
   const mostReadPost = editorPosts.length > 0 ? [...editorPosts].sort((a, b) => (b.views || 0) - (a.views || 0))[0] : null;
 
+  // Aktif/Yaklaşan Oyunlar ve Kullanıcının Rolleri (Oyuncu Modülü)
+  const playsSnapshot = await adminDb.collection('plays').get();
+  const allPlays = playsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() as any }));
+  const activePlays = allPlays.filter(p => p.status === 'ACTIVE' || p.status === 'UPCOMING');
+
+  const userAssignedPlays = activePlays.filter(p => {
+    const inCast = Array.isArray(p.cast) && p.cast.some((c: any) => 
+      (c.actorName && cleanName && c.actorName.toLowerCase().includes(cleanName.toLowerCase())) ||
+      (userEmail && c.userEmail === userEmail)
+    );
+    const inCrew = Array.isArray(p.crew) && p.crew.some((cr: any) => 
+      (cr.memberName && cleanName && cr.memberName.toLowerCase().includes(cleanName.toLowerCase()))
+    );
+    return inCast || inCrew;
+  });
+
+  // Bekleyen Onay Sayısı (Yönetici Modülü İçin)
+  let pendingUsersCount = 0;
+  if (['ADMIN', 'SUPERADMIN'].includes(role) || userTitles.some(t => t.includes('Admin') || t.includes('Yönetici') || t.includes('Başkan'))) {
+    try {
+      const pendingSnap = await adminDb.collection('users').where('role', '==', 'PENDING').get();
+      pendingUsersCount = pendingSnap.size;
+    } catch {}
+  }
+
+  // Gişe / Satış Yetkisi
+  const isSales = role === 'SALES' || ['ADMIN', 'SUPERADMIN'].includes(role) || userTitles.some(t => t.includes('Gişe') || t.includes('Satış'));
+
   const inputStyle = {
     padding: '0.85rem 1rem',
     borderRadius: '10px',
@@ -107,11 +135,16 @@ export default async function MembersDashboard() {
 
   return (
     <div className="pt-32 pb-16 px-[5%] min-h-screen bg-[var(--bg-dark)]">
-      <header className="text-center mb-16">
-        <h1 className="serif-font text-5xl text-[var(--primary-gold)] mb-3">Üye Panosu</h1>
+      <header className="text-center mb-12 sm:mb-16">
+        <span className="editorial-tag text-[var(--primary-gold)] block text-[10px] mb-2 font-mono">
+          KULÜP DİJİTAL ALANI
+        </span>
+        <h1 className="serif-font text-4xl sm:text-5xl text-[var(--text-main)] mb-3">
+          Üye Panosu
+        </h1>
         <p className="text-[var(--text-muted)] max-w-2xl mx-auto text-sm">
           {session ? (
-            <>Hoş geldin, <span className="text-[var(--text-main)] font-bold">{cleanName}</span>!</>
+            <>Hoş geldin, <span className="text-[var(--primary-gold)] font-bold">{cleanName}</span>!</>
           ) : (
             <>FSM Vakıf Üniversitesi Sinema ve Tiyatro Kulübü <span className="text-[var(--text-main)] font-bold">Dijital Panosu</span></>
           )}
@@ -121,16 +154,120 @@ export default async function MembersDashboard() {
       <ScrollReveal>
         <div className="max-w-7xl mx-auto space-y-8">
 
-        {/* EDİTÖR & YAZAR ÖZET KARTI */}
+        {/* 👑 1. YÖNETİCİ HIZLI BAKIŞ MODÜLÜ */}
+        {canAdd && (
+          <div className="p-4 sm:p-5 bg-[var(--primary-gold-dim)] border border-[var(--primary-gold-border)] rounded-2xl flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+            <div className="flex items-center gap-3">
+              <span className="text-2xl">🛡️</span>
+              <div>
+                <span className="text-xs font-bold text-[var(--text-main)] block">Yönetim Konsolu Erişimi</span>
+                <span className="text-[11px] text-[var(--text-dim)]">
+                  {pendingUsersCount > 0 
+                    ? `⚠️ Onay bekleyen ${pendingUsersCount} yeni üyelik başvurusu var.`
+                    : "Tüm sistem ve üye kayıtları güncel."}
+                </span>
+              </div>
+            </div>
+            <Link
+              href="/tanerabi/dashboard"
+              className="btn btn-primary !py-2 !px-4 text-xs font-bold uppercase tracking-wider flex items-center gap-1.5 flex-shrink-0"
+            >
+              <span>Yönetim Konsolunu Aç</span>
+              <ion-icon name="arrow-forward-outline"></ion-icon>
+            </Link>
+          </div>
+        )}
+
+        {/* 🎭 2. OYUNCU & KAST MODÜLÜ (Kullanıcı bir oyunda görevliyse görünür) */}
+        {userAssignedPlays.length > 0 && (
+          <div className="glass-card !p-6 sm:!p-8 bg-[var(--bg-surface)] border border-[var(--primary-gold-border)] rounded-2xl">
+            <div className="flex items-center justify-between gap-4 border-b border-[var(--border-subtle)] pb-4 mb-6">
+              <div>
+                <span className="editorial-tag text-[var(--primary-gold)] block text-[10px] mb-1 font-mono">
+                  🎭 OYUNCU & SAHNE KADROSU
+                </span>
+                <h2 className="serif-font text-2xl text-[var(--text-main)] font-bold">
+                  Oyunlarım & Sahne Görevlerim
+                </h2>
+              </div>
+              <span className="text-xs font-mono text-[var(--primary-gold)]">
+                {userAssignedPlays.length} Aktif Oyun
+              </span>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {userAssignedPlays.map((p: any) => {
+                const myCast = (p.cast || []).find((c: any) => 
+                  (c.actorName && cleanName && c.actorName.toLowerCase().includes(cleanName.toLowerCase())) ||
+                  (userEmail && c.userEmail === userEmail)
+                );
+                const myCrew = (p.crew || []).find((cr: any) => 
+                  (cr.memberName && cleanName && cr.memberName.toLowerCase().includes(cleanName.toLowerCase()))
+                );
+
+                return (
+                  <div key={p.id} className="p-5 bg-[var(--bg-surface-elevated)] border border-[var(--border-subtle)] rounded-xl space-y-3">
+                    <div className="flex items-start justify-between gap-3">
+                      <div>
+                        <h3 className="serif-font text-lg text-[var(--text-main)] font-bold">{p.title}</h3>
+                        <span className="text-xs text-[var(--text-dim)] block">{p.season || 'Bu Sezon'} &bull; {p.director ? `Reji: ${p.director}` : 'FSM Tiyatro'}</span>
+                      </div>
+                      <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-[var(--primary-gold-dim)] text-[var(--primary-gold)] border border-[var(--primary-gold-border)]">
+                        {p.status === 'ACTIVE' ? 'Sahnede' : 'Hazırlıkta'}
+                      </span>
+                    </div>
+
+                    {/* Rol & Görev Rozeti */}
+                    <div className="flex flex-wrap gap-2 pt-2 border-t border-[var(--border-subtle)]">
+                      {myCast && (
+                        <div className="text-xs text-[var(--text-main)]">
+                          <span className="text-[var(--text-dim)]">Karakter:</span> <strong className="text-[var(--primary-gold)] italic">"{myCast.roleName || 'Oyuncu'}"</strong>
+                        </div>
+                      )}
+                      {myCrew && (
+                        <div className="text-xs text-[var(--text-main)]">
+                          <span className="text-[var(--text-dim)]">Ekip Görevi:</span> <strong className="text-[var(--primary-gold)]">{myCrew.duty || 'Reji'}</strong>
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Senaryo ve Oyun Sayfası Butonları */}
+                    <div className="flex items-center gap-2 pt-2">
+                      {p.scriptUrl && (
+                        <a
+                          href={p.scriptUrl}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="px-3 py-1.5 bg-[var(--primary-gold)] text-black font-bold text-xs rounded-lg hover:brightness-110 flex items-center gap-1 transition-all"
+                        >
+                          <ion-icon name="document-text-outline"></ion-icon>
+                          <span>Rol Metnimi İndir (PDF)</span>
+                        </a>
+                      )}
+                      <Link
+                        href={`/oyunlar/${p.id}`}
+                        className="px-3 py-1.5 bg-[var(--bg-surface)] hover:bg-[var(--primary-gold-dim)] text-[var(--text-muted)] hover:text-[var(--primary-gold)] border border-[var(--border-medium)] rounded-lg text-xs font-semibold transition-all"
+                      >
+                        Oyun Detayı →
+                      </Link>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        )}
+
+        {/* 📝 3. EDİTÖR & YAZAR ÖZET KARTI */}
         {isEditor && (
           <div className="glass-card !p-6 sm:!p-8 bg-[var(--bg-surface)] border border-[var(--primary-gold-border)] rounded-2xl">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-[var(--border-subtle)] pb-6 mb-6">
               <div>
                 <span className="editorial-tag text-[var(--primary-gold)] block text-[10px] mb-1 font-mono">
-                  ✍️ EDİTÖR & İÇERİK METRİKLERİ
+                  ✍️ YAZAR & EDİTÖR MASASI
                 </span>
                 <h2 className="serif-font text-2xl text-[var(--text-main)] font-bold">
-                  Yazı Performansın & Kulis Masası
+                  Yazılarım & İstatistikler
                 </h2>
               </div>
               <Link
@@ -168,7 +305,7 @@ export default async function MembersDashboard() {
             {editorPosts.length > 0 && (
               <div className="space-y-2">
                 <span className="text-[11px] font-bold text-[var(--text-dim)] uppercase tracking-wider block mb-2">
-                  Son Yazıların
+                  Son Yazılarınız
                 </span>
                 <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
                   {editorPosts.slice(0, 3).map((p: any) => (
@@ -192,17 +329,37 @@ export default async function MembersDashboard() {
           </div>
         )}
 
+        {/* 🎟️ 4. GİŞE & BİLET TARAMA MODÜLÜ */}
+        {isSales && (
+          <div className="p-5 bg-[var(--bg-surface)] border border-[var(--border-subtle)] rounded-2xl flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+            <div className="flex items-center gap-3">
+              <span className="text-2xl">🎟️</span>
+              <div>
+                <span className="text-xs font-bold text-[var(--text-main)] block">Temsil Giriş Gişesi</span>
+                <span className="text-[11px] text-[var(--text-dim)]">Kapıda seyirci karekodlarını kamerayla tarayıp giriş onaylayın.</span>
+              </div>
+            </div>
+            <Link
+              href="/members/tickets/scan"
+              className="px-4 py-2 bg-[var(--primary-gold-dim)] hover:bg-[var(--primary-gold)] text-[var(--primary-gold)] hover:text-black border border-[var(--primary-gold-border)] rounded-lg text-xs font-bold transition-all flex items-center gap-2 flex-shrink-0"
+            >
+              <ion-icon name="qr-code-outline"></ion-icon>
+              <span>QR Bilet Tara</span>
+            </Link>
+          </div>
+        )}
+
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
         
-        {/* ETKİNLİKLER KARTI */}
+        {/* ETKİNLİKLER & PROVA TAKVİMİ */}
         <div className="glass-card">
           <h2 className="text-[var(--text-main)] text-2xl mb-6 border-b border-[var(--border-subtle)] pb-4 flex items-center gap-2 font-bold">
-            Yaklaşan Etkinlikler
+            Yaklaşan Etkinlikler & Takvim
           </h2>
           
           {canAdd && (
             <form action={addEvent as any} className="mb-6 bg-[var(--primary-gold-dim)] p-6 rounded-xl flex flex-col gap-3 border border-dashed border-[var(--primary-gold-border)]">
-              <h4 className="text-[var(--primary-gold)] text-sm font-bold">+ Yeni Etkinlik Ekle (Yönetici)</h4>
+              <h4 className="text-[var(--primary-gold)] text-sm font-bold">+ Yeni Etkinlik Ekle</h4>
               <input type="text" name="title" placeholder="Etkinlik Adı" style={inputStyle} required />
               <div className="flex flex-col md:flex-row gap-3">
                 <div className="flex-1 relative">
@@ -279,25 +436,25 @@ export default async function MembersDashboard() {
           )}
         </div>
 
-        {/* EKİP İHTİYAÇLARI */}
+        {/* KULÜP GÖREV ÇAĞRILARI (AÇIK POZİSYONLAR) */}
         <div className="glass-card">
           <h2 className="text-[var(--text-main)] text-2xl mb-6 border-b border-[var(--border-subtle)] pb-4 flex items-center gap-2 font-bold">
-            Ekip İhtiyaç İlanları
+            Kulüp Görev Çağrıları
           </h2>
 
           {canAdd && (
              <form action={addTeamNeed as any} className="mb-6 bg-[var(--primary-gold-dim)] p-6 rounded-xl flex flex-col gap-3 border border-dashed border-[var(--primary-gold-border)]">
-              <h4 className="text-[var(--primary-gold)] text-sm font-bold">+ Yeni Personel Açığı Ekle (Yönetici)</h4>
-              <input type="text" name="roleName" placeholder="Aranan Yetenek" style={inputStyle} required />
-              <textarea name="description" placeholder="Beklentilerimiz..." rows={3} style={inputStyle} required></textarea>
+              <h4 className="text-[var(--primary-gold)] text-sm font-bold">+ Yeni Görev Çağrısı Ekle</h4>
+              <input type="text" name="roleName" placeholder="Aranan Görev / Pozisyon" style={inputStyle} required />
+              <textarea name="description" placeholder="Görev tanımı ve beklentiler..." rows={3} style={inputStyle} required></textarea>
               <button type="submit" className="btn btn-primary mt-2">
-                İlanı Yayınla
+                Çağrıyı Yayınla
               </button>
             </form>
           )}
 
           {teamNeeds.length === 0 ? (
-            <p className="text-[var(--text-dim)] text-sm">Şu an için açık bir ekip personel ilanı yok.</p>
+            <p className="text-[var(--text-dim)] text-sm">Şu an için açık bir görev çağrısı bulunmuyor.</p>
           ) : (
             <ul className="space-y-4">
               {teamNeeds.map((t: any) => {
@@ -314,7 +471,7 @@ export default async function MembersDashboard() {
                             title="İlanı Sil"
                             className="text-red-400 hover:text-red-300 text-xs px-2 py-1 rounded border border-red-500/30 hover:border-red-500"
                           >
-                            İlanı Kaldır
+                            Kaldır
                           </button>
                         </form>
                       )}
@@ -328,7 +485,7 @@ export default async function MembersDashboard() {
           )}
         </div>
 
-        {/* SENARYO KÜTÜPHANESİ - SADECE YETKİLİLER VE AKTÖRLERE ÖZEL */}
+        {/* OYUN METİNLERİ & SENARYO KÜTÜPHANESİ */}
         <div className="md:col-span-2">
           {['AKTOR', 'PLAYER', 'DIRECTOR', 'ASST_DIRECTOR', 'SUPERADMIN', 'ADMIN'].includes(role) && (
             <ScriptVault initialScripts={scripts} canManage={canManageScripts} />

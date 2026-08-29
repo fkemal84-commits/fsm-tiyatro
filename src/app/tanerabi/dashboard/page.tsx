@@ -5,6 +5,9 @@ import RoleSelector from '@/components/RoleSelector';
 import TitleManager from '@/components/TitleManager';
 import TitlePoolManager from '@/components/TitlePoolManager';
 import PlayCastEditor from '@/components/PlayCastEditor';
+import PlayEditModal from '@/components/PlayEditModal';
+import EventEditModal from '@/components/EventEditModal';
+import TeamNeedEditModal from '@/components/TeamNeedEditModal';
 import SmartFileInput from '@/components/SmartFileInput';
 import PlayStatusChanger from '@/components/PlayStatusChanger';
 import { adminDb } from '@/lib/firebase-admin';
@@ -593,6 +596,18 @@ export default async function Dashboard({ searchParams }: { searchParams: Promis
                         helperText="Dikey tiyatro afişinizi seçin; otomatik optimize edilir."
                       />
                     </div>
+                    <div>
+                      <label style={labelStyle}>Oyun Metni / Senaryo (PDF)</label>
+                      <input 
+                        type="file" 
+                        name="scriptPdf" 
+                        accept="application/pdf" 
+                        style={{ ...inputStyle, padding: '0.4rem' }} 
+                      />
+                      <span style={{ fontSize: '0.7rem', color: 'var(--text-dim)', display: 'block', marginTop: '0.25rem' }}>
+                        Oyun arşivlendiğinde kütüphaneye dahil edilir; aktifken sadece oyuncu kadrosuna özeldir.
+                      </span>
+                    </div>
                     <div style={{ gridColumn: '1/-1' }}>
                       <label style={labelStyle}>Özet</label>
                       <textarea name="description" placeholder="Oyun özeti..." rows={3} style={inputStyle} required />
@@ -618,9 +633,11 @@ export default async function Dashboard({ searchParams }: { searchParams: Promis
                         <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
                           <span style={{ color: 'var(--text-main)', fontSize: '0.875rem', fontWeight: 'bold' }}>{p.title}</span>
                           {p.year && <span style={{ color: 'var(--text-dim)', fontSize: '0.75rem' }}>{p.year}</span>}
+                          {p.scriptUrl && <span style={{ fontSize: '0.7rem', color: 'var(--primary-gold)', background: 'rgba(212,175,55,0.1)', padding: '0.15rem 0.4rem', borderRadius: '4px' }}>📄 Senaryo Yüklü</span>}
                         </div>
                         <div style={{ display: 'flex', gap: '0.6rem', alignItems: 'center', flexShrink: 0 }}>
                           <PlayStatusChanger playId={p.id} initialStatus={p.status || 'ACTIVE'} />
+                          <PlayEditModal play={p} />
                           <Link href={`/oyunlar/${p.id}`} target="_blank" style={{ padding: '0.35rem 0.75rem', border: '1px solid var(--border-medium)', borderRadius: '6px', fontSize: '0.75rem', color: 'var(--text-muted)', textDecoration: 'none' }}>Görüntüle</Link>
                           <DeleteButton action={deletePlay as any} id={p.id} name={p.title} confirmMessage="Bu oyunu silmek istediğine emin misin?" idFieldName="playId" />
                         </div>
@@ -781,7 +798,10 @@ export default async function Dashboard({ searchParams }: { searchParams: Promis
                                 <span>📍 {e.location || 'Haliç Yerleşkesi'}</span>
                               </div>
                             </div>
-                            <DeleteButton action={deleteEvent as any} id={e.id} name={e.title} confirmMessage="Bu etkinliği ve bilet rezervasyonlarını silmek istiyor musunuz?" idFieldName="eventId" />
+                            <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
+                              <EventEditModal event={e} />
+                              <DeleteButton action={deleteEvent as any} id={e.id} name={e.title} confirmMessage="Bu etkinliği ve bilet rezervasyonlarını silmek istiyor musunuz?" idFieldName="eventId" />
+                            </div>
                           </div>
 
                           {/* Bilet Alan Üyeler Listesi */}
@@ -1119,16 +1139,19 @@ export default async function Dashboard({ searchParams }: { searchParams: Promis
                               <h4 style={{ color: 'var(--primary-gold)', fontWeight: 'bold', fontSize: '0.95rem', margin: 0 }}>
                                 🎯 {need.roleName}
                               </h4>
-                              <form action={deleteTeamNeed as any}>
-                                <input type="hidden" name="needId" value={need.id} />
-                                <button
-                                  type="submit"
-                                  title="İlanı Sil"
-                                  style={{ padding: '0.25rem 0.5rem', border: '1px solid rgba(239, 68, 68, 0.3)', borderRadius: '4px', background: 'transparent', color: '#f87171', fontSize: '0.7rem', cursor: 'pointer' }}
-                                >
-                                  İlanı Kapat / Sil
-                                </button>
-                              </form>
+                              <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
+                                <TeamNeedEditModal need={need} />
+                                <form action={deleteTeamNeed as any}>
+                                  <input type="hidden" name="needId" value={need.id} />
+                                  <button
+                                    type="submit"
+                                    title="İlanı Sil"
+                                    style={{ padding: '0.35rem 0.65rem', border: '1px solid rgba(239, 68, 68, 0.3)', borderRadius: '6px', background: 'transparent', color: '#f87171', fontSize: '0.75rem', cursor: 'pointer' }}
+                                  >
+                                    İlanı Kapat / Sil
+                                  </button>
+                                </form>
+                              </div>
                             </div>
                             <p style={{ color: 'var(--text-muted)', fontSize: '0.8rem', margin: 0, lineHeight: '1.4' }}>
                               {need.description}

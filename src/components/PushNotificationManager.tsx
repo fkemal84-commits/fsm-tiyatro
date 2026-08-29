@@ -20,8 +20,15 @@ export default function PushNotificationManager({ session: initialSession }: { s
   const [showDelayed, setShowDelayed] = useState(false);
   const [isDismissed, setIsDismissed] = useState(false);
 
-  // 5 saniye sonra uyarının görünmesine izin ver ve dismissal kontrolü yap
+  // 15 saniye sonra uyarının görünmesine izin ver ve dismissal kontrolü yap
   useEffect(() => {
+    if (typeof window !== 'undefined' && 'Notification' in window) {
+      if (Notification.permission === 'granted' || Notification.permission === 'denied') {
+        setPermission(Notification.permission);
+        return;
+      }
+    }
+
     const dismissedUntil = localStorage.getItem('push_notif_dismissed_until');
     if (dismissedUntil && Date.now() < parseInt(dismissedUntil)) {
       setIsDismissed(true);
@@ -30,13 +37,13 @@ export default function PushNotificationManager({ session: initialSession }: { s
 
     const timer = setTimeout(() => {
       setShowDelayed(true);
-    }, 5000);
+    }, 15000);
     return () => clearTimeout(timer);
   }, []);
 
   const handleDismiss = () => {
-    // 3 gün boyunca bir daha sorma
-    const expireTime = Date.now() + 3 * 24 * 60 * 60 * 1000;
+    // 7 gün boyunca bir daha sorma
+    const expireTime = Date.now() + 7 * 24 * 60 * 60 * 1000;
     localStorage.setItem('push_notif_dismissed_until', expireTime.toString());
     setIsDismissed(true);
   };
@@ -80,7 +87,8 @@ export default function PushNotificationManager({ session: initialSession }: { s
         return;
       }
       
-      setPermission(Notification.permission);
+      const currentPerm = Notification.permission;
+      setPermission(currentPerm);
       setIsIOS(/iPad|iPhone|iPod/.test(navigator.userAgent) && !(window as any).MSStream);
       setIsStandalone(window.matchMedia('(display-mode: standalone)').matches);
       
@@ -107,10 +115,9 @@ export default function PushNotificationManager({ session: initialSession }: { s
     }
   };
 
+  // İzin zaten verilmişse veya reddedilmişse KESİNLİKLE hiçbir kutu gösterme
   if (!isSupported || !currentSession || !showDelayed || isDismissed) return null;
-  
-  if (permission === 'granted' && regStatus === 'done') return null;
-  if (permission === 'denied' && !regStatus.startsWith('error')) return null;
+  if (permission === 'granted' || permission === 'denied') return null;
 
   return (
     <div style={{

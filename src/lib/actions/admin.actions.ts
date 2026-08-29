@@ -39,6 +39,31 @@ export async function deleteTeamNeed(formData: FormData) {
   }
 }
 
+export async function updateTeamNeed(formData: FormData) {
+  try {
+    await requireAuth(['SUPERADMIN', 'ADMIN', 'DIRECTOR']);
+    const needId = (formData.get('needId') as string)?.trim();
+    const roleName = (formData.get('roleName') as string)?.trim();
+    const description = (formData.get('description') as string)?.trim();
+
+    if (!needId || !roleName || !description) {
+      return { error: "İlan başlığı ve açıklaması zorunludur." };
+    }
+
+    await adminDb.collection('teamNeeds').doc(needId).update({
+      roleName,
+      description,
+      updatedAt: new Date().toISOString()
+    });
+
+    revalidatePath('/members');
+    revalidatePath('/tanerabi/dashboard');
+    return { success: true };
+  } catch (error) {
+    return handleServerError(error, "UPDATE_TEAM_NEED");
+  }
+}
+
 export async function applyForTeamNeed(formData: FormData) {
   try {
     const { user, uid } = await requireAuth([
@@ -202,21 +227,76 @@ export async function updateSiteConfig(formData: FormData) {
   }
 }
 
+const DEFAULT_TITLE_PERMISSIONS: Record<string, string[]> = {
+  'Süper Admin': ['canWritePosts', 'canManagePosts', 'canViewMetrics', 'canManagePlays', 'canManageScripts', 'canViewScripts', 'canManageMembers', 'canAssignTitles', 'canManageEvents', 'canScanTickets', 'canManageSite'],
+  'Yönetici (Admin)': ['canWritePosts', 'canManagePosts', 'canViewMetrics', 'canManagePlays', 'canManageScripts', 'canViewScripts', 'canManageMembers', 'canAssignTitles', 'canManageEvents', 'canScanTickets', 'canManageSite'],
+  'İçerik Editörü': ['canWritePosts', 'canViewMetrics'],
+  'Yönetmen': ['canManagePlays', 'canManageScripts', 'canViewScripts', 'canManageEvents', 'canWritePosts', 'canViewMetrics'],
+  'Yrd. Yönetmen': ['canManagePlays', 'canViewScripts', 'canManageEvents', 'canWritePosts'],
+  'Oyuncu / Aktör': ['canViewScripts'],
+  'Gişe & Satış': ['canScanTickets'],
+  'Kulüp Başkanı': ['canManageMembers', 'canAssignTitles', 'canManageEvents', 'canManagePlays', 'canWritePosts', 'canScanTickets', 'canViewMetrics'],
+  'Başkan Yardımcısı': ['canManageMembers', 'canAssignTitles', 'canManageEvents', 'canManagePlays', 'canWritePosts'],
+  'Sayman': ['canManageMembers', 'canScanTickets', 'canManageEvents'],
+  'Genel Sekreter': ['canManageMembers', 'canManageEvents', 'canWritePosts'],
+  'Yönetim Kurulu Üyesi': ['canManageMembers', 'canManageEvents'],
+  'Denetim Kurulu Üyesi': ['canManageMembers'],
+  'Dekor & Sahne Amiri': ['canManagePlays', 'canViewScripts'],
+  'Kostüm & Aksesuar': ['canManagePlays', 'canViewScripts'],
+  'Işık & Ses': ['canManagePlays', 'canViewScripts'],
+  'Sosyal Medya & Tasarım': ['canWritePosts', 'canViewMetrics'],
+  'Dramaturg': ['canWritePosts', 'canViewScripts', 'canManageScripts', 'canViewMetrics']
+};
+
 export async function updateUserTitles(userId: string, titles: string[]) {
   try {
-    await requireAuth(['SUPERADMIN', 'ADMIN']);
+    const { user: callerUser } = await requireAuth(['SUPERADMIN', 'ADMIN']);
     if (!userId) return { error: "Kullanıcı ID gereklidir." };
+
+    const callerRole = callerUser.role;
+    const isSuperAdmin = callerRole === 'SUPERADMIN';
+
+    // Hedef kullanıcı kontrolü
+    const userDoc = await adminDb.collection('users').doc(userId).get();
+    if (!userDoc.exists) return { error: "Kullanıcı bulunamadı." };
+    const targetUserData = userDoc.data()!;
+    const targetCurrentRole = targetUserData.role || 'MEMBER';
+
+    // Süper Admin'i sadece bir başka Süper Admin değiştirebilir
+    if (targetCurrentRole === 'SUPERADMIN' && !isSuperAdmin) {
+      return { error: "Süper Admin yetkilerini sadece bir Süper Admin düzenleyebilir." };
+    }
 
     const cleanTitles = Array.isArray(titles) 
       ? titles.map(t => typeof t === 'string' ? t.trim() : '').filter(Boolean)
       : [];
 
-    const userDoc = await adminDb.collection('users').doc(userId).get();
-    const currentRole = userDoc.data()?.role || 'MEMBER';
+    // Yetki Aşımı Koruması (Privilege Escalation Guard)
+    if (!isSuperAdmin) {
+      // Caller yetkilerini belirle
+      const callerTitles: string[] = callerUser.titles || [];
+      const callerPermSet = new Set<string>();
+      if (callerRole === 'ADMIN') {
+        Object.values(DEFAULT_TITLE_PERMISSIONS).forEach(perms => perms.forEach(p => callerPermSet.add(p)));
+      } else {
+        callerTitles.forEach(t => {
+          (DEFAULT_TITLE_PERMISSIONS[t] || []).forEach(p => callerPermSet.add(p));
+        });
+      }
+
+      // Verilmek istenen her unvanın yetkilerini kontrol et
+      for (const title of cleanTitles) {
+        const requiredPerms = DEFAULT_TITLE_PERMISSIONS[title] || [];
+        const missing = requiredPerms.filter(p => !callerPermSet.has(p));
+        if (missing.length > 0) {
+          return { error: `"${title}" unvanındaki bazı yetkileri (${missing.join(', ')}) siz taşımadığınız için bu unvanı başkasına veremezsiniz.` };
+        }
+      }
+    }
 
     // Otomatik Rol / Yetki Senkronizasyonu (Unvan & Perk Birleşimi)
-    let newRole = currentRole;
-    if (currentRole !== 'SUPERADMIN') {
+    let newRole = targetCurrentRole;
+    if (targetCurrentRole !== 'SUPERADMIN') {
       if (cleanTitles.some(t => t.includes('Admin') || t.includes('Yönetici'))) {
         newRole = 'ADMIN';
       } else if (cleanTitles.some(t => t === 'Yönetmen' || t.includes('Reji'))) {
@@ -227,7 +307,7 @@ export async function updateUserTitles(userId: string, titles: string[]) {
         newRole = 'AKTOR';
       } else if (cleanTitles.some(t => t.includes('Gişe') || t.includes('Satış'))) {
         newRole = 'SALES';
-      } else if (cleanTitles.length === 0 && currentRole !== 'ADMIN') {
+      } else if (cleanTitles.length === 0 && targetCurrentRole !== 'ADMIN') {
         newRole = 'MEMBER';
       }
     }
@@ -257,11 +337,7 @@ export async function addAvailableTitle(formData: FormData) {
     const docRef = adminDb.collection('settings').doc('titles');
     const docSnap = await docRef.get();
 
-    const existingList: string[] = docSnap.exists ? (docSnap.data()?.list || []) : [
-      'Kulüp Başkanı', 'Başkan Yardımcısı', 'Sayman', 'Genel Sekreter', 
-      'Yönetim Kurulu Üyesi', 'Denetim Kurulu Üyesi', 'Dekor & Sahne Amiri',
-      'Kostüm & Aksesuar', 'Işık & Ses', 'Sosyal Medya & Tasarım', 'Dramaturg'
-    ];
+    const existingList: string[] = docSnap.exists ? (docSnap.data()?.list || []) : Object.keys(DEFAULT_TITLE_PERMISSIONS);
 
     if (!existingList.includes(title)) {
       existingList.push(title);
@@ -289,11 +365,7 @@ export async function removeAvailableTitle(titleOrFormData: string | FormData) {
 
     const currentList: string[] = docSnap.exists && Array.isArray(docSnap.data()?.list)
       ? docSnap.data()!.list
-      : [
-        'Kulüp Başkanı', 'Başkan Yardımcısı', 'Sayman', 'Genel Sekreter', 
-        'Yönetim Kurulu Üyesi', 'Denetim Kurulu Üyesi', 'Dekor & Sahne Amiri',
-        'Kostüm & Aksesuar', 'Işık & Ses', 'Sosyal Medya & Tasarım', 'Dramaturg'
-      ];
+      : Object.keys(DEFAULT_TITLE_PERMISSIONS);
 
     const updatedList = currentList.filter(t => t !== title);
     await docRef.set({ list: updatedList, updatedAt: new Date().toISOString() }, { merge: true });
@@ -306,18 +378,15 @@ export async function removeAvailableTitle(titleOrFormData: string | FormData) {
 }
 
 export async function getAvailableTitles(): Promise<string[]> {
-  const defaultList = [
-    'Yönetici (Admin)', 'İçerik Editörü', 'Yönetmen', 'Yrd. Yönetmen', 'Oyuncu / Aktör', 'Gişe & Satış',
-    'Kulüp Başkanı', 'Başkan Yardımcısı', 'Sayman', 'Genel Sekreter', 
-    'Yönetim Kurulu Üyesi', 'Denetim Kurulu Üyesi', 'Dekor & Sahne Amiri',
-    'Kostüm & Aksesuar', 'Işık & Ses', 'Sosyal Medya & Tasarım', 'Dramaturg'
-  ];
+  const defaultList = Object.keys(DEFAULT_TITLE_PERMISSIONS);
 
   try {
     const docRef = adminDb.collection('settings').doc('titles');
     const docSnap = await docRef.get();
-    if (docSnap.exists && Array.isArray(docSnap.data()?.list)) {
-      return docSnap.data()!.list;
+    if (docSnap.exists && Array.isArray(docSnap.data()?.list) && docSnap.data()!.list.length > 0) {
+      // Birleşik havuz
+      const merged = Array.from(new Set([...defaultList, ...docSnap.data()!.list]));
+      return merged;
     }
     return defaultList;
   } catch (e) {

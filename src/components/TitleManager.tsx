@@ -15,11 +15,13 @@ export default function TitleManager({ userId, userTitles = [], availableTitles 
   const [selectedToAdd, setSelectedToAdd] = useState<string>('');
   const [customTitle, setCustomTitle] = useState<string>('');
   const [isAddingCustom, setIsAddingCustom] = useState(false);
+  const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
 
   const handleAddTitle = (titleToAdd: string) => {
     const trimmed = titleToAdd.trim();
     if (!trimmed || titles.includes(trimmed)) return;
+    setErrorMsg(null);
 
     const nextTitles = [...titles, trimmed];
     setTitles(nextTitles);
@@ -28,16 +30,25 @@ export default function TitleManager({ userId, userTitles = [], availableTitles 
     setIsAddingCustom(false);
 
     startTransition(async () => {
-      await updateUserTitles(userId, nextTitles);
+      const res = await updateUserTitles(userId, nextTitles);
+      if (res && 'error' in res && res.error) {
+        setErrorMsg(res.error);
+        setTitles(titles);
+      }
     });
   };
 
   const handleRemoveTitle = (titleToRemove: string) => {
+    setErrorMsg(null);
     const nextTitles = titles.filter(t => t !== titleToRemove);
     setTitles(nextTitles);
 
     startTransition(async () => {
-      await updateUserTitles(userId, nextTitles);
+      const res = await updateUserTitles(userId, nextTitles);
+      if (res && 'error' in res && res.error) {
+        setErrorMsg(res.error);
+        setTitles(titles);
+      }
     });
   };
 
@@ -209,6 +220,11 @@ export default function TitleManager({ userId, userTitles = [], availableTitles 
         )}
         {isPending && <span style={{ fontSize: '0.65rem', color: 'var(--primary-gold)' }}>Kaydediliyor...</span>}
       </div>
+      {errorMsg && (
+        <span style={{ fontSize: '0.7rem', color: '#f87171', fontWeight: '500', lineHeight: 1.2 }}>
+          ⚠️ {errorMsg}
+        </span>
+      )}
     </div>
   );
 }

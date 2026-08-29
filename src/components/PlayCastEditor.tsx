@@ -2,23 +2,28 @@
 
 import { useState } from 'react';
 
-interface CastMember {
+export interface CastMember {
   actorName: string;
   roleName: string;
   photoUrl?: string;
+  userEmail?: string;
 }
 
-interface CrewMember {
-  name: string;
-  task: string;
+export interface CrewMember {
+  name?: string;
+  memberName?: string;
+  task?: string;
+  duty?: string;
+  photoUrl?: string;
 }
 
-interface PlayCastEditorProps {
+export interface PlayCastEditorProps {
   initialCast?: CastMember[];
   initialCrew?: CrewMember[];
+  onChange?: (data: { cast: CastMember[]; crew: CrewMember[] }) => void;
 }
 
-export default function PlayCastEditor({ initialCast = [], initialCrew = [] }: PlayCastEditorProps) {
+export default function PlayCastEditor({ initialCast = [], initialCrew = [], onChange }: PlayCastEditorProps) {
   const [cast, setCast] = useState<CastMember[]>(initialCast);
   const [crew, setCrew] = useState<CrewMember[]>(initialCrew);
 
@@ -32,24 +37,32 @@ export default function PlayCastEditor({ initialCast = [], initialCrew = [] }: P
 
   const handleAddCast = () => {
     if (!actorName.trim() || !roleName.trim()) return;
-    setCast([...cast, { actorName: actorName.trim(), roleName: roleName.trim() }]);
+    const next = [...cast, { actorName: actorName.trim(), roleName: roleName.trim() }];
+    setCast(next);
+    onChange?.({ cast: next, crew });
     setActorName('');
     setRoleName('');
   };
 
   const handleRemoveCast = (index: number) => {
-    setCast(cast.filter((_, i) => i !== index));
+    const next = cast.filter((_, i) => i !== index);
+    setCast(next);
+    onChange?.({ cast: next, crew });
   };
 
   const handleAddCrew = () => {
     if (!crewName.trim() || !crewTask.trim()) return;
-    setCrew([...crew, { name: crewName.trim(), task: crewTask.trim() }]);
+    const next = [...crew, { name: crewName.trim(), task: crewTask.trim() }];
+    setCrew(next);
+    onChange?.({ cast, crew: next });
     setCrewName('');
     setCrewTask('');
   };
 
   const handleRemoveCrew = (index: number) => {
-    setCrew(crew.filter((_, i) => i !== index));
+    const next = crew.filter((_, i) => i !== index);
+    setCrew(next);
+    onChange?.({ cast, crew: next });
   };
 
   const inputStyle = {

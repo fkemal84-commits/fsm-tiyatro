@@ -115,6 +115,46 @@ export async function deleteEvent(formData: FormData) {
   }
 }
 
+export async function updateEvent(formData: FormData) {
+  try {
+    const eventId = formData.get('eventId') as string;
+    if (!eventId) return { error: "Etkinlik ID gereklidir." };
+
+    await requireAuth(['SUPERADMIN', 'ADMIN']);
+
+    const title = (formData.get('title') as string)?.trim();
+    const date = (formData.get('date') as string)?.trim();
+    const location = (formData.get('location') as string)?.trim() || 'Haliç Yerleşkesi';
+    const description = (formData.get('description') as string)?.trim() || '';
+    const type = (formData.get('type') as string)?.trim() || 'Etkinlik';
+    const isTicketed = formData.get('isTicketed') === 'true' || formData.get('isTicketed') === 'on';
+    const ticketQuotaRaw = formData.get('ticketQuota') as string;
+    const ticketQuota = isTicketed && ticketQuotaRaw ? Math.max(1, parseInt(ticketQuotaRaw, 10)) : 0;
+
+    if (!title || !date) {
+      return { error: "Etkinlik adı ve tarihi zorunludur." };
+    }
+
+    await adminDb.collection('events').doc(eventId).update({
+      title,
+      date,
+      location,
+      description,
+      type,
+      isTicketed: Boolean(isTicketed),
+      ticketQuota,
+      updatedAt: new Date().toISOString()
+    });
+
+    revalidatePath('/etkinlikler');
+    revalidatePath('/members');
+    revalidatePath('/tanerabi/dashboard');
+    return { success: true };
+  } catch (error) {
+    return handleServerError(error, "UPDATE_EVENT");
+  }
+}
+
 export async function joinEvent(formData: FormData) {
   const eventId = formData.get('eventId') as string;
   const eventTitle = formData.get('eventTitle') as string;

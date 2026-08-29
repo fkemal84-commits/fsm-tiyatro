@@ -131,14 +131,27 @@ export default async function OyunDetailPage({ params }: { params: Promise<{ id:
               </div>
             </div>
 
-            {/* Bilet Sorgulama / Arşiv Bilgisi */}
+            {/* Bilet Sorgulama / Arşiv & Senaryo Bilgisi */}
             {play.status === 'ARCHIVED' ? (
-              <div className="p-4 bg-[var(--bg-surface-elevated)] rounded-xl border border-[var(--border-subtle)] flex items-center gap-3 mt-4">
-                <span className="text-xl">🏛️</span>
-                <div>
-                  <span className="text-xs font-bold text-[var(--text-main)] block">Arşiv Repertuvarı</span>
-                  <span className="text-[11px] text-[var(--text-dim)]">Bu oyun geçmiş sezonlarımızda sahnelenmiş olup dijital arşivimizdedir.</span>
+              <div className="p-4 bg-[var(--bg-surface-elevated)] rounded-xl border border-[var(--border-subtle)] flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 mt-4">
+                <div className="flex items-center gap-3">
+                  <span className="text-xl">🏛️</span>
+                  <div>
+                    <span className="text-xs font-bold text-[var(--text-main)] block">Arşiv Repertuvarı</span>
+                    <span className="text-[11px] text-[var(--text-dim)]">Bu oyun geçmiş sezonlarımızda sahnelenmiş olup dijital arşivimizdedir.</span>
+                  </div>
                 </div>
+                {play.scriptUrl && (
+                  <a
+                    href={play.scriptUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="px-4 py-2 bg-[var(--primary-gold-dim)] hover:bg-[var(--primary-gold)] text-[var(--primary-gold)] hover:text-black border border-[var(--primary-gold-border)] rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 flex-shrink-0"
+                  >
+                    <ion-icon name="document-text-outline"></ion-icon>
+                    <span>📄 Oyun Metnini İncele (PDF)</span>
+                  </a>
+                )}
               </div>
             ) : (
               <div className="p-4 bg-[var(--bg-surface)] rounded-xl border border-[var(--border-subtle)] flex flex-col sm:flex-row items-center justify-between gap-3 mt-4">

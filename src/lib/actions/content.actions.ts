@@ -164,6 +164,13 @@ export async function addPlay(formData: FormData) {
       try { showDates = JSON.parse(rawDates); } catch (e) { return { error: "Oyun tarihleri geçerli bir JSON değil." }; }
     }
 
+    // Senaryo / Metin PDF dosyası
+    const scriptFile = formData.get('scriptPdf') as File | null;
+    let scriptUrl = "";
+    if (scriptFile && scriptFile.size > 0) {
+      scriptUrl = await uploadToStorage(scriptFile, 'plays/scripts');
+    }
+
     await adminDb.collection('plays').add({
       title,
       description,
@@ -179,6 +186,7 @@ export async function addPlay(formData: FormData) {
       cast,
       crew,
       showDates,
+      scriptUrl: scriptUrl || null,
       imageUrl: imageUrl || null,
       posterUrl: posterUrl || null,
       videoUrl: videoUrl || null,
@@ -193,6 +201,114 @@ export async function addPlay(formData: FormData) {
     return handleServerError(error, "ADD_PLAY");
   }
   redirect('/oyunlar');
+}
+
+export async function updatePlay(formData: FormData) {
+  try {
+    const playId = formData.get('playId') as string;
+    if (!playId) return { error: "Oyun ID gereklidir." };
+
+    await requireAuth(['SUPERADMIN', 'ADMIN', 'DIRECTOR']);
+
+    const title = formData.get('title') as string;
+    const description = formData.get('description') as string;
+    const playwright = (formData.get('playwright') as string) || '';
+    const director = (formData.get('director') as string) || '';
+    const season = (formData.get('season') as string) || '';
+    const genre = (formData.get('genre') as string) || 'Tiyatro Oyunu';
+    const duration = (formData.get('duration') as string) || '';
+    const year = (formData.get('year') as string) || '';
+    const stageLocation = (formData.get('stageLocation') as string) || '';
+    const directorNote = (formData.get('directorNote') as string) || '';
+    const status = (formData.get('status') as 'ACTIVE' | 'ARCHIVED' | 'UPCOMING') || 'UPCOMING';
+    const videoUrl = (formData.get('videoUrl') as string) || '';
+
+    const playDoc = await adminDb.collection('plays').doc(playId).get();
+    if (!playDoc.exists) return { error: "Oyun bulunamadı." };
+    const existing = playDoc.data()!;
+
+    // Dosyalar
+    const file = formData.get('image') as File | null;
+    const posterFile = formData.get('poster') as File | null;
+    const scriptFile = formData.get('scriptPdf') as File | null;
+
+    let imageUrl = existing.imageUrl;
+    if (file && file.size > 0) {
+      if (existing.imageUrl) await deleteStorageFile(existing.imageUrl);
+      imageUrl = await uploadToStorage(file, 'plays');
+    }
+
+    let posterUrl = existing.posterUrl;
+    if (posterFile && posterFile.size > 0) {
+      if (existing.posterUrl) await deleteStorageFile(existing.posterUrl);
+      posterUrl = await uploadToStorage(posterFile, 'plays/posters');
+    }
+
+    let scriptUrl = existing.scriptUrl;
+    if (scriptFile && scriptFile.size > 0) {
+      if (existing.scriptUrl) await deleteStorageFile(existing.scriptUrl);
+      scriptUrl = await uploadToStorage(scriptFile, 'plays/scripts');
+    }
+
+    // Cast / Crew / Dates
+    const rawCast = formData.get('castJson') as string;
+    const rawCrew = formData.get('crewJson') as string;
+    const rawDates = formData.get('datesJson') as string;
+
+    let cast = existing.cast || [];
+    let crew = existing.crew || [];
+    let showDates = existing.showDates || [];
+
+    if (rawCast) {
+      try { cast = JSON.parse(rawCast); } catch {}
+    }
+    if (rawCrew) {
+      try { crew = JSON.parse(rawCrew); } catch {}
+    }
+    if (rawDates) {
+      try { showDates = JSON.parse(rawDates); } catch {}
+    }
+
+    await adminDb.collection('plays').doc(playId).update({
+      title: title || existing.title,
+      description: description || existing.description,
+      playwright,
+      director,
+      season,
+      genre,
+      duration,
+      year,
+      stageLocation,
+      directorNote,
+      status,
+      cast,
+      crew,
+      showDates,
+      scriptUrl: scriptUrl || null,
+      imageUrl: imageUrl || null,
+      posterUrl: posterUrl || null,
+      videoUrl: videoUrl || null,
+      updatedAt: new Date().toISOString()
+    });
+
+    revalidatePath('/');
+    revalidatePath('/oyunlar');
+    revalidatePath(`/oyunlar/${playId}`);
+    revalidatePath('/tanerabi/dashboard');
+    revalidatePath('/members');
+    return { success: true };
+  } catch (error) {
+    return handleServerError(error, "UPDATE_PLAY");
+  }
+}
+
+export async function getAIAnalysis(title: string, content: string, category: string) {
+  try {
+    const { analyzeArticleWithAI } = await import('@/lib/ai');
+    return await analyzeArticleWithAI(title, content, category);
+  } catch (error) {
+    return { error: "Yapay zeka analiz servisi çağrılamadı." };
+  }
 }
 
 export async function deletePlay(formData: FormData) {
