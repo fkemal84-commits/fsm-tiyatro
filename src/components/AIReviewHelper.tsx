@@ -119,81 +119,181 @@ export default function AIReviewHelper({
 
           {analysis && !isPending && (
             <div className="space-y-4 text-xs">
-              {/* İmla ve Anlatım */}
-              {analysis.grammarTips && analysis.grammarTips.length > 0 && (
-                <div className="p-3 bg-[var(--bg-card)] rounded-lg border border-[var(--border-subtle)] space-y-1.5">
-                  <span className="font-bold text-[var(--text-main)] block flex items-center gap-1.5">
-                    <span className="text-emerald-400">✍️</span> İmla & Anlatım İpuçları:
-                  </span>
-                  <ul className="list-disc list-inside space-y-1 text-[var(--text-muted)] leading-relaxed">
-                    {analysis.grammarTips.map((tip, idx) => (
-                      <li key={idx}>{tip}</li>
-                    ))}
-                  </ul>
+              {/* 1. Edebi Skorlar & Baş Dramaturg Özeti */}
+              {analysis.overallScores && (
+                <div className="grid grid-cols-3 gap-2 p-3 bg-[var(--bg-card)] rounded-xl border border-[var(--border-subtle)]">
+                  <div className="text-center p-2 rounded-lg bg-[var(--bg-surface)]">
+                    <span className="text-[10px] text-[var(--text-dim)] block mb-0.5">Edebi Kalite</span>
+                    <span className="text-base font-bold text-[var(--primary-gold)] font-mono">{analysis.overallScores.literaryQuality} / 10</span>
+                  </div>
+                  <div className="text-center p-2 rounded-lg bg-[var(--bg-surface)]">
+                    <span className="text-[10px] text-[var(--text-dim)] block mb-0.5">Dramatik Derinlik</span>
+                    <span className="text-base font-bold text-amber-400 font-mono">{analysis.overallScores.dramaticDepth} / 10</span>
+                  </div>
+                  <div className="text-center p-2 rounded-lg bg-[var(--bg-surface)]">
+                    <span className="text-[10px] text-[var(--text-dim)] block mb-0.5">Akış & Ritim</span>
+                    <span className="text-base font-bold text-emerald-400 font-mono">{analysis.overallScores.flowAndRhythm} / 10</span>
+                  </div>
                 </div>
               )}
 
-              {/* Dramaturgi & Sanatsal Derinlik */}
+              {/* Baş Dramaturg Değerlendirmesi */}
+              {analysis.executiveSummary && (
+                <div className="p-3.5 bg-[var(--bg-card)] rounded-xl border border-[var(--primary-gold-border)] space-y-1.5">
+                  <span className="font-bold text-[var(--primary-gold)] flex items-center gap-1.5 text-[11px] uppercase tracking-wider">
+                    <span>👑</span> Baş Dramaturg Görüşü:
+                  </span>
+                  <p className="text-[var(--text-main)] leading-relaxed italic">
+                    "{analysis.executiveSummary}"
+                  </p>
+                  {analysis.structureAndPacing && (
+                    <p className="text-[var(--text-muted)] text-[11px] leading-relaxed pt-2 border-t border-[var(--border-subtle)]">
+                      <strong className="text-[var(--text-main)]">Tempo & Ritim:</strong> {analysis.structureAndPacing}
+                    </p>
+                  )}
+                </div>
+              )}
+
+              {/* 2. Dramaturji & Sahneleme Vizyonu */}
               {analysis.dramaturgicalInsights && analysis.dramaturgicalInsights.length > 0 && (
-                <div className="p-3 bg-[var(--bg-card)] rounded-lg border border-[var(--border-subtle)] space-y-1.5">
-                  <span className="font-bold text-[var(--primary-gold)] block flex items-center gap-1.5">
-                    <span>🎭</span> Tiyatro & Sanatsal Derinleştirme:
+                <div className="p-3.5 bg-[var(--bg-card)] rounded-xl border border-[var(--border-subtle)] space-y-3">
+                  <span className="font-bold text-[var(--primary-gold)] flex items-center gap-1.5 text-[11px] uppercase tracking-wider">
+                    <span>🎭</span> Dramaturji & Sahneleme Vizyonu:
                   </span>
-                  <ul className="list-disc list-inside space-y-1 text-[var(--text-muted)] leading-relaxed">
-                    {analysis.dramaturgicalInsights.map((insight, idx) => (
-                      <li key={idx}>{insight}</li>
-                    ))}
-                  </ul>
+                  <div className="space-y-2.5">
+                    {analysis.dramaturgicalInsights.map((insight: any, idx: number) => {
+                      const isObj = typeof insight === 'object';
+                      const title = isObj ? insight.title : `Öneri ${idx + 1}`;
+                      const desc = isObj ? insight.description : insight;
+                      const tip = isObj ? insight.actionableTip : null;
+
+                      return (
+                        <div key={idx} className="p-2.5 rounded-lg bg-[var(--bg-surface)] border border-[var(--border-subtle)] space-y-1">
+                          <span className="font-bold text-[var(--text-main)] block">{title}</span>
+                          <p className="text-[var(--text-muted)] leading-relaxed m-0">{desc}</p>
+                          {tip && (
+                            <div className="pt-1 text-[11px] text-[var(--primary-gold)] font-medium">
+                              💡 <strong>Uygulama:</strong> {tip}
+                            </div>
+                          )}
+                        </div>
+                      );
+                    })}
+                  </div>
                 </div>
               )}
 
-              {/* Alternatif Başlıklar */}
-              {analysis.titleSuggestions && analysis.titleSuggestions.length > 0 && (
-                <div className="p-3 bg-[var(--bg-card)] rounded-lg border border-[var(--border-subtle)] space-y-2">
-                  <span className="font-bold text-[var(--text-main)] block flex items-center gap-1.5">
-                    <span>💡</span> Alternatif Başlık Fikirleri:
+              {/* 3. Metin İyileştirmeleri & Nokta Atışı Düzeltmeler */}
+              {analysis.textCorrections && analysis.textCorrections.length > 0 && (
+                <div className="p-3.5 bg-[var(--bg-card)] rounded-xl border border-[var(--border-subtle)] space-y-2.5">
+                  <span className="font-bold text-emerald-400 flex items-center gap-1.5 text-[11px] uppercase tracking-wider">
+                    <span>✍️</span> Nokta Atışı Metin İyileştirmeleri:
                   </span>
-                  <div className="flex flex-wrap gap-2">
-                    {analysis.titleSuggestions.map((t, idx) => (
-                      <button
-                        key={idx}
-                        type="button"
-                        onClick={() => onApplyTitle && onApplyTitle(t)}
-                        className="px-2.5 py-1.5 bg-[var(--bg-surface)] hover:bg-[var(--primary-gold-muted)] border border-[var(--border-medium)] hover:border-[var(--primary-gold)] rounded-md text-[11px] text-[var(--text-main)] text-left transition-colors flex items-center gap-1"
-                        title="Bu başlığı kullan"
-                      >
-                        <span>{t}</span>
-                        <span className="text-[10px] text-[var(--primary-gold)] font-bold">↵ Seç</span>
-                      </button>
+                  <div className="space-y-2">
+                    {analysis.textCorrections.map((corr: any, idx: number) => (
+                      <div key={idx} className="p-2.5 rounded-lg bg-[var(--bg-surface)] border border-[var(--border-subtle)] space-y-1.5">
+                        {corr.originalSnippet && (
+                          <div className="text-[11px] text-red-300/80 line-through">
+                            ❌ {corr.originalSnippet}
+                          </div>
+                        )}
+                        <div className="text-[11px] text-emerald-300 font-medium">
+                          ✓ {corr.suggestion}
+                        </div>
+                        {corr.reason && (
+                          <div className="text-[10px] text-[var(--text-dim)]">
+                            ℹ️ {corr.reason}
+                          </div>
+                        )}
+                      </div>
                     ))}
                   </div>
                 </div>
               )}
 
-              {/* Anahtar Kelimeler */}
-              {analysis.keywords && analysis.keywords.length > 0 && (
-                <div className="p-3 bg-[var(--bg-card)] rounded-lg border border-[var(--border-subtle)] space-y-2">
-                  <span className="font-bold text-[var(--text-main)] block flex items-center gap-1.5">
-                    <span>🏷️</span> Önerilen Anahtar Kelimeler:
-                  </span>
-                  <div className="flex flex-wrap gap-1.5">
-                    {analysis.keywords.map((kw, idx) => (
-                      <span
-                        key={idx}
-                        className="px-2 py-0.5 bg-[var(--primary-gold-muted)] text-[var(--primary-gold)] border border-[var(--primary-gold-border)] rounded-full text-[10px] font-semibold"
-                      >
-                        #{kw}
+              {/* 4. Giriş Kancası & Vurucu Kapanış */}
+              {analysis.hookAndClosingEnhancement && (
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 p-3.5 bg-[var(--bg-card)] rounded-xl border border-[var(--border-subtle)]">
+                  {analysis.hookAndClosingEnhancement.openingHookSuggestion && (
+                    <div className="p-2.5 rounded-lg bg-[var(--bg-surface)] space-y-1">
+                      <span className="text-[10px] font-bold uppercase tracking-wider text-[var(--primary-gold)] block">
+                        🎣 Çarpıcı Giriş Kancası:
                       </span>
-                    ))}
+                      <p className="text-[var(--text-main)] italic leading-relaxed m-0">
+                        "{analysis.hookAndClosingEnhancement.openingHookSuggestion}"
+                      </p>
+                    </div>
+                  )}
+                  {analysis.hookAndClosingEnhancement.closingPunchlineSuggestion && (
+                    <div className="p-2.5 rounded-lg bg-[var(--bg-surface)] space-y-1">
+                      <span className="text-[10px] font-bold uppercase tracking-wider text-[var(--primary-gold)] block">
+                        🎯 Vurucu Kapanış Cümlesi:
+                      </span>
+                      <p className="text-[var(--text-main)] italic leading-relaxed m-0">
+                        "{analysis.hookAndClosingEnhancement.closingPunchlineSuggestion}"
+                      </p>
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* 5. Alternatif Başlıklar */}
+              {analysis.titleSuggestions && analysis.titleSuggestions.length > 0 && (
+                <div className="p-3.5 bg-[var(--bg-card)] rounded-xl border border-[var(--border-subtle)] space-y-2">
+                  <span className="font-bold text-[var(--text-main)] flex items-center justify-between text-[11px] uppercase tracking-wider">
+                    <span>💡 Alternatif Başlık Önerileri (Tıkla ve Başlığa Uygula):</span>
+                  </span>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                    {analysis.titleSuggestions.map((item: any, idx: number) => {
+                      const titleStr = typeof item === 'object' ? item.title : item;
+                      const styleStr = typeof item === 'object' ? item.style : 'Alternatif';
+
+                      return (
+                        <button
+                          key={idx}
+                          type="button"
+                          onClick={() => onApplyTitle?.(titleStr)}
+                          className="p-2 text-left rounded-lg bg-[var(--bg-surface)] hover:bg-[var(--primary-gold-dim)] border border-[var(--border-subtle)] hover:border-[var(--primary-gold-border)] transition-all group cursor-pointer"
+                        >
+                          <span className="text-[9px] font-mono text-[var(--primary-gold)] block mb-0.5 uppercase tracking-wider">
+                            {styleStr}
+                          </span>
+                          <span className="text-xs font-semibold text-[var(--text-main)] group-hover:text-[var(--primary-gold)] block">
+                            {titleStr}
+                          </span>
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
+
+              {/* 6. Anahtar Kelimeler */}
+              {analysis.keywords && analysis.keywords.length > 0 && (
+                <div className="p-3 bg-[var(--bg-card)] rounded-xl border border-[var(--border-subtle)] space-y-1.5">
+                  <div className="flex items-center justify-between">
+                    <span className="font-bold text-[var(--text-dim)] uppercase tracking-wider text-[10px]">
+                      🏷️ Önerilen Anahtar Kelimeler:
+                    </span>
                     {onApplyKeywords && (
                       <button
                         type="button"
                         onClick={() => onApplyKeywords(analysis.keywords.join(', '))}
-                        className="px-2.5 py-0.5 bg-[var(--primary-gold)] text-black rounded-full text-[10px] font-bold hover:brightness-110 ml-2"
+                        className="text-[10px] text-[var(--primary-gold)] hover:underline font-bold"
                       >
-                        Hepsini Ekle
+                        Hepsini Ekle +
                       </button>
                     )}
+                  </div>
+                  <div className="flex flex-wrap gap-1.5">
+                    {analysis.keywords.map((kw, idx) => (
+                      <span
+                        key={idx}
+                        className="px-2 py-0.5 rounded-md bg-[var(--bg-surface)] border border-[var(--border-subtle)] text-[var(--text-muted)] text-[11px]"
+                      >
+                        #{kw}
+                      </span>
+                    ))}
                   </div>
                 </div>
               )}

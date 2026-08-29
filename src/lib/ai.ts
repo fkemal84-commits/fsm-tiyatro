@@ -1,14 +1,36 @@
-/**
- * FSM Tiyatro Yapay Zeka Metin Analiz & Dramaturg Servisi
- * OpenRouter & DeepSeek-R1 Entegrasyonu
- */
+export interface DramaturgicalInsight {
+  title: string;
+  description: string;
+  actionableTip: string;
+}
+
+export interface TextCorrection {
+  originalSnippet: string;
+  suggestion: string;
+  reason: string;
+}
+
+export interface TitleSuggestion {
+  title: string;
+  style: string;
+}
 
 export interface AIAnalysisResult {
-  grammarTips: string[];
-  dramaturgicalInsights: string[];
-  titleSuggestions: string[];
+  overallScores?: {
+    literaryQuality: number; // 1-10
+    dramaticDepth: number;   // 1-10
+    flowAndRhythm: number;   // 1-10
+  };
+  executiveSummary: string;
+  structureAndPacing: string;
+  dramaturgicalInsights: DramaturgicalInsight[];
+  textCorrections: TextCorrection[];
+  hookAndClosingEnhancement?: {
+    openingHookSuggestion: string;
+    closingPunchlineSuggestion: string;
+  };
+  titleSuggestions: TitleSuggestion[];
   keywords: string[];
-  rawSummary?: string;
 }
 
 import { adminDb } from './firebase-admin';
@@ -43,33 +65,64 @@ export async function analyzeArticleWithAI(
     };
   }
 
-  const systemPrompt = `Sen üniversite tiyatro kulübünün kıdemli baş dramaturgu, edebiyat danışmanı ve usta Türkçe editörüsün.
-Görevin, kulis/blog/makale yazısını inceleyip yazara yapıcı, derinlikli ve sanatsal açıdan zenginleştirici geri bildirimler sunmaktır.
+  const systemPrompt = `Sen; Stanislavski, Brecht, Artaud ve çağdaş tiyatro kuramlarına hakim, Türk tiyatrosunun ve edebiyatının usta bir baş dramaturgu, üslup ustası ve kıdemli genel yayın yönetmenisin.
+Görevin, yazılan kulis/blog/makale metnini derinlemesine inceleyerek yüzeysel olmayan, somut, metne özel ve sanatsal açıdan zenginleştirici bir inceleme raporu hazırlamaktır.
 
-Aşağıdaki JSON formatında kesinlikle geçerli bir JSON çıktısı üret:
+Analizinde mutlaka şu hususlara dikkat et:
+1. Genel geçer klişelerden kaçın, doğrudan metnin cümlelerine ve fikirlerine atıf yap.
+2. Düzeltmelerde ("textCorrections") metinden birebir alıntı ("originalSnippet") göster ve daha güçlü, pürüzsüz alternatifini ("suggestion") açıkla.
+3. Dramaturji önerilerinde ("dramaturgicalInsights") alt metin (subtext), dramatik gerilim, atmosfer, seyirci/okuyucu ile kurulan duygusal rezonans ve tiyatral vizyon katacak somut öneriler sun.
+4. Giriş kancası (hook) ve vurucu kapanış (punchline) için ilham verici revizyonlar üret.
+
+Aşağıdaki JSON şemasına BİREBİR uyan geçerli bir JSON çıktısı üret:
 {
-  "grammarTips": [
-    "İmla, noktalama veya anlatım bozukluğu tespit edilen yerler ve düzeltme tavsiyeleri (1-3 madde)"
-  ],
+  "overallScores": {
+    "literaryQuality": 8,
+    "dramaticDepth": 7,
+    "flowAndRhythm": 8
+  },
+  "executiveSummary": "Metnin ana fikrini, gücünü ve genel etkisini özetleyen 2-3 cümlelik vurucu baş dramaturg değerlendirmesi.",
+  "structureAndPacing": "Metnin anlatım akışı, paragraf geçişleri, tempo ve ritim analizi (1-2 paragraf).",
   "dramaturgicalInsights": [
-    "Tiyatro kuramı, alt metin (subtext), sahne atmosferi, dramatik gerilim veya felsefi derinlik katabilecek sanatsal öneriler (2-4 madde)"
+    {
+      "title": "Karakter/Olay Örgüsü Derinleştirme",
+      "description": "Metindeki düşüncenin alt metnini ve felsefi boyutunu güçlendirecek detaylı analiz.",
+      "actionableTip": "Yazarın uygulayabileceği somut adım."
+    },
+    {
+      "title": "Sahne Atmosferi ve Duyusal Dil",
+      "description": "Okuyucuda/seyircide 5 duyuya hitap eden sahne hissi uyandırma analizi.",
+      "actionableTip": "Örnek duyusal benzetme veya atmosfer önerisi."
+    }
   ],
+  "textCorrections": [
+    {
+      "originalSnippet": "Metinden aynen alınan ve iyileştirilebilecek bir cümle",
+      "suggestion": "Daha akıcı, edebi ve hatasız revizyonu",
+      "reason": "Gerekçesi (imla, anlatım bozukluğu, kelime tekrarı, ton kayması vb.)"
+    }
+  ],
+  "hookAndClosingEnhancement": {
+    "openingHookSuggestion": "Okuyucuyu ilk satırdan yakalayacak çarpıcı bir alternatif giriş cümlesi.",
+    "closingPunchlineSuggestion": "Yazıyı zihinde yankı uyandırarak noktalayacak unutulmaz bir son cümle."
+  },
   "titleSuggestions": [
-    "Yazının etkisini artırabilecek 2-3 alternatif çarpıcı başlık önerisi"
+    { "title": "Başlık 1", "style": "Şiirsel / Metaforik" },
+    { "title": "Başlık 2", "style": "Çarpıcı & Merak Uyandırıcı" },
+    { "title": "Başlık 3", "style": "Akademik / Kuramsal" },
+    { "title": "Başlık 4", "style": "Kısa & Vurucu" }
   ],
-  "keywords": [
-    "Yazıya uygun 4-6 adet anahtar kelime"
-  ]
+  "keywords": ["anahtar1", "anahtar2", "anahtar3", "anahtar4", "anahtar5"]
 }
 
-ÖNEMLİ: Sadece ve sadece saf JSON formatında yanıt ver. Başka hiçbir açıklama yazma.`;
+ÖNEMLİ: Sadece ve sadece saf JSON döndür. Kod bloğu işareti (\`\`\`json) veya JSON harici hiçbir metin yazma.`;
 
-  const userPrompt = `Yazı Başlığı: ${title || 'Başlıksız'}
-Kategori: ${category || 'Kulis'}
+  const userPrompt = `İNCELENECEK YAZI BİLGİLERİ:
+Başlık: ${title || 'Başlıksız'}
+Kategori: ${category || 'Kulis / Blog'}
 Metin:
-${content.slice(0, 4000)}`;
+${content.slice(0, 4500)}`;
 
-  // Güncel ve çalışan OpenRouter ücretsiz modelleri
   const models = [
     'openrouter/free',
     'dots-studio/dots-3-note-preview:free',
@@ -96,7 +149,7 @@ ${content.slice(0, 4000)}`;
             { role: "user", content: userPrompt }
           ],
           temperature: 0.6,
-          max_tokens: 1500
+          max_tokens: 2000
         })
       });
 
@@ -109,7 +162,6 @@ ${content.slice(0, 4000)}`;
       const rawText = resData.choices?.[0]?.message?.content;
       if (!rawText) continue;
 
-      // JSON ayrıştırma ve temizleme
       let cleaned = rawText.trim();
       if (cleaned.includes('</think>')) {
         cleaned = cleaned.split('</think>')[1].trim();
@@ -119,7 +171,6 @@ ${content.slice(0, 4000)}`;
       if (cleaned.endsWith('```')) cleaned = cleaned.replace(/```$/, '');
       cleaned = cleaned.trim();
 
-      // JSON bloğunu parantezler arasından cımbızla al
       const firstBrace = cleaned.indexOf('{');
       const lastBrace = cleaned.lastIndexOf('}');
       if (firstBrace !== -1 && lastBrace !== -1 && lastBrace > firstBrace) {
