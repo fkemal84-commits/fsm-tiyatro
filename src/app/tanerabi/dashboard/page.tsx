@@ -28,7 +28,7 @@ export default async function Dashboard({ searchParams }: { searchParams: Promis
     const selectedYear = sp.year || 'all';
 
     // Veritabanı verilerini çek
-    const [usersSnap, postsSnap, playsSnap, eventsSnap, requestsSnap, configDoc, titlesDoc, teamNeedsSnap, teamAppsSnap] = await Promise.all([
+    const [usersSnap, postsSnap, playsSnap, eventsSnap, requestsSnap, configDoc, titlesDoc, teamNeedsSnap, teamAppsSnap, eventReservationsSnap] = await Promise.all([
       adminDb.collection('users').get(),
       adminDb.collection('posts').get(),
       adminDb.collection('plays').get(),
@@ -38,6 +38,7 @@ export default async function Dashboard({ searchParams }: { searchParams: Promis
       adminDb.collection('settings').doc('titles').get(),
       adminDb.collection('teamNeeds').get(),
       adminDb.collection('teamApplications').get(),
+      adminDb.collection('eventReservations').get(),
     ]);
 
     const defaultTitles = [
@@ -112,8 +113,9 @@ export default async function Dashboard({ searchParams }: { searchParams: Promis
 
     const posts = postsSnap.docs.map(doc => ({ id: doc.id, ...doc.data() as any })).sort((a, b) => new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime());
     const plays = playsSnap.docs.map(doc => ({ id: doc.id, ...doc.data() as any })).sort((a, b) => new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime());
-    const events = eventsSnap.docs.map(doc => ({ id: doc.id, ...doc.data() as any }));
-    const eventRequests = requestsSnap.docs.map(doc => ({ id: doc.id, ...doc.data() as any })).sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+    const events = eventsSnap.docs.map(d => ({ id: d.id, ...d.data() as any }));
+    const eventRequests = requestsSnap.docs.map(d => ({ id: d.id, ...d.data() as any })).sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+    const eventReservations = eventReservationsSnap.docs.map(d => ({ id: d.id, ...d.data() as any }));
     const siteConfig = configDoc.exists ? configDoc.data() : {};
 
     const pendingUsers = allUsers.filter(u => u.role === 'PENDING');
@@ -706,10 +708,10 @@ export default async function Dashboard({ searchParams }: { searchParams: Promis
                       <div>
                         <label style={labelStyle}>Kategori</label>
                         <select name="category" style={inputStyle} defaultValue="Kulis">
-                          <option value="Kulis">Kulis</option>
-                          <option value="Makale">Makale</option>
-                          <option value="Haber">Haber</option>
-                          <option value="Akademik Bildiri">Akademik Bildiri (Google Scholar)</option>
+                          <option value="Kulis">Kulis (Kulüp / Ekip İçi)</option>
+                          <option value="Blog">Blog (Tiyatro & Sanat Güncesi)</option>
+                          <option value="Makale">Makale (Akademik & Google Scholar)</option>
+                          <option value="Haber">Haber (Kulüp Duyurusu)</option>
                         </select>
                       </div>
                     </div>
@@ -770,42 +772,104 @@ export default async function Dashboard({ searchParams }: { searchParams: Promis
             {activeTab === 'events' && (role === 'SUPERADMIN' || role === 'ADMIN') && (
               <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
                 <div style={{ background: 'var(--bg-surface)', border: '1px solid var(--border-subtle)', borderRadius: '12px', padding: '1.5rem' }}>
-                  <h2 style={{ color: 'var(--text-main)', marginBottom: '1.25rem', fontSize: '1.1rem', fontWeight: 'bold' }}>Yeni Etkinlik Ekle</h2>
+                  <h2 style={{ color: 'var(--text-main)', marginBottom: '1.25rem', fontSize: '1.1rem', fontWeight: 'bold' }}>Yeni Etkinlik & Biletli Buluşma Ekle</h2>
                   <form action={addEvent as any} style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
                     <div style={{ gridColumn: '1/-1' }}>
                       <label style={labelStyle}>Etkinlik Başlığı</label>
-                      <input type="text" name="title" placeholder="Etkinlik adı" style={inputStyle} required />
+                      <input type="text" name="title" placeholder="Örn: Devlet Tiyatroları Toplu Oyun Gezisi" style={inputStyle} required />
                     </div>
                     <div>
                       <label style={labelStyle}>Tarih & Saat</label>
                       <input type="text" name="date" placeholder="Örn: 15 Mart 2026, 18:00" style={inputStyle} required />
                     </div>
                     <div>
-                      <label style={labelStyle}>Yer / Platform</label>
-                      <input type="text" name="location" placeholder="Mekan veya online link" style={inputStyle} required />
+                      <label style={labelStyle}>Yer / Mekan</label>
+                      <input type="text" name="location" placeholder="Örn: AKM Büyük Salon veya Haliç Yerleşkesi" style={inputStyle} required />
+                    </div>
+                    <div>
+                      <label style={labelStyle}>Etkinlik Türü</label>
+                      <select name="type" style={inputStyle} defaultValue="Tiyatro Bileti">
+                        <option value="Tiyatro Bileti">🎭 Tiyatro Bileti / Gezisi</option>
+                        <option value="Sinema Bileti">🎬 Sinema Bileti</option>
+                        <option value="Özel Atölye">🎨 Özel Atölye</option>
+                        <option value="Söyleşi">🎤 Söyleşi & Panel</option>
+                        <option value="Kulüp Buluşması">☕ Kulüp Buluşması</option>
+                        <option value="Etkinlik">📌 Genel Etkinlik</option>
+                      </select>
+                    </div>
+                    <div style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
+                      <label style={labelStyle}>Bilet & Kontenjan Ayarı</label>
+                      <label style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', color: 'var(--text-main)', fontSize: '0.85rem', cursor: 'pointer', marginTop: '0.25rem' }}>
+                        <input type="checkbox" name="isTicketed" value="true" defaultChecked style={{ width: '18px', height: '18px', accentColor: 'var(--primary-gold)' }} />
+                        <span style={{ fontWeight: '600' }}>🎟️ Biletli Etkinlik (Sadece Üyeler Ayırtabilir)</span>
+                      </label>
                     </div>
                     <div style={{ gridColumn: '1/-1' }}>
-                      <label style={labelStyle}>Açıklama (isteğe bağlı)</label>
-                      <textarea name="description" placeholder="Kısa açıklama..." rows={2} style={inputStyle} />
+                      <label style={labelStyle}>Maksimum Kontenjan / Bilet Sayısı (0 = Sınırsız)</label>
+                      <input type="number" name="ticketQuota" placeholder="Örn: 20" defaultValue="20" min="0" style={inputStyle} />
+                      <span style={{ fontSize: '0.75rem', color: 'var(--text-dim)', marginTop: '0.25rem', display: 'block' }}>
+                        Belirtilen sayıya ulaşıldığında sistem otomatik olarak bilet ayırtmayı kapatacaktır.
+                      </span>
                     </div>
                     <div style={{ gridColumn: '1/-1' }}>
-                      <button type="submit" style={{ padding: '0.85rem 2rem', background: 'var(--primary-gold)', color: '#000', border: 'none', borderRadius: '8px', fontWeight: 'bold', fontSize: '0.875rem', cursor: 'pointer' }}>Etkinliği Ekle</button>
+                      <label style={labelStyle}>Açıklama (İsteğe bağlı)</label>
+                      <textarea name="description" placeholder="Bilet detayları, buluşma noktası veya notlar..." rows={2} style={inputStyle} />
+                    </div>
+                    <div style={{ gridColumn: '1/-1' }}>
+                      <button type="submit" style={{ padding: '0.85rem 2rem', background: 'var(--primary-gold)', color: '#000', border: 'none', borderRadius: '8px', fontWeight: 'bold', fontSize: '0.875rem', cursor: 'pointer' }}>Etkinliği Yayınla</button>
                     </div>
                   </form>
                 </div>
 
                 <div style={{ background: 'var(--bg-surface)', border: '1px solid var(--border-subtle)', borderRadius: '12px', padding: '1.5rem' }}>
-                  <h2 style={{ color: 'var(--text-main)', marginBottom: '1rem', fontSize: '1.1rem', fontWeight: 'bold' }}>Mevcut Etkinlikler ({events.length})</h2>
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-                    {events.map((e: any) => (
-                      <div key={e.id} style={{ padding: '0.875rem 1rem', background: 'var(--bg-surface-elevated)', borderRadius: '8px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '1rem', border: '1px solid var(--border-subtle)' }}>
-                        <div>
-                          <span style={{ color: 'var(--text-main)', fontSize: '0.875rem', fontWeight: '500' }}>{e.title}</span>
-                          {e.date && <span style={{ color: 'var(--text-dim)', fontSize: '0.75rem', marginLeft: '0.75rem' }}>{e.date}</span>}
+                  <h2 style={{ color: 'var(--text-main)', marginBottom: '1rem', fontSize: '1.1rem', fontWeight: 'bold' }}>Mevcut Etkinlikler & Katılımcı Listeleri ({events.length})</h2>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+                    {events.map((e: any) => {
+                      const reservations = eventReservations.filter((r: any) => r.eventId === e.id && r.status === 'ACTIVE');
+                      return (
+                        <div key={e.id} style={{ padding: '1rem', background: 'var(--bg-surface-elevated)', borderRadius: '8px', border: '1px solid var(--border-subtle)', display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '1rem', flexWrap: 'wrap' }}>
+                            <div>
+                              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap', marginBottom: '0.25rem' }}>
+                                <span style={{ color: 'var(--text-main)', fontSize: '0.95rem', fontWeight: 'bold' }}>{e.title}</span>
+                                {e.isTicketed && (
+                                  <span style={{ fontSize: '0.7rem', fontWeight: 'bold', padding: '0.15rem 0.5rem', borderRadius: '4px', background: 'rgba(245, 158, 11, 0.15)', color: '#fbbf24', border: '1px solid rgba(245, 158, 11, 0.3)' }}>
+                                    🎟️ Biletli: {reservations.length} / {e.ticketQuota || '∞'} Bilet
+                                  </span>
+                                )}
+                              </div>
+                              <div style={{ display: 'flex', gap: '0.75rem', fontSize: '0.75rem', color: 'var(--text-dim)' }}>
+                                <span>📅 {e.date}</span>
+                                <span>📍 {e.location || 'Haliç Yerleşkesi'}</span>
+                              </div>
+                            </div>
+                            <DeleteButton action={deleteEvent as any} id={e.id} name={e.title} confirmMessage="Bu etkinliği ve bilet rezervasyonlarını silmek istiyor musunuz?" idFieldName="eventId" />
+                          </div>
+
+                          {/* Bilet Alan Üyeler Listesi */}
+                          {e.isTicketed && (
+                            <details style={{ background: 'rgba(0,0,0,0.2)', padding: '0.6rem 0.85rem', borderRadius: '6px', border: '1px solid rgba(255,255,255,0.05)', fontSize: '0.8rem' }}>
+                              <summary style={{ cursor: 'pointer', color: 'var(--primary-gold)', fontWeight: 'bold', userSelect: 'none' }}>
+                                👥 Bilet Alan Kulüp Üyelerini Gör ({reservations.length} Kişi)
+                              </summary>
+                              <div style={{ marginTop: '0.6rem', display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
+                                {reservations.map((r: any) => (
+                                  <div key={r.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0.35rem 0.5rem', background: 'rgba(255,255,255,0.03)', borderRadius: '4px' }}>
+                                    <span style={{ color: 'var(--text-main)', fontWeight: '500' }}>{r.userName} ({r.userEmail})</span>
+                                    <span style={{ fontFamily: 'monospace', color: 'var(--primary-gold)', fontSize: '0.75rem', background: 'rgba(0,0,0,0.4)', padding: '0.1rem 0.4rem', borderRadius: '4px', border: '1px solid rgba(255,255,255,0.1)' }}>
+                                      {r.ticketCode}
+                                    </span>
+                                  </div>
+                                ))}
+                                {reservations.length === 0 && (
+                                  <p style={{ color: 'var(--text-dim)', fontStyle: 'italic', margin: 0 }}>Henüz bilet ayırtan üye yok.</p>
+                                )}
+                              </div>
+                            </details>
+                          )}
                         </div>
-                        <DeleteButton action={deleteEvent as any} id={e.id} name={e.title} confirmMessage="Bu etkinliği silmek istiyor musun?" idFieldName="eventId" />
-                      </div>
-                    ))}
+                      );
+                    })}
                     {events.length === 0 && <p style={{ color: 'var(--text-dim)', fontSize: '0.875rem' }}>Henüz etkinlik eklenmemiş.</p>}
                   </div>
                 </div>

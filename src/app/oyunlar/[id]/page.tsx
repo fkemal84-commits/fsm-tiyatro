@@ -131,16 +131,26 @@ export default async function OyunDetailPage({ params }: { params: Promise<{ id:
               </div>
             </div>
 
-            {/* Bilet Sorgulama Butonu */}
-            <div className="p-4 bg-[var(--bg-surface)] rounded-xl border border-[var(--border-subtle)] flex flex-col sm:flex-row items-center justify-between gap-3 mt-4">
-              <div className="text-center sm:text-left">
-                <span className="text-xs font-bold text-[var(--text-main)] block">Temsil Bileti Sorgulama</span>
-                <span className="text-[11px] text-[var(--text-dim)]">Koltuk ve biletinizi kontrol edin</span>
+            {/* Bilet Sorgulama / Arşiv Bilgisi */}
+            {play.status === 'ARCHIVED' ? (
+              <div className="p-4 bg-[var(--bg-surface-elevated)] rounded-xl border border-[var(--border-subtle)] flex items-center gap-3 mt-4">
+                <span className="text-xl">🏛️</span>
+                <div>
+                  <span className="text-xs font-bold text-[var(--text-main)] block">Arşiv Repertuvarı</span>
+                  <span className="text-[11px] text-[var(--text-dim)]">Bu oyun geçmiş sezonlarımızda sahnelenmiş olup dijital arşivimizdedir.</span>
+                </div>
               </div>
-              <Link href="/biletimi-bul" className="btn btn-primary !py-2.5 !px-5 text-xs font-bold w-full sm:w-auto text-center flex-shrink-0">
-                Biletimi Bul
-              </Link>
-            </div>
+            ) : (
+              <div className="p-4 bg-[var(--bg-surface)] rounded-xl border border-[var(--border-subtle)] flex flex-col sm:flex-row items-center justify-between gap-3 mt-4">
+                <div className="text-center sm:text-left">
+                  <span className="text-xs font-bold text-[var(--text-main)] block">Temsil Bileti Sorgulama</span>
+                  <span className="text-[11px] text-[var(--text-dim)]">Koltuk ve biletinizi kontrol edin</span>
+                </div>
+                <Link href="/biletimi-bul" className="btn btn-primary !py-2.5 !px-5 text-xs font-bold w-full sm:w-auto text-center flex-shrink-0">
+                  Biletimi Bul
+                </Link>
+              </div>
+            )}
 
           </div>
 

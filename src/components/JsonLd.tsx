@@ -81,7 +81,7 @@ export function PlayJsonLd({ play }: { play: any }) {
 export function ArticleJsonLd({ post }: { post: any }) {
   if (!post) return null;
 
-  const isAcademic = post.academicMeta?.isAcademic || post.category === 'Akademik Bildiri';
+  const isAcademic = post.category === 'Makale' || post.academicMeta?.isAcademic === true;
 
   const schema = {
     "@context": "https://schema.org",

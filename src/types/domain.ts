@@ -84,7 +84,7 @@ export interface Post {
   title: string;
   content: string;
   excerpt?: string;
-  category: 'Kulis' | 'Makale' | 'Blog' | 'Haber' | 'Akademik Bildiri' | 'Tiyatro Yazısı';
+  category: 'Kulis' | 'Makale' | 'Blog' | 'Haber';
   author?: string;
   authorEmail?: string;
   authorRole?: string;

@@ -14,8 +14,8 @@ export async function addPost(formData: FormData) {
     const file = formData.get('image') as File | null;
     const pdfFile = formData.get('pdf') as File | null;
     
-    // Akademik Metadata Alanları (Google Scholar için)
-    const isAcademic = formData.get('isAcademic') === 'true' || category === 'Akademik Bildiri';
+    // Sadece 'Makale' kategorisindeki yazılar akademik niteliktedir (Google Scholar & PDF desteği)
+    const isAcademic = category === 'Makale' || formData.get('isAcademic') === 'true';
     const abstract = (formData.get('abstract') as string) || excerpt;
     const authorAffiliation = (formData.get('authorAffiliation') as string) || 'Fatih Sultan Mehmet Vakıf Üniversitesi';
     const journalTitle = (formData.get('journalTitle') as string) || 'FSM Tiyatro ve Sahne Sanatları Güncesi';

@@ -5,6 +5,7 @@ import { addTeamNeed, deleteTeamNeed, addEvent } from "@/app/actions";
 import { getWhatsAppEventLink } from "@/lib/utils";
 import { Metadata } from "next";
 import JoinEventButton from "../../components/JoinEventButton";
+import EventTicketButton from "@/components/EventTicketButton";
 import ScriptVault from "@/components/ScriptVault";
 import ScrollReveal from "@/components/ScrollReveal";
 import TeamNeedApplyButton from "@/components/TeamNeedApplyButton";
@@ -26,12 +27,33 @@ export default async function MembersDashboard() {
 
   const userEmail = session?.user?.email;
   let userApplications: string[] = [];
+  const userReservationsMap: Record<string, { id: string; ticketCode: string }> = {};
+
   if (userEmail) {
     try {
-      const appsSnap = await adminDb.collection('teamApplications')
-        .where('userEmail', '==', userEmail)
-        .get();
+      const [appsSnap, userSnap] = await Promise.all([
+        adminDb.collection('teamApplications').where('userEmail', '==', userEmail).get(),
+        adminDb.collection('users').where('email', '==', userEmail).limit(1).get()
+      ]);
       userApplications = appsSnap.docs.map(doc => doc.data().needId);
+
+      if (!userSnap.empty) {
+        const uid = userSnap.docs[0].id;
+        const resSnap = await adminDb.collection('eventReservations')
+          .where('userId', '==', uid)
+          .where('status', '==', 'ACTIVE')
+          .get();
+
+        resSnap.docs.forEach(doc => {
+          const data = doc.data();
+          if (data.eventId) {
+            userReservationsMap[data.eventId] = {
+              id: doc.id,
+              ticketCode: data.ticketCode
+            };
+          }
+        });
+      }
     } catch {
       userApplications = [];
     }
@@ -147,7 +169,19 @@ export default async function MembersDashboard() {
                   <div className="text-sm text-[var(--text-muted)] mb-3">📍 {e.location}</div>
                   {e.description && <p className="text-xs text-[var(--text-muted)] mb-4 bg-[var(--bg-card)] p-2 rounded-lg border border-[var(--border-subtle)]">{e.description}</p>}
                   
-                  <JoinEventButton eventId={e.id} eventTitle={e.title} />
+                  {e.isTicketed ? (
+                    <EventTicketButton 
+                      eventId={e.id}
+                      eventTitle={e.title}
+                      isTicketed={e.isTicketed}
+                      ticketQuota={e.ticketQuota || 0}
+                      reservedCount={e.reservedCount || 0}
+                      isLoggedIn={!!session}
+                      initialReservation={userReservationsMap[e.id] || null}
+                    />
+                  ) : (
+                    <JoinEventButton eventId={e.id} eventTitle={e.title} />
+                  )}
                 </li>
               ))}
             </ul>

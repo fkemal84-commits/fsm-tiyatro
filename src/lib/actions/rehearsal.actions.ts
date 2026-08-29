@@ -49,36 +49,70 @@ export async function deleteRehearsal(formData: FormData) {
 }
 
 export async function addEvent(formData: FormData) {
-  const title = formData.get('title') as string;
-  const eventDate = formData.get('eventDate') as string;
-  const eventTime = formData.get('eventTime') as string;
-  const location = formData.get('location') as string;
-  const description = formData.get('description') as string;
+  try {
+    const title = formData.get('title') as string;
+    const rawDate = (formData.get('date') as string) || '';
+    const eventDate = (formData.get('eventDate') as string) || '';
+    const eventTime = (formData.get('eventTime') as string) || '';
+    const location = (formData.get('location') as string) || 'Haliç Yerleşkesi';
+    const description = (formData.get('description') as string) || '';
+    const type = (formData.get('type') as string) || 'Etkinlik';
+    
+    // Biletli / Kontenjanlı Etkinlik Alanları
+    const isTicketed = formData.get('isTicketed') === 'true' || formData.get('isTicketed') === 'on';
+    const ticketQuotaRaw = formData.get('ticketQuota') as string;
+    const ticketQuota = isTicketed && ticketQuotaRaw ? Math.max(1, parseInt(ticketQuotaRaw, 10)) : 0;
 
-  if (!title || !eventDate || !eventTime || !location) return;
+    const dateTimeStr = rawDate.trim() || (eventDate && eventTime ? `${eventDate} - ${eventTime}` : eventDate || 'Tarih Belirtilmedi');
 
-  await requireAuth(['SUPERADMIN', 'ADMIN']);
+    if (!title || !dateTimeStr) {
+      return { error: "Etkinlik adı ve tarihi zorunludur." };
+    }
 
-  const dateTimeStr = `${eventDate} - ${eventTime}`;
+    await requireAuth(['SUPERADMIN', 'ADMIN']);
 
-  await adminDb.collection('events').add({
-    title,
-    date: dateTimeStr,
-    location,
-    description: description || '',
-    createdAt: new Date().toISOString()
-  });
+    await adminDb.collection('events').add({
+      title: title.trim(),
+      date: dateTimeStr,
+      location: location.trim(),
+      description: description.trim(),
+      type: type.trim(),
+      isTicketed: Boolean(isTicketed),
+      ticketQuota: ticketQuota,
+      reservedCount: 0,
+      createdAt: new Date().toISOString()
+    });
 
-  revalidatePath('/members');
+    revalidatePath('/etkinlikler');
+    revalidatePath('/members');
+    revalidatePath('/tanerabi/dashboard');
+    return { success: true };
+  } catch (error) {
+    return handleServerError(error, "ADD_EVENT");
+  }
 }
 
 export async function deleteEvent(formData: FormData) {
   const eventId = formData.get('eventId') as string;
   if (!eventId) return;
 
-  await requireAuth(['SUPERADMIN', 'ADMIN']);
-  await adminDb.collection('events').doc(eventId).delete();
-  revalidatePath('/members');
+  try {
+    await requireAuth(['SUPERADMIN', 'ADMIN']);
+    
+    // Etkinliğe ait rezervasyonları da temizle
+    const resSnap = await adminDb.collection('eventReservations').where('eventId', '==', eventId).get();
+    const batch = adminDb.batch();
+    resSnap.docs.forEach(doc => batch.delete(doc.ref));
+    await batch.commit().catch(() => {});
+
+    await adminDb.collection('events').doc(eventId).delete();
+    revalidatePath('/etkinlikler');
+    revalidatePath('/members');
+    revalidatePath('/tanerabi/dashboard');
+    return { success: true };
+  } catch (error) {
+    return handleServerError(error, "DELETE_EVENT");
+  }
 }
 
 export async function joinEvent(formData: FormData) {
@@ -117,6 +151,176 @@ export async function joinEvent(formData: FormData) {
     return { success: true };
   } catch (error) {
     return handleServerError(error, "JOIN_EVENT");
+  }
+}
+
+/**
+ * Biletli Etkinlik için Üye Bilet Rezervasyonu
+ * Sadece giriş yapmış kulüp üyeleri kendilerine bilet ayırtabilir.
+ */
+export async function reserveEventTicket(eventId: string) {
+  if (!eventId) return { error: "Etkinlik ID gereklidir." };
+
+  try {
+    const { user, uid } = await requireAuth([
+      'MEMBER', 'AKTOR', 'PLAYER', 'EDITOR', 'SALES', 
+      'DIRECTOR', 'ASST_DIRECTOR', 'ADMIN', 'SUPERADMIN'
+    ]);
+
+    const eventRef = adminDb.collection('events').doc(eventId);
+    const eventDoc = await eventRef.get();
+
+    if (!eventDoc.exists) {
+      return { error: "Etkinlik bulunamadı." };
+    }
+
+    const eventData = eventDoc.data()!;
+    if (!eventData.isTicketed) {
+      return { error: "Bu etkinlik biletli bir etkinlik değildir." };
+    }
+
+    // Kontenjan Kontrolü
+    const currentReserved = eventData.reservedCount || 0;
+    const quota = eventData.ticketQuota || 0;
+
+    if (quota > 0 && currentReserved >= quota) {
+      return { error: "Üzgünüz, bu etkinlik için tüm kontenjan / biletler dolmuştur." };
+    }
+
+    // Daha önce bilet ayırtmış mı kontrol et
+    const existingSnap = await adminDb.collection('eventReservations')
+      .where('eventId', '==', eventId)
+      .where('userId', '==', uid)
+      .where('status', '==', 'ACTIVE')
+      .limit(1)
+      .get();
+
+    if (!existingSnap.empty) {
+      const existingTicket = existingSnap.docs[0].data();
+      return { 
+        error: `Bu etkinlik için zaten biletiniz bulunmaktadır. (Bilet Kodunuz: ${existingTicket.ticketCode})` 
+      };
+    }
+
+    // Özel bilet referans kodu üret (Örn: ETK-FSM-7D4E)
+    const randomSuffix = crypto.randomUUID().split('-')[0].toUpperCase();
+    const ticketCode = `ETK-${randomSuffix}`;
+
+    const userName = [user.name, user.surname].filter(Boolean).join(' ') || user.email;
+
+    const resRef = await adminDb.collection('eventReservations').add({
+      eventId,
+      eventTitle: eventData.title,
+      eventDate: eventData.date,
+      eventLocation: eventData.location,
+      eventType: eventData.type || 'Biletli Etkinlik',
+      userId: uid,
+      userName,
+      userEmail: user.email,
+      userPhone: user.formattedPhone || user.phone || '',
+      userDepartment: user.department || '',
+      ticketCode,
+      status: 'ACTIVE',
+      createdAt: new Date().toISOString()
+    });
+
+    // Kontenjan sayacını artır
+    await eventRef.update({
+      reservedCount: currentReserved + 1,
+      updatedAt: new Date().toISOString()
+    });
+
+    revalidatePath('/etkinlikler');
+    revalidatePath('/members');
+    revalidatePath('/tanerabi/dashboard');
+
+    return { 
+      success: true, 
+      ticketCode, 
+      reservationId: resRef.id,
+      message: `Biletiniz başarıyla ayrıldı! Bilet Kodunuz: ${ticketCode}` 
+    };
+  } catch (error) {
+    return handleServerError(error, "RESERVE_EVENT_TICKET");
+  }
+}
+
+/**
+ * Biletli Etkinlik Rezervasyonunu İptal Etme
+ */
+export async function cancelEventTicketReservation(reservationId: string) {
+  if (!reservationId) return { error: "Rezervasyon ID gereklidir." };
+
+  try {
+    const { user, uid } = await requireAuth([
+      'MEMBER', 'AKTOR', 'PLAYER', 'EDITOR', 'SALES', 
+      'DIRECTOR', 'ASST_DIRECTOR', 'ADMIN', 'SUPERADMIN'
+    ]);
+
+    const resRef = adminDb.collection('eventReservations').doc(reservationId);
+    const resDoc = await resRef.get();
+
+    if (!resDoc.exists) {
+      return { error: "Rezervasyon bulunamadı." };
+    }
+
+    const resData = resDoc.data()!;
+
+    // Yalnızca biletin sahibi veya ADMIN silebilir
+    if (resData.userId !== uid && user.role !== 'SUPERADMIN' && user.role !== 'ADMIN') {
+      return { error: "Sadece kendi biletinizi iptal edebilirsiniz." };
+    }
+
+    if (resData.status !== 'ACTIVE') {
+      return { error: "Bu rezervasyon zaten aktif değil." };
+    }
+
+    // Rezervasyonu iptal et
+    await resRef.update({
+      status: 'CANCELLED',
+      cancelledAt: new Date().toISOString()
+    });
+
+    // Etkinliğin kontenjan sayacını düşür
+    if (resData.eventId) {
+      const eventRef = adminDb.collection('events').doc(resData.eventId);
+      const eventDoc = await eventRef.get();
+      if (eventDoc.exists) {
+        const currentReserved = eventDoc.data()?.reservedCount || 0;
+        await eventRef.update({
+          reservedCount: Math.max(0, currentReserved - 1),
+          updatedAt: new Date().toISOString()
+        });
+      }
+    }
+
+    revalidatePath('/etkinlikler');
+    revalidatePath('/members');
+    revalidatePath('/tanerabi/dashboard');
+
+    return { success: true, message: "Bilet rezervasyonunuz iptal edildi." };
+  } catch (error) {
+    return handleServerError(error, "CANCEL_EVENT_TICKET");
+  }
+}
+
+/**
+ * Etkinliğe bilet ayırtmış üyeleri listeleme (Yönetim için)
+ */
+export async function getEventReservations(eventId: string) {
+  try {
+    await requireAuth(['SUPERADMIN', 'ADMIN', 'DIRECTOR', 'ASST_DIRECTOR']);
+    if (!eventId) return [];
+
+    const snap = await adminDb.collection('eventReservations')
+      .where('eventId', '==', eventId)
+      .where('status', '==', 'ACTIVE')
+      .get();
+
+    return snap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+  } catch (error) {
+    console.error("[GET_EVENT_RESERVATIONS] Hata:", error);
+    return [];
   }
 }
 

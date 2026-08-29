@@ -79,7 +79,7 @@ export default async function KulisDetailPage({ params }: { params: Promise<{ id
   const baseUrl = process.env.NEXTAUTH_URL || 'https://fsmtiyatro.com';
   const pageUrl = `${baseUrl}/kulis/${post.id}`;
 
-  const isAcademic = post.academicMeta?.isAcademic || post.category === 'Akademik Bildiri';
+  const isAcademic = post.category === 'Makale' || post.academicMeta?.isAcademic === true;
 
   return (
     <div className="min-h-screen bg-[var(--bg-dark)] pt-24 pb-16 sm:pt-32 sm:pb-24">

@@ -110,6 +110,18 @@ export async function joinEvent(formData: FormData) {
   return rehearsalActions.joinEvent(formData);
 }
 
+export async function reserveEventTicket(eventId: string) {
+  return rehearsalActions.reserveEventTicket(eventId);
+}
+
+export async function cancelEventTicketReservation(reservationId: string) {
+  return rehearsalActions.cancelEventTicketReservation(reservationId);
+}
+
+export async function getEventReservations(eventId: string) {
+  return rehearsalActions.getEventReservations(eventId);
+}
+
 export async function startPulseCheck(rehearsalId: string) {
   return rehearsalActions.startPulseCheck(rehearsalId);
 }
