@@ -49,18 +49,21 @@ Aşağıdaki JSON formatında kesinlikle geçerli bir JSON çıktısı üret:
   ]
 }
 
-ÖNEMLİ: Sadece ve sadece saf JSON formatında yanıt ver. Markdown kod bloğu (\`\`\`json ...) kullanma veya sadece JSON bloğu döndür.`;
+ÖNEMLİ: Sadece ve sadece saf JSON formatında yanıt ver. Başka hiçbir açıklama yazma.`;
 
   const userPrompt = `Yazı Başlığı: ${title || 'Başlıksız'}
 Kategori: ${category || 'Kulis'}
 Metin:
 ${content.slice(0, 4000)}`;
 
+  // Güncel ve çalışan OpenRouter ücretsiz modelleri
   const models = [
-    'deepseek/deepseek-r1:free',
-    'meta-llama/llama-3.3-70b-instruct:free',
-    'google/gemini-2.0-flash-exp:free',
-    'qwen/qwen-2.5-72b-instruct:free'
+    'openrouter/free',
+    'dots-studio/dots-3-note-preview:free',
+    'minimax/minimax-m3:free',
+    'z-ai/glm-5.2:free',
+    'nvidia/nemotron-3-nano-omni-30b-a3b-reasoning:free',
+    'inclusionai/ling-3.0-flash-fin:free'
   ];
 
   for (const model of models) {
@@ -93,20 +96,21 @@ ${content.slice(0, 4000)}`;
       const rawText = resData.choices?.[0]?.message?.content;
       if (!rawText) continue;
 
-      // JSON ayrıştırma (Markdown bloklarını temizle)
+      // JSON ayrıştırma ve temizleme
       let cleaned = rawText.trim();
+      if (cleaned.includes('</think>')) {
+        cleaned = cleaned.split('</think>')[1].trim();
+      }
       if (cleaned.startsWith('```json')) cleaned = cleaned.replace(/^```json/, '');
       if (cleaned.startsWith('```')) cleaned = cleaned.replace(/^```/, '');
       if (cleaned.endsWith('```')) cleaned = cleaned.replace(/```$/, '');
       cleaned = cleaned.trim();
 
-      // DeepSeek R1 <think>...</think> etiketlerini temizle
-      if (cleaned.includes('</think>')) {
-        cleaned = cleaned.split('</think>')[1].trim();
-        if (cleaned.startsWith('```json')) cleaned = cleaned.replace(/^```json/, '');
-        if (cleaned.startsWith('```')) cleaned = cleaned.replace(/^```/, '');
-        if (cleaned.endsWith('```')) cleaned = cleaned.replace(/```$/, '');
-        cleaned = cleaned.trim();
+      // JSON bloğunu parantezler arasından cımbızla al
+      const firstBrace = cleaned.indexOf('{');
+      const lastBrace = cleaned.lastIndexOf('}');
+      if (firstBrace !== -1 && lastBrace !== -1 && lastBrace > firstBrace) {
+        cleaned = cleaned.substring(firstBrace, lastBrace + 1);
       }
 
       const parsed: AIAnalysisResult = JSON.parse(cleaned);
