@@ -18,8 +18,26 @@ export default async function KulisPage() {
   let posts: any[] = [];
 
   const session = await getServerSession(authOptions);
-  const userRole = (session?.user as any)?.role;
-  const canWritePost = ['EDITOR', 'ADMIN', 'SUPERADMIN', 'DIRECTOR'].includes(userRole);
+  let canWritePost = false;
+  if (session?.user) {
+    const userRole = (session.user as any).role;
+    const userTitles: string[] = (session.user as any).titles || [];
+    if (['EDITOR', 'ADMIN', 'SUPERADMIN', 'DIRECTOR'].includes(userRole) || userTitles.some((t: string) => t.includes('Editör') || t.includes('Yazar') || t.includes('Yönetmen') || t.includes('Admin'))) {
+      canWritePost = true;
+    } else if (session.user.email) {
+      try {
+        const uSnap = await adminDb.collection('users').where('email', '==', session.user.email.toLowerCase()).limit(1).get();
+        if (!uSnap.empty) {
+          const uData = uSnap.docs[0].data();
+          const dbRole = uData.role;
+          const dbTitles: string[] = uData.titles || [];
+          if (['EDITOR', 'ADMIN', 'SUPERADMIN', 'DIRECTOR'].includes(dbRole) || dbTitles.some((t: string) => t.includes('Editör') || t.includes('Yazar') || t.includes('Yönetmen') || t.includes('Admin'))) {
+            canWritePost = true;
+          }
+        }
+      } catch {}
+    }
+  }
 
   try {
     const snap = await adminDb.collection('posts').orderBy('createdAt', 'desc').get();

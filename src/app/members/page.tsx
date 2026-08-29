@@ -78,7 +78,9 @@ export default async function MembersDashboard() {
     .sort((a, b) => new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime());
 
   // Editör ve Yazar Metrikleri
-  const isEditor = ['EDITOR', 'ADMIN', 'SUPERADMIN', 'DIRECTOR'].includes(role);
+  const userTitles: string[] = (session?.user as any)?.titles || [];
+  const isEditor = ['EDITOR', 'ADMIN', 'SUPERADMIN', 'DIRECTOR'].includes(role) ||
+    userTitles.some((t: string) => t.includes('Editör') || t.includes('Yazar') || t.includes('Yönetmen') || t.includes('Admin'));
   let editorPosts: any[] = [];
   if (isEditor && userEmail) {
     try {

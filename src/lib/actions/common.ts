@@ -15,10 +15,11 @@ export async function requireAuth(allowedRoles: string[]) {
 
   const user = uSnap.docs[0].data();
   const uid = uSnap.docs[0].id;
-  const userRole = user.role;
+  const userRole = user.role || 'MEMBER';
+  const userTitles: string[] = Array.isArray(user.titles) ? user.titles : [];
 
   // SUPERADMIN ve ADMIN her zaman tam yetkilidir
-  if (userRole === 'SUPERADMIN' || userRole === 'ADMIN') {
+  if (userRole === 'SUPERADMIN' || userRole === 'ADMIN' || userTitles.some(t => t.includes('Admin') || t.includes('Yönetici'))) {
     return { session, user, uid };
   }
 
@@ -26,7 +27,15 @@ export async function requireAuth(allowedRoles: string[]) {
     return { session, user, uid };
   }
 
-  if (allowedRoles.includes('AKTOR') && userRole === 'PLAYER') {
+  if (allowedRoles.includes('EDITOR') && userTitles.some(t => t.includes('Editör') || t.includes('Yazar'))) {
+    return { session, user, uid };
+  }
+
+  if (allowedRoles.includes('DIRECTOR') && userTitles.some(t => t.includes('Yönetmen'))) {
+    return { session, user, uid };
+  }
+
+  if ((allowedRoles.includes('AKTOR') || allowedRoles.includes('PLAYER')) && (userRole === 'PLAYER' || userTitles.some(t => t.includes('Oyuncu') || t.includes('Aktör')))) {
     return { session, user, uid };
   }
 

@@ -427,7 +427,7 @@ export default async function Dashboard({ searchParams }: { searchParams: Promis
                     <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.875rem', color: 'var(--text-main)' }}>
                       <thead>
                         <tr style={{ borderBottom: '1px solid var(--border-medium)' }}>
-                          {['Ad Soyad', 'Sistem Yetkisi', 'Kulüp Görevleri', 'Telefon & WhatsApp', 'Bölüm & Sezon', 'E-Posta', '', ''].map((h, i) => (
+                          {['Ad Soyad', 'Görevler, Unvanlar & Yetkiler (Perkler)', 'Telefon & WhatsApp', 'Bölüm & Sezon', 'E-Posta', '', ''].map((h, i) => (
                             <th key={`${h}-${i}`} style={{ padding: '0.75rem', textAlign: 'left', color: 'var(--text-dim)', fontWeight: 'bold', fontSize: '0.7rem', textTransform: 'uppercase', letterSpacing: '0.1em' }}>
                               {h}
                             </th>
@@ -437,25 +437,26 @@ export default async function Dashboard({ searchParams }: { searchParams: Promis
                       <tbody>
                         {displayApprovedUsers.map((u: any) => {
                           const canEdit = (role === 'SUPERADMIN') || (role === 'ADMIN' && u.role !== 'SUPERADMIN' && u.role !== 'ADMIN');
-                          const roleLabel: Record<string, string> = { SUPERADMIN: 'Süper Admin', ADMIN: 'Admin', SALES: 'Satış', EDITOR: 'Editör', DIRECTOR: 'Yönetmen', ASST_DIRECTOR: 'Yrd. Yönetmen', AKTOR: 'Aktör', MEMBER: 'Üye' };
+                          const allUserPerks = Array.isArray(u.titles) && u.titles.length > 0
+                            ? u.titles
+                            : (u.role && u.role !== 'MEMBER' && u.role !== 'PENDING' ? [u.role] : []);
+
                           return (
                             <tr key={u.id} style={{ borderBottom: '1px solid var(--border-subtle)' }}>
                               <td style={{ padding: '0.875rem', fontWeight: '500', color: 'var(--text-main)', whiteSpace: 'nowrap' }}>
-                                {u.name} {u.surname}
+                                <div style={{ display: 'flex', flexDirection: 'column' }}>
+                                  <span>{u.name} {u.surname}</span>
+                                  {u.displayTitle && (
+                                    <span style={{ fontSize: '0.7rem', color: 'var(--primary-gold)', fontWeight: '600' }}>
+                                      ⭐ Vitrin: {u.displayTitle}
+                                    </span>
+                                  )}
+                                </div>
                               </td>
-                              <td style={{ padding: '0.875rem' }}>
-                                {canEdit ? (
-                                  <RoleSelector userId={u.id} currentRole={u.role} currentUserRole={role} />
-                                ) : (
-                                  <span style={{ color: 'var(--text-muted)', fontWeight: 'bold', fontSize: '0.8rem' }}>
-                                    {roleLabel[u.role] || u.role}
-                                  </span>
-                                )}
-                              </td>
-                              <td style={{ padding: '0.875rem' }}>
+                              <td style={{ padding: '0.875rem', minWidth: '240px' }}>
                                 <TitleManager 
                                   userId={u.id} 
-                                  userTitles={u.titles || []} 
+                                  userTitles={allUserPerks} 
                                   availableTitles={availableTitles} 
                                   canEdit={canEdit} 
                                 />

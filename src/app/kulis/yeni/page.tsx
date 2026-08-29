@@ -11,6 +11,8 @@ export const metadata: Metadata = {
   description: "Kulis, Blog ve Akademik Makale yayınlama editörü.",
 };
 
+import { adminDb } from "@/lib/firebase-admin";
+
 export default async function YeniYaziPage() {
   const session = await getServerSession(authOptions);
   if (!session?.user) {
@@ -18,7 +20,23 @@ export default async function YeniYaziPage() {
   }
 
   const role = (session.user as any)?.role;
-  const canWrite = ['EDITOR', 'ADMIN', 'SUPERADMIN', 'DIRECTOR'].includes(role);
+  const userTitles: string[] = (session.user as any)?.titles || [];
+  let canWrite = ['EDITOR', 'ADMIN', 'SUPERADMIN', 'DIRECTOR'].includes(role) ||
+    userTitles.some((t: string) => t.includes('Editör') || t.includes('Yazar') || t.includes('Yönetmen') || t.includes('Admin'));
+
+  if (!canWrite && session.user.email) {
+    try {
+      const uSnap = await adminDb.collection('users').where('email', '==', session.user.email.toLowerCase()).limit(1).get();
+      if (!uSnap.empty) {
+        const uData = uSnap.docs[0].data();
+        const dbRole = uData.role;
+        const dbTitles: string[] = uData.titles || [];
+        if (['EDITOR', 'ADMIN', 'SUPERADMIN', 'DIRECTOR'].includes(dbRole) || dbTitles.some((t: string) => t.includes('Editör') || t.includes('Yazar') || t.includes('Yönetmen') || t.includes('Admin'))) {
+          canWrite = true;
+        }
+      }
+    } catch {}
+  }
 
   if (!canWrite) {
     redirect('/kulis');

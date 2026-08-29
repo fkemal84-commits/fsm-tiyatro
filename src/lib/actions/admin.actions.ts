@@ -211,13 +211,36 @@ export async function updateUserTitles(userId: string, titles: string[]) {
       ? titles.map(t => typeof t === 'string' ? t.trim() : '').filter(Boolean)
       : [];
 
+    const userDoc = await adminDb.collection('users').doc(userId).get();
+    const currentRole = userDoc.data()?.role || 'MEMBER';
+
+    // Otomatik Rol / Yetki Senkronizasyonu (Unvan & Perk Birleşimi)
+    let newRole = currentRole;
+    if (currentRole !== 'SUPERADMIN') {
+      if (cleanTitles.some(t => t.includes('Admin') || t.includes('Yönetici'))) {
+        newRole = 'ADMIN';
+      } else if (cleanTitles.some(t => t === 'Yönetmen' || t.includes('Reji'))) {
+        newRole = 'DIRECTOR';
+      } else if (cleanTitles.some(t => t.includes('Editör') || t.includes('Yazar'))) {
+        newRole = 'EDITOR';
+      } else if (cleanTitles.some(t => t.includes('Oyuncu') || t.includes('Aktör'))) {
+        newRole = 'AKTOR';
+      } else if (cleanTitles.some(t => t.includes('Gişe') || t.includes('Satış'))) {
+        newRole = 'SALES';
+      } else if (cleanTitles.length === 0 && currentRole !== 'ADMIN') {
+        newRole = 'MEMBER';
+      }
+    }
+
     await adminDb.collection('users').doc(userId).update({
       titles: cleanTitles,
+      role: newRole,
       updatedAt: new Date().toISOString()
     });
 
     revalidatePath('/tanerabi/dashboard');
     revalidatePath('/kulup');
+    revalidatePath('/members');
     revalidatePath(`/tanerabi/users/${userId}`);
     return { success: true };
   } catch (error) {
@@ -283,24 +306,23 @@ export async function removeAvailableTitle(titleOrFormData: string | FormData) {
 }
 
 export async function getAvailableTitles(): Promise<string[]> {
+  const defaultList = [
+    'Yönetici (Admin)', 'İçerik Editörü', 'Yönetmen', 'Yrd. Yönetmen', 'Oyuncu / Aktör', 'Gişe & Satış',
+    'Kulüp Başkanı', 'Başkan Yardımcısı', 'Sayman', 'Genel Sekreter', 
+    'Yönetim Kurulu Üyesi', 'Denetim Kurulu Üyesi', 'Dekor & Sahne Amiri',
+    'Kostüm & Aksesuar', 'Işık & Ses', 'Sosyal Medya & Tasarım', 'Dramaturg'
+  ];
+
   try {
     const docRef = adminDb.collection('settings').doc('titles');
     const docSnap = await docRef.get();
     if (docSnap.exists && Array.isArray(docSnap.data()?.list)) {
       return docSnap.data()!.list;
     }
-    return [
-      'Kulüp Başkanı', 'Başkan Yardımcısı', 'Sayman', 'Genel Sekreter', 
-      'Yönetim Kurulu Üyesi', 'Denetim Kurulu Üyesi', 'Dekor & Sahne Amiri',
-      'Kostüm & Aksesuar', 'Işık & Ses', 'Sosyal Medya & Tasarım', 'Dramaturg'
-    ];
+    return defaultList;
   } catch (e) {
     console.error("[GET_AVAILABLE_TITLES] Hata:", e);
-    return [
-      'Kulüp Başkanı', 'Başkan Yardımcısı', 'Sayman', 'Genel Sekreter', 
-      'Yönetim Kurulu Üyesi', 'Denetim Kurulu Üyesi', 'Dekor & Sahne Amiri',
-      'Kostüm & Aksesuar', 'Işık & Ses', 'Sosyal Medya & Tasarım', 'Dramaturg'
-    ];
+    return defaultList;
   }
 }
 
