@@ -252,19 +252,28 @@ export async function addAvailableTitle(formData: FormData) {
   }
 }
 
-export async function removeAvailableTitle(title: string) {
+export async function removeAvailableTitle(titleOrFormData: string | FormData) {
   try {
     await requireAuth(['SUPERADMIN', 'ADMIN']);
+    const title = typeof titleOrFormData === 'string' 
+      ? titleOrFormData.trim() 
+      : (titleOrFormData.get('title') as string)?.trim();
+
     if (!title) return { error: "Unvan seçilmedi." };
 
     const docRef = adminDb.collection('settings').doc('titles');
     const docSnap = await docRef.get();
 
-    if (docSnap.exists) {
-      const currentList: string[] = docSnap.data()?.list || [];
-      const updatedList = currentList.filter(t => t !== title);
-      await docRef.set({ list: updatedList, updatedAt: new Date().toISOString() }, { merge: true });
-    }
+    const currentList: string[] = docSnap.exists && Array.isArray(docSnap.data()?.list)
+      ? docSnap.data()!.list
+      : [
+        'Kulüp Başkanı', 'Başkan Yardımcısı', 'Sayman', 'Genel Sekreter', 
+        'Yönetim Kurulu Üyesi', 'Denetim Kurulu Üyesi', 'Dekor & Sahne Amiri',
+        'Kostüm & Aksesuar', 'Işık & Ses', 'Sosyal Medya & Tasarım', 'Dramaturg'
+      ];
+
+    const updatedList = currentList.filter(t => t !== title);
+    await docRef.set({ list: updatedList, updatedAt: new Date().toISOString() }, { merge: true });
 
     revalidatePath('/tanerabi/dashboard');
     return { success: true };

@@ -115,7 +115,7 @@ export default function Navbar({ session: initialSession, initialTicketQueryActi
     { label: 'Kulis', href: '/kulis' },
     { label: 'Kulüp', href: '/kulup' },
     ...(currentSession?.user 
-      ? [{ label: 'Üye Panosu', href: '/members', highlight: true }] 
+      ? [{ label: 'Pano', href: '/members', highlight: true }] 
       : [{ label: 'Katıl', href: '/katil', highlight: true }]),
   ];
 
@@ -143,7 +143,7 @@ export default function Navbar({ session: initialSession, initialTicketQueryActi
           </div>
         </Link>
 
-        {/* DESKTOP NAV — DROPDOWN YOK, TERTEMİZ 5 LİNK */}
+        {/* DESKTOP NAV — TERTEMİZ DİREKT LİNKLER */}
         <nav className="desktop-nav">
           <ul className="nav-links">
             {navLinks.map((item) => (
@@ -192,12 +192,8 @@ export default function Navbar({ session: initialSession, initialTicketQueryActi
                   <span>Yönetim</span>
                 </Link>
               )}
-              <Link href="/members" className="profile-link flex items-center gap-1 text-xs" title="Üye Panosu">
-                <ion-icon name="grid-outline"></ion-icon>
-                <span>Pano</span>
-              </Link>
-              <Link href="/profile" className="profile-link flex items-center gap-1 font-bold text-xs">
-                <ion-icon name="person-circle-outline" style={{ fontSize: '1.1rem' }}></ion-icon>
+              <Link href="/profile" className="profile-link flex items-center gap-1.5 font-bold text-xs" title="Profilim">
+                <ion-icon name="person-circle-outline" style={{ fontSize: '1.2rem' }}></ion-icon>
                 <span>{cleanName}</span>
               </Link>
               <button onClick={() => signOut({ callbackUrl: '/' })} className="btn-logout !py-1 !px-2 text-xs" title="Çıkış Yap">
@@ -250,7 +246,7 @@ export default function Navbar({ session: initialSession, initialTicketQueryActi
             </Link>
             {currentSession?.user ? (
               <Link href="/members" onClick={() => setIsMenuOpen(false)} className="serif-font text-2xl text-[var(--primary-gold)] font-bold">
-                🎭 Üye Panosu
+                🎭 Pano
               </Link>
             ) : (
               <Link href="/katil" onClick={() => setIsMenuOpen(false)} className="serif-font text-2xl text-[var(--primary-gold)] font-bold">

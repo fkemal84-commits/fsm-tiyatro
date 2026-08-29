@@ -46,6 +46,10 @@ export default function ProfileClient({ user }: { user: any }) {
     outline: 'none',
   };
 
+  const userTitles: string[] = Array.isArray(user?.titles) ? user.titles : [];
+  const selectableTitles = Array.from(new Set([roleLabel, ...userTitles])).filter(Boolean);
+  const [activeDisplayTitle, setActiveDisplayTitle] = useState(user?.displayTitle || (userTitles.length > 0 ? userTitles[0] : roleLabel));
+
   const handleProfileSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setProfileLoading(true);
@@ -54,7 +58,7 @@ export default function ProfileClient({ user }: { user: any }) {
     const formData = new FormData(e.currentTarget);
     const res = await updateProfile(formData);
     if (res && 'success' in res && res.success) {
-      setProfileMsg('Portfolyo bilgileriniz başarıyla güncellendi.');
+      setProfileMsg('Portfolyo ve unvan bilgileriniz başarıyla güncellendi.');
     }
     setProfileLoading(false);
   };
@@ -162,19 +166,47 @@ export default function ProfileClient({ user }: { user: any }) {
           <div>
             <h1 className="serif-font" style={{ fontSize: '2rem', color: 'var(--text-main)', margin: '0 0 0.25rem 0', lineHeight: '1.2' }}>{fullName}</h1>
             <p style={{ color: 'var(--text-muted)', margin: '0 0 0.6rem 0', fontSize: '0.875rem' }}>{user?.email} • {user?.phone || 'Telefon Kayıtsız'}</p>
-            <div style={{ display: 'inline-block', padding: '0.25rem 0.75rem', background: 'var(--primary-gold-dim)', color: 'var(--primary-gold)', borderRadius: '999px', fontSize: '0.75rem', fontWeight: 'bold', border: '1px solid var(--primary-gold-border)' }}>
-              {roleLabel}
+            
+            {/* Vitrin Unvanı ve Diğer Unvanlar */}
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.4rem', alignItems: 'center' }}>
+              <span style={{ display: 'inline-flex', alignItems: 'center', gap: '0.3rem', padding: '0.25rem 0.75rem', background: 'var(--primary-gold)', color: '#000', borderRadius: '999px', fontSize: '0.75rem', fontWeight: 'bold' }}>
+                ⭐ {activeDisplayTitle}
+              </span>
+              {userTitles.filter(t => t !== activeDisplayTitle).map((t, idx) => (
+                <span key={idx} style={{ padding: '0.25rem 0.65rem', background: 'var(--primary-gold-dim)', color: 'var(--primary-gold)', borderRadius: '999px', fontSize: '0.75rem', fontWeight: '600', border: '1px solid var(--primary-gold-border)' }}>
+                  {t}
+                </span>
+              ))}
             </div>
           </div>
         </div>
         
         {avatarError && <div style={{ color: '#ef4444', fontSize: '0.85rem', marginBottom: '1rem', background: 'rgba(239,68,68,0.1)', padding: '0.6rem 1rem', borderRadius: '8px', border: '1px solid rgba(239,68,68,0.2)' }}>{avatarError}</div>}
 
-        <h3 style={{ fontSize: '1.1rem', color: 'var(--text-main)', margin: '0 0 1rem 0', borderBottom: '1px solid var(--border-subtle)', paddingBottom: '0.5rem', fontWeight: 'bold' }}>Portfolyo & Bilgiler</h3>
+        <h3 style={{ fontSize: '1.1rem', color: 'var(--text-main)', margin: '0 0 1rem 0', borderBottom: '1px solid var(--border-subtle)', paddingBottom: '0.5rem', fontWeight: 'bold' }}>Portfolyo & Görev Tercihleri</h3>
         
         {profileMsg && <div style={{ background: 'rgba(34,197,94,0.1)', border: '1px solid rgba(34,197,94,0.3)', color: '#10b981', padding: '0.75rem 1rem', borderRadius: '8px', marginBottom: '1rem', fontSize: '0.85rem', fontWeight: 'bold' }}>{profileMsg}</div>}
 
         <form onSubmit={handleProfileSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+          {/* Birincil Vitrin Unvanı Seçimi */}
+          {selectableTitles.length > 0 && (
+            <div>
+              <label style={{ fontSize: '0.75rem', color: 'var(--text-dim)', fontWeight: 'bold', display: 'block', marginBottom: '0.3rem', textTransform: 'uppercase' }}>
+                Vitrinde Gösterilecek Birincil Unvanınız (Yorumlarda ve Ekipte Çıkar)
+              </label>
+              <select 
+                name="displayTitle"
+                value={activeDisplayTitle}
+                onChange={(e) => setActiveDisplayTitle(e.target.value)}
+                style={inputStyle}
+              >
+                {selectableTitles.map((t, idx) => (
+                  <option key={idx} value={t}>{t}</option>
+                ))}
+              </select>
+            </div>
+          )}
+
           <div>
             <label style={{ fontSize: '0.75rem', color: 'var(--text-dim)', fontWeight: 'bold', display: 'block', marginBottom: '0.3rem', textTransform: 'uppercase' }}>Bölüm</label>
             <input 

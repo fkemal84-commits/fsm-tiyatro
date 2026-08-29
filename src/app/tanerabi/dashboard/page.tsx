@@ -3,6 +3,8 @@ import DeleteButton from '@/components/DeleteButton';
 import SiteConfigForm from '@/components/SiteConfigForm';
 import RoleSelector from '@/components/RoleSelector';
 import TitleManager from '@/components/TitleManager';
+import TitlePoolManager from '@/components/TitlePoolManager';
+import PlayCastEditor from '@/components/PlayCastEditor';
 import SmartFileInput from '@/components/SmartFileInput';
 import PlayStatusChanger from '@/components/PlayStatusChanger';
 import { adminDb } from '@/lib/firebase-admin';
@@ -316,76 +318,8 @@ export default async function Dashboard({ searchParams }: { searchParams: Promis
                     </div>
                   </div>
 
-                  {/* Tanımlı Unvan Tagleri */}
-                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem', marginBottom: '1.25rem', padding: '0.75rem', background: 'var(--bg-surface-elevated)', borderRadius: '8px', border: '1px solid var(--border-subtle)' }}>
-                    {availableTitles.map((t, i) => (
-                      <span
-                        key={i}
-                        style={{
-                          padding: '0.3rem 0.65rem',
-                          borderRadius: '999px',
-                          fontSize: '0.75rem',
-                          fontWeight: '600',
-                          background: 'rgba(212, 175, 55, 0.12)',
-                          color: 'var(--primary-gold)',
-                          border: '1px solid rgba(212, 175, 55, 0.3)',
-                          display: 'inline-flex',
-                          alignItems: 'center',
-                          gap: '0.4rem'
-                        }}
-                      >
-                        {t}
-                        <form action={async () => { 'use server'; await removeAvailableTitle(t); }} style={{ display: 'inline' }}>
-                          <button
-                            type="submit"
-                            title={`${t} unvanını havuzdan sil`}
-                            style={{
-                              background: 'transparent',
-                              border: 'none',
-                              color: 'var(--primary-gold)',
-                              cursor: 'pointer',
-                              fontSize: '0.9rem',
-                              lineHeight: 1,
-                              padding: '0',
-                              opacity: 0.7
-                            }}
-                          >
-                            ×
-                          </button>
-                        </form>
-                      </span>
-                    ))}
-                    {availableTitles.length === 0 && (
-                      <span style={{ color: 'var(--text-dim)', fontSize: '0.75rem' }}>Henüz tanımlı unvan yok.</span>
-                    )}
-                  </div>
-
-                  {/* Yeni Unvan Ekleme Formu */}
-                  <form action={addAvailableTitle as any} style={{ display: 'flex', gap: '0.6rem', alignItems: 'center', maxWidth: '480px' }}>
-                    <input
-                      type="text"
-                      name="title"
-                      placeholder="Yeni unvan yaz (Örn: Kulüp Başkanı, Sayman, Kostüm Sorumlusu)..."
-                      required
-                      style={{ ...inputStyle, padding: '0.5rem 0.85rem', fontSize: '0.8rem' }}
-                    />
-                    <button
-                      type="submit"
-                      style={{
-                        padding: '0.5rem 1.1rem',
-                        background: 'var(--primary-gold)',
-                        color: '#000',
-                        border: 'none',
-                        borderRadius: '8px',
-                        fontSize: '0.75rem',
-                        fontWeight: 'bold',
-                        cursor: 'pointer',
-                        whiteSpace: 'nowrap'
-                      }}
-                    >
-                      + Görev Ekle
-                    </button>
-                  </form>
+                  {/* Unvan Havuzu Yönetim Bileşeni (Ekleme ve Silme) */}
+                  <TitlePoolManager initialTitles={availableTitles} />
                 </div>
 
                 {/* Tüm üyeler */}
@@ -665,6 +599,9 @@ export default async function Dashboard({ searchParams }: { searchParams: Promis
                     <div style={{ gridColumn: '1/-1' }}>
                       <label style={labelStyle}>YouTube Linki (isteğe bağlı)</label>
                       <input type="text" name="videoUrl" placeholder="https://youtube.com/..." style={inputStyle} />
+                    </div>
+                    <div style={{ gridColumn: '1/-1' }}>
+                      <PlayCastEditor />
                     </div>
                     <div style={{ gridColumn: '1/-1' }}>
                       <button type="submit" style={{ padding: '0.85rem 2rem', background: 'var(--primary-gold)', color: '#000', border: 'none', borderRadius: '8px', fontWeight: 'bold', fontSize: '0.875rem', cursor: 'pointer' }}>Oyunu Ekle</button>

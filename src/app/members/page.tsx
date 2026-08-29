@@ -4,6 +4,7 @@ import { adminDb } from "@/lib/firebase-admin";
 import { addTeamNeed, deleteTeamNeed, addEvent } from "@/app/actions";
 import { getWhatsAppEventLink } from "@/lib/utils";
 import { Metadata } from "next";
+import Link from "next/link";
 import JoinEventButton from "../../components/JoinEventButton";
 import EventTicketButton from "@/components/EventTicketButton";
 import ScriptVault from "@/components/ScriptVault";
@@ -76,6 +77,21 @@ export default async function MembersDashboard() {
     .map(doc => ({ id: doc.id, ...doc.data() as any }))
     .sort((a, b) => new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime());
 
+  // Editör ve Yazar Metrikleri
+  const isEditor = ['EDITOR', 'ADMIN', 'SUPERADMIN', 'DIRECTOR'].includes(role);
+  let editorPosts: any[] = [];
+  if (isEditor && userEmail) {
+    try {
+      const postsSnap = await adminDb.collection('posts').where('authorEmail', '==', userEmail).get();
+      editorPosts = postsSnap.docs.map(doc => ({ id: doc.id, ...doc.data() as any }));
+    } catch {
+      editorPosts = [];
+    }
+  }
+  const totalViews = editorPosts.reduce((acc, p) => acc + (p.views || 0), 0);
+  const totalLikes = editorPosts.reduce((acc, p) => acc + (p.likes?.length || 0), 0);
+  const mostReadPost = editorPosts.length > 0 ? [...editorPosts].sort((a, b) => (b.views || 0) - (a.views || 0))[0] : null;
+
   const inputStyle = {
     padding: '0.85rem 1rem',
     borderRadius: '10px',
@@ -101,7 +117,80 @@ export default async function MembersDashboard() {
       </header>
 
       <ScrollReveal>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-7xl mx-auto">
+        <div className="max-w-7xl mx-auto space-y-8">
+
+        {/* EDİTÖR & YAZAR ÖZET KARTI */}
+        {isEditor && (
+          <div className="glass-card !p-6 sm:!p-8 bg-[var(--bg-surface)] border border-[var(--primary-gold-border)] rounded-2xl">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-[var(--border-subtle)] pb-6 mb-6">
+              <div>
+                <span className="editorial-tag text-[var(--primary-gold)] block text-[10px] mb-1 font-mono">
+                  ✍️ EDİTÖR & İÇERİK METRİKLERİ
+                </span>
+                <h2 className="serif-font text-2xl text-[var(--text-main)] font-bold">
+                  Yazı Performansın & Kulis Masası
+                </h2>
+              </div>
+              <Link
+                href="/kulis/yeni"
+                className="btn btn-primary py-2.5 px-5 text-xs font-bold uppercase tracking-wider flex items-center gap-2 flex-shrink-0 self-start sm:self-auto shadow-md hover:scale-105 transition-all"
+              >
+                <ion-icon name="create-outline" style={{ fontSize: '1.1rem' }}></ion-icon>
+                <span>+ Yeni Yazı Yaz</span>
+              </Link>
+            </div>
+
+            {/* Metrik Kutuları */}
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-6">
+              <div className="p-4 bg-[var(--bg-surface-elevated)] rounded-xl border border-[var(--border-subtle)]">
+                <span className="text-[10px] font-bold text-[var(--text-dim)] uppercase tracking-wider block mb-1">Yayınlanan Yazı</span>
+                <span className="text-2xl font-bold text-[var(--text-main)] font-mono">{editorPosts.length}</span>
+              </div>
+              <div className="p-4 bg-[var(--bg-surface-elevated)] rounded-xl border border-[var(--border-subtle)]">
+                <span className="text-[10px] font-bold text-[var(--text-dim)] uppercase tracking-wider block mb-1">Toplam Okunma</span>
+                <span className="text-2xl font-bold text-[var(--primary-gold)] font-mono">{totalViews}</span>
+              </div>
+              <div className="p-4 bg-[var(--bg-surface-elevated)] rounded-xl border border-[var(--border-subtle)]">
+                <span className="text-[10px] font-bold text-[var(--text-dim)] uppercase tracking-wider block mb-1">Toplam Beğeni</span>
+                <span className="text-2xl font-bold text-rose-400 font-mono">❤️ {totalLikes}</span>
+              </div>
+              <div className="p-4 bg-[var(--bg-surface-elevated)] rounded-xl border border-[var(--border-subtle)] overflow-hidden">
+                <span className="text-[10px] font-bold text-[var(--text-dim)] uppercase tracking-wider block mb-1">En Çok Okunan</span>
+                <span className="text-xs font-bold text-[var(--text-main)] truncate block" title={mostReadPost?.title || '—'}>
+                  {mostReadPost ? mostReadPost.title : '—'}
+                </span>
+              </div>
+            </div>
+
+            {/* Son Yazıların Hızlı Listesi */}
+            {editorPosts.length > 0 && (
+              <div className="space-y-2">
+                <span className="text-[11px] font-bold text-[var(--text-dim)] uppercase tracking-wider block mb-2">
+                  Son Yazıların
+                </span>
+                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
+                  {editorPosts.slice(0, 3).map((p: any) => (
+                    <Link
+                      key={p.id}
+                      href={`/kulis/${p.id}`}
+                      className="p-3 bg-[var(--bg-surface-elevated)] hover:bg-[var(--primary-gold-dim)] border border-[var(--border-subtle)] hover:border-[var(--primary-gold-border)] rounded-xl transition-all block group"
+                    >
+                      <span className="text-xs font-bold text-[var(--text-main)] group-hover:text-[var(--primary-gold)] line-clamp-1">
+                        {p.title}
+                      </span>
+                      <div className="flex items-center gap-3 text-[10px] text-[var(--text-dim)] mt-1.5 font-mono">
+                        <span>👁️ {p.views || 0} okuma</span>
+                        <span>❤️ {p.likes?.length || 0} beğeni</span>
+                      </div>
+                    </Link>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+        )}
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
         
         {/* ETKİNLİKLER KARTI */}
         <div className="glass-card">
@@ -244,7 +333,8 @@ export default async function MembersDashboard() {
           )}
         </div>
 
-      </div>
+        </div>
+        </div>
       </ScrollReveal>
     </div>
   );

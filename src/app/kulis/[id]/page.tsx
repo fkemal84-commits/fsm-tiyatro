@@ -71,6 +71,11 @@ export default async function KulisDetailPage({ params }: { params: Promise<{ id
   if (!docSnap.exists) notFound();
   const post = { id: docSnap.id, ...docSnap.data() as any };
 
+  // Okunma / görüntülenme sayısını artır (Background fire & forget)
+  adminDb.collection('posts').doc(resolvedParams.id).update({
+    views: (post.views || 0) + 1
+  }).catch(() => {});
+
   const commentsSnap = await adminDb.collection('posts').doc(resolvedParams.id).collection('comments').orderBy('createdAt', 'desc').get();
   const comments = commentsSnap.docs.map(doc => ({ id: doc.id, ...doc.data() as any }));
 

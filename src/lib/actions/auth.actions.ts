@@ -174,12 +174,14 @@ export async function updateProfile(formData: FormData) {
   const pastPlays = formData.get('pastPlays') as string;
   const skills = formData.get('skills') as string;
   const bio = formData.get('bio') as string;
+  const displayTitle = (formData.get('displayTitle') as string)?.trim();
 
   try {
     const { uid } = await requireAuth(['MEMBER', 'AKTOR', 'EDITOR', 'DIRECTOR', 'ASST_DIRECTOR', 'ADMIN', 'SUPERADMIN']);
 
     await adminDb.collection('users').doc(uid).update({
       ...(photoUrl ? { photoUrl } : {}),
+      ...(displayTitle !== undefined ? { displayTitle } : {}),
       department: department || '',
       hobbies: hobbies || '',
       pastPlays: pastPlays || '',
@@ -189,6 +191,8 @@ export async function updateProfile(formData: FormData) {
     });
 
     revalidatePath('/profile');
+    revalidatePath('/kulup/ekip');
+    revalidatePath('/kulis');
     return { success: true };
   } catch (error) {
     return handleServerError(error, "UPDATE_PROFILE");

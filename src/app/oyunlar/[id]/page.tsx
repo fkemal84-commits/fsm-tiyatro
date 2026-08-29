@@ -156,31 +156,111 @@ export default async function OyunDetailPage({ params }: { params: Promise<{ id:
 
         </div>
 
-        {/* OYUNCULAR VE REJİ NOTU (Varsa) */}
-        {((play.cast && play.cast.length > 0) || play.directorNote) && (
-          <div className="grid grid-cols-1 md:grid-cols-12 gap-8 mb-12">
-            {play.directorNote && (
-              <div className="md:col-span-6 editorial-card p-6 bg-[var(--bg-surface)]">
-                <h3 className="serif-font text-xl text-[var(--text-main)] mb-3">Yönetmenin Notu</h3>
-                <p className="text-xs text-[var(--text-muted)] italic leading-relaxed whitespace-pre-wrap font-light">
-                  "{play.directorNote}"
-                </p>
+        {/* 1. OYUNCULAR (CAST) VİTRİNİ — BİLETİNİAL / BROADWAY STİLİ */}
+        {play.cast && play.cast.length > 0 && (
+          <div className="editorial-card p-6 sm:p-8 bg-[var(--bg-surface)] mb-12">
+            <div className="flex items-center justify-between mb-6 border-b border-[var(--border-subtle)] pb-4">
+              <div>
+                <span className="editorial-tag text-[var(--primary-gold)] block text-[10px] mb-1">
+                  SAHNE KADROSU
+                </span>
+                <h3 className="serif-font text-2xl sm:text-3xl text-[var(--text-main)] font-bold">
+                  Oyuncular & Karakterler
+                </h3>
               </div>
-            )}
+              <span className="text-xs font-mono text-[var(--text-dim)]">
+                {play.cast.length} Oyuncu
+              </span>
+            </div>
 
-            {play.cast && play.cast.length > 0 && (
-              <div className={`${play.directorNote ? 'md:col-span-6' : 'md:col-span-12'} editorial-card p-6 bg-[var(--bg-surface)]`}>
-                <h3 className="serif-font text-xl text-[var(--text-main)] mb-3">Oyuncular</h3>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">
-                  {play.cast.map((c: any, i: number) => (
-                    <div key={i} className="flex justify-between py-1 border-b border-[var(--border-subtle)]">
-                      <span className="text-[var(--text-main)] font-semibold">{c.actorName}</span>
-                      <span className="text-[var(--primary-gold)] italic">{c.roleName}</span>
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4 sm:gap-6">
+              {play.cast.map((c: any, i: number) => {
+                const initials = (c.actorName || 'O')
+                  .split(' ')
+                  .map((n: string) => n[0])
+                  .filter(Boolean)
+                  .slice(0, 2)
+                  .join('')
+                  .toUpperCase();
+
+                return (
+                  <div 
+                    key={i} 
+                    className="p-4 bg-[var(--bg-surface-elevated)] border border-[var(--border-subtle)] hover:border-[var(--primary-gold-border)] rounded-2xl flex flex-col items-center text-center group transition-all hover:-translate-y-1 hover:shadow-lg"
+                  >
+                    {/* Oyuncu Portresi / Maske Rozeti */}
+                    <div className="relative w-16 h-16 sm:w-20 sm:h-20 rounded-full overflow-hidden mb-3 border-2 border-[var(--primary-gold-border)] group-hover:border-[var(--primary-gold)] transition-colors shadow-md flex items-center justify-center bg-[var(--bg-dark)]">
+                      {c.photoUrl ? (
+                        <Image
+                          src={c.photoUrl}
+                          alt={c.actorName}
+                          fill
+                          className="object-cover group-hover:scale-105 transition-transform"
+                        />
+                      ) : (
+                        <div className="w-full h-full flex flex-col items-center justify-center bg-gradient-to-b from-[var(--primary-gold-dim)] to-[var(--bg-surface-elevated)]">
+                          <span className="text-xl sm:text-2xl opacity-80 group-hover:scale-110 transition-transform">🎭</span>
+                        </div>
+                      )}
                     </div>
-                  ))}
+
+                    {/* Oyuncu Adı */}
+                    <h4 className="font-bold text-xs sm:text-sm text-[var(--text-main)] group-hover:text-[var(--primary-gold)] transition-colors leading-tight mb-1">
+                      {c.actorName}
+                    </h4>
+
+                    {/* Karakter / Rol Rozeti */}
+                    <span className="text-[11px] text-[var(--primary-gold)] italic font-serif leading-tight">
+                      "{c.roleName}"
+                    </span>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        )}
+
+        {/* 2. REJİ & SAHNE ARKASI EKİBİ (CREW) */}
+        {((play.crew && play.crew.length > 0) || play.director || play.playwright) && (
+          <div className="editorial-card p-6 sm:p-8 bg-[var(--bg-surface)] mb-12">
+            <span className="editorial-tag text-[var(--primary-gold)] block text-[10px] mb-1">
+              PERDE ARKASI
+            </span>
+            <h3 className="serif-font text-2xl text-[var(--text-main)] font-bold mb-6 border-b border-[var(--border-subtle)] pb-4">
+              Reji & Teknik Kadro
+            </h3>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+              {play.director && (
+                <div className="p-4 bg-[var(--bg-surface-elevated)] rounded-xl border border-[var(--border-subtle)]">
+                  <span className="text-[10px] font-bold text-[var(--text-dim)] uppercase tracking-wider block mb-1">Yönetmen</span>
+                  <span className="text-sm font-bold text-[var(--text-main)]">{play.director}</span>
                 </div>
-              </div>
-            )}
+              )}
+              {play.playwright && (
+                <div className="p-4 bg-[var(--bg-surface-elevated)] rounded-xl border border-[var(--border-subtle)]">
+                  <span className="text-[10px] font-bold text-[var(--text-dim)] uppercase tracking-wider block mb-1">Yazar</span>
+                  <span className="text-sm font-bold text-[var(--text-main)]">{play.playwright}</span>
+                </div>
+              )}
+              {play.crew && play.crew.map((cr: any, idx: number) => (
+                <div key={idx} className="p-4 bg-[var(--bg-surface-elevated)] rounded-xl border border-[var(--border-subtle)]">
+                  <span className="text-[10px] font-bold text-[var(--primary-gold)] uppercase tracking-wider block mb-1">{cr.task || 'Ekip'}</span>
+                  <span className="text-sm font-bold text-[var(--text-main)]">{cr.name}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* 3. YÖNETMENİN NOTU (Varsa) */}
+        {play.directorNote && (
+          <div className="editorial-card p-6 sm:p-8 bg-[var(--bg-surface)] mb-12 relative overflow-hidden">
+            <div className="text-4xl text-[var(--primary-gold)] opacity-30 font-serif leading-none mb-2">“</div>
+            <h3 className="serif-font text-xl text-[var(--text-main)] mb-3 font-bold">Yönetmenin Notu</h3>
+            <p className="text-xs sm:text-sm text-[var(--text-muted)] italic leading-relaxed whitespace-pre-wrap font-light">
+              {play.directorNote}
+            </p>
           </div>
         )}
 

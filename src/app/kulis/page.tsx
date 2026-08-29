@@ -11,8 +11,15 @@ export const metadata: Metadata = {
   description: 'FSM Tiyatro kulis günlükleri, prova notları, oyun incelemeleri ve tiyatro yazıları.',
 };
 
+import { getServerSession } from "next-auth";
+import { authOptions } from "@/lib/auth";
+
 export default async function KulisPage() {
   let posts: any[] = [];
+
+  const session = await getServerSession(authOptions);
+  const userRole = (session?.user as any)?.role;
+  const canWritePost = ['EDITOR', 'ADMIN', 'SUPERADMIN', 'DIRECTOR'].includes(userRole);
 
   try {
     const snap = await adminDb.collection('posts').orderBy('createdAt', 'desc').get();
@@ -32,13 +39,27 @@ export default async function KulisPage() {
         ]} 
       />
 
-      {/* Başlık */}
-      <div className="max-w-[1380px] mx-auto px-[5%] mb-8 sm:mb-12">
-        <span className="editorial-tag text-[var(--primary-gold)] block mb-2 text-[10px]">SAHNE ARKASI & METİNLER</span>
-        <h1 className="serif-font text-3xl sm:text-5xl md:text-6xl text-[var(--text-main)] mb-3 break-words">Kulis</h1>
-        <p className="text-xs sm:text-sm md:text-base text-[var(--text-muted)] font-light max-w-xl">
-          Prova günlükleri, oyuncu ve yönetmen notları, tiyatro incelemeleri.
-        </p>
+      {/* Başlık ve Editör Aksiyonu */}
+      <div className="max-w-[1380px] mx-auto px-[5%] mb-8 sm:mb-12 flex flex-col md:flex-row md:items-end justify-between gap-6">
+        <div>
+          <span className="editorial-tag text-[var(--primary-gold)] block mb-2 text-[10px]">SAHNE ARKASI & METİNLER</span>
+          <h1 className="serif-font text-3xl sm:text-5xl md:text-6xl text-[var(--text-main)] mb-3 break-words">Kulis</h1>
+          <p className="text-xs sm:text-sm md:text-base text-[var(--text-muted)] font-light max-w-xl">
+            Prova günlükleri, oyuncu ve yönetmen notları, akademik makaleler ve tiyatro incelemeleri.
+          </p>
+        </div>
+
+        {canWritePost && (
+          <div>
+            <Link 
+              href="/kulis/yeni"
+              className="btn btn-primary py-3 px-6 text-xs font-bold uppercase tracking-wider flex items-center gap-2 shadow-lg hover:scale-105 transition-all flex-shrink-0"
+            >
+              <ion-icon name="create-outline" style={{ fontSize: '1.2rem' }}></ion-icon>
+              <span>+ Yeni Yazı Ekle</span>
+            </Link>
+          </div>
+        )}
       </div>
 
       <div className="max-w-[1380px] mx-auto px-[5%]">

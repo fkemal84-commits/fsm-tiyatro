@@ -10,6 +10,7 @@ interface Comment {
   author?: string;
   authorEmail: string;
   authorPhoto?: string;
+  authorTitle?: string;
   photoUrl?: string;
   createdAt: string;
 }
@@ -129,7 +130,14 @@ export default function BlogInteractions({
                   </div>
                   <div className="flex-1">
                     <div className="flex justify-between items-center mb-1">
-                      <span className="text-[var(--text-main)] font-bold text-sm">{name}</span>
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <span className="text-[var(--text-main)] font-bold text-sm">{name}</span>
+                        {c.authorTitle && (
+                          <span className="text-[10px] px-2 py-0.5 rounded-full bg-[var(--primary-gold-dim)] text-[var(--primary-gold)] border border-[var(--primary-gold-border)] font-semibold">
+                            {c.authorTitle}
+                          </span>
+                        )}
+                      </div>
                       <span className="text-[var(--text-dim)] text-xs">{new Date(c.createdAt).toLocaleDateString('tr-TR')}</span>
                     </div>
                     <div className="p-4 bg-[var(--bg-surface-elevated)] rounded-xl border border-[var(--border-subtle)]">

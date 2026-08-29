@@ -288,16 +288,19 @@ export async function addComment(formData: FormData) {
 
     const { user } = await requireAuth(['MEMBER', 'AKTOR', 'EDITOR', 'DIRECTOR', 'ASST_DIRECTOR', 'ADMIN', 'SUPERADMIN']);
     const authorName = [user.name, user.surname].filter(Boolean).join(' ') || user.email.split('@')[0];
+    const authorTitle = user.displayTitle || (Array.isArray(user.titles) && user.titles[0]) || (user.role === 'MEMBER' ? 'Kulüp Üyesi' : user.role);
 
     const commentData = {
       content: content.trim(),
       authorName,
       authorEmail: user.email,
       authorPhoto: user.photoUrl || null,
+      authorTitle: authorTitle || null,
       createdAt: new Date().toISOString()
     };
 
     await adminDb.collection('posts').doc(postId).collection('comments').add(commentData);
+    revalidatePath(`/kulis/${postId}`);
     revalidatePath(`/blog/${postId}`);
     revalidatePath(`/yayin/${postId}`);
     return { success: true };
