@@ -51,6 +51,8 @@ export async function registerUser(formData: FormData) {
 
     const isSchoolEmail = email.toLowerCase().endsWith('@stu.fsm.edu.tr');
     const role = isSchoolEmail ? 'MEMBER' : 'PENDING';
+    const student_status = isSchoolEmail ? 'FSMVU_ACTIVE' : 'EXTERNAL';
+    const membership_status = isSchoolEmail ? 'ACTIVE' : 'PENDING';
 
     const now = new Date();
     const currentYear = now.getFullYear();
@@ -89,6 +91,8 @@ export async function registerUser(formData: FormData) {
       password: hashedPassword,
       consent,
       role,
+      membership_status,
+      student_status,
       registrationYear: activeSeasonYear, // 2027
       season: activeSeason,               // "2026-2027 Sezonu"
       academicYear,                       // "2026-2027"
@@ -106,16 +110,59 @@ export async function approveUser(formData: FormData) {
     const userId = formData.get('userId') as string;
     if (!userId) return { error: "Kullanıcı ID gereklidir." };
 
-    await requireAuth(['SUPERADMIN', 'ADMIN']);
+    const { session } = await requireAuth(['SUPERADMIN', 'ADMIN']);
 
     await adminDb.collection('users').doc(userId).update({
-      role: 'MEMBER'
+      role: 'MEMBER',
+      membership_status: 'ACTIVE',
+      membership_updated_at: new Date().toISOString(),
+      membership_updated_by: session?.user?.email || 'admin'
     });
 
     revalidatePath('/tanerabi/dashboard');
     return { success: true };
   } catch (error) {
     return handleServerError(error, "APPROVE_USER");
+  }
+}
+
+export async function updateUserMembershipStatus(formData: FormData) {
+  try {
+    const userId = formData.get('userId') as string;
+    const membership_status = formData.get('membership_status') as string;
+    const student_status = formData.get('student_status') as string | null;
+    const reason = (formData.get('reason') as string) || null;
+
+    if (!userId || !membership_status) return { error: "Gerekli alanlar eksik." };
+
+    const { session } = await requireAuth(['SUPERADMIN', 'ADMIN']);
+
+    const updates: Record<string, any> = {
+      membership_status,
+      membership_updated_at: new Date().toISOString(),
+      membership_updated_by: session?.user?.email || 'admin'
+    };
+
+    if (student_status) {
+      updates.student_status = student_status;
+    }
+    if (reason) {
+      updates.membership_rejection_reason = reason;
+    }
+
+    if (membership_status === 'ACTIVE') {
+      updates.role = 'MEMBER';
+    } else if (membership_status === 'ALUMNI') {
+      updates.role = 'ALUMNI';
+    } else if (membership_status === 'NONE') {
+      updates.role = 'USER';
+    }
+
+    await adminDb.collection('users').doc(userId).update(updates);
+    revalidatePath('/tanerabi/dashboard');
+    return { success: true };
+  } catch (error) {
+    return handleServerError(error, "UPDATE_MEMBERSHIP_STATUS");
   }
 }
 
@@ -155,6 +202,7 @@ export async function changePassword(formData: FormData) {
   try {
     const { user, uid } = await requireAuth(['MEMBER', 'AKTOR', 'EDITOR', 'DIRECTOR', 'ASST_DIRECTOR', 'ADMIN', 'SUPERADMIN']);
 
+    if (!user.password) return { error: "Mevcut şifre kaydı bulunamadı." };
     const isPasswordValid = await bcrypt.compare(currentPassword, user.password);
     if (!isPasswordValid) return { error: "Girdiğiniz mevcut şifreniz yanlış." };
 

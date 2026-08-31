@@ -1,6 +1,7 @@
 import { adminDb, adminStorage } from '@/lib/firebase-admin';
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
+import { normalizeUser, isAdmin } from "@/lib/auth-helpers";
 
 /**
  * Kullanıcı oturumunu ve yetkisini doğrular. 
@@ -10,23 +11,27 @@ export async function requireAuth(allowedRoles: string[]) {
   const session = await getServerSession(authOptions);
   if (!session?.user?.email) throw new Error("Yetkisiz erişim! Lütfen giriş yapın.");
 
-  const uSnap = await adminDb.collection('users').where('email', '==', session.user.email).limit(1).get();
+  const uSnap = await adminDb.collection('users').where('email', '==', session.user.email.toLowerCase()).limit(1).get();
   if (uSnap.empty) throw new Error("Kullanıcı kaydı bulunamadı.");
 
-  const user = uSnap.docs[0].data();
+  const rawUser = uSnap.docs[0].data();
   const uid = uSnap.docs[0].id;
-  const userRole = user.role || 'MEMBER';
-  const userTitles: string[] = Array.isArray(user.titles) ? user.titles : [];
+  const user = normalizeUser({ id: uid, ...rawUser });
+
+  if (user.membership_status === 'PENDING') {
+    throw new Error("Hesabınız henüz onaylanmamıştır.");
+  }
 
   // SUPERADMIN ve ADMIN her zaman tam yetkilidir
-  if (userRole === 'SUPERADMIN' || userRole === 'ADMIN' || userTitles.some(t => t.includes('Admin') || t.includes('Yönetici'))) {
+  if (isAdmin(user)) {
     return { session, user, uid };
   }
 
-  if (allowedRoles.includes(userRole)) {
+  if (allowedRoles.includes(user.role)) {
     return { session, user, uid };
   }
 
+  const userTitles = user.titles || [];
   if (allowedRoles.includes('EDITOR') && userTitles.some(t => t.includes('Editör') || t.includes('Yazar'))) {
     return { session, user, uid };
   }
@@ -35,7 +40,7 @@ export async function requireAuth(allowedRoles: string[]) {
     return { session, user, uid };
   }
 
-  if ((allowedRoles.includes('AKTOR') || allowedRoles.includes('PLAYER')) && (userRole === 'PLAYER' || userTitles.some(t => t.includes('Oyuncu') || t.includes('Aktör')))) {
+  if ((allowedRoles.includes('AKTOR') || allowedRoles.includes('PLAYER')) && (user.role === 'PLAYER' || userTitles.some(t => t.includes('Oyuncu') || t.includes('Aktör')))) {
     return { session, user, uid };
   }
 

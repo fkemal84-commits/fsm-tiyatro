@@ -20,6 +20,10 @@ export async function approveUser(formData: FormData) {
   return authActions.approveUser(formData);
 }
 
+export async function updateUserMembershipStatus(formData: FormData) {
+  return authActions.updateUserMembershipStatus(formData);
+}
+
 export async function rejectUser(formData: FormData) {
   return authActions.rejectUser(formData);
 }

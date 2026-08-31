@@ -119,17 +119,27 @@ export interface EventItem {
   createdAt: string;
 }
 
+export type MembershipStatus = 'NONE' | 'PENDING' | 'ACTIVE' | 'ALUMNI';
+
+export type StudentStatus = 'FSMVU_ACTIVE' | 'FSMVU_ALUMNI' | 'EXTERNAL';
+
 export interface User {
   id: string;
   name: string;
   surname: string;
   email: string;
+  password?: string;
   role: UserRole;
-  membershipStatus?: 'ACTIVE' | 'ALUMNI' | 'HONORARY';
+  membership_status?: MembershipStatus;
+  student_status?: StudentStatus;
+  titles?: string[];
+  displayTitle?: string;
   joinedSeason?: string;
   graduationYear?: string;
   departments?: string[];
   phone?: string;
+  formattedPhone?: string;
+  rawPhone?: string;
   photoUrl?: string;
   department?: string;
   hobbies?: string;
@@ -137,7 +147,11 @@ export interface User {
   skills?: string;
   bio?: string;
   assignedPlays?: string[];
+  membership_updated_at?: string;
+  membership_updated_by?: string | null;
+  membership_rejection_reason?: string | null;
   createdAt: string;
+  updatedAt?: string;
 }
 
 export type AttendanceStatus = 'GELDİ' | 'MAZERETLİ' | 'GEÇ' | 'GELMEDİ';

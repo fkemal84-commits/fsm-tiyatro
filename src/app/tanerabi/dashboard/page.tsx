@@ -15,6 +15,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { redirect } from "next/navigation";
 import Link from 'next/link';
+import { normalizeUser } from "@/lib/auth-helpers";
 
 export const dynamic = "force-dynamic";
 
@@ -58,7 +59,8 @@ export default async function Dashboard({ searchParams }: { searchParams: Promis
 
     const allUsers = usersSnap.docs.map(doc => {
       const data = doc.data();
-      const createdAt = data.createdAt || new Date().toISOString();
+      const normalized = normalizeUser({ id: doc.id, ...data });
+      const createdAt = normalized.createdAt || new Date().toISOString();
       
       // Üniversite tiyatro takvimi sezon hesabı:
       // Temmuz ve sonrasındaki kayıtlar başlayan yeni sezonundur (Örn: 2026 Ağustos/Ekim -> 2026-2027 Sezonu / 2027 Kayıtları)
@@ -99,11 +101,13 @@ export default async function Dashboard({ searchParams }: { searchParams: Promis
 
       return { 
         id: doc.id, 
-        name: data.name || '', 
-        surname: data.surname || '', 
-        email: data.email || '', 
-        role: data.role || 'MEMBER', 
-        titles: Array.isArray(data.titles) ? data.titles : [],
+        name: normalized.name, 
+        surname: normalized.surname, 
+        email: normalized.email, 
+        role: normalized.role, 
+        membership_status: normalized.membership_status,
+        student_status: normalized.student_status,
+        titles: normalized.titles || [],
         createdAt, 
         phone: whatsappNumber, 
         formattedPhone: formattedDisplayPhone,
@@ -285,7 +289,18 @@ export default async function Dashboard({ searchParams }: { searchParams: Promis
                         <tbody>
                           {pendingUsers.map((u: any) => (
                             <tr key={u.id} style={{ borderBottom: '1px solid var(--border-subtle)' }}>
-                              <td style={{ padding: '0.875rem', color: 'var(--text-main)', fontWeight: '500' }}>{u.name} {u.surname}</td>
+                              <td style={{ padding: '0.875rem', color: 'var(--text-main)', fontWeight: '500' }}>
+                                <div>{u.name} {u.surname}</div>
+                                <div style={{ marginTop: '0.25rem' }}>
+                                  {u.student_status === 'FSMVU_ACTIVE' ? (
+                                    <span style={{ fontSize: '0.65rem', padding: '0.15rem 0.4rem', borderRadius: '4px', background: 'rgba(16, 185, 129, 0.15)', color: '#10b981', border: '1px solid rgba(16, 185, 129, 0.3)', fontWeight: 'bold' }}>🎓 FSM Öğrencisi</span>
+                                  ) : u.student_status === 'FSMVU_ALUMNI' ? (
+                                    <span style={{ fontSize: '0.65rem', padding: '0.15rem 0.4rem', borderRadius: '4px', background: 'rgba(59, 130, 246, 0.15)', color: '#60a5fa', border: '1px solid rgba(59, 130, 246, 0.3)', fontWeight: 'bold' }}>🏛️ FSM Mezunu</span>
+                                  ) : (
+                                    <span style={{ fontSize: '0.65rem', padding: '0.15rem 0.4rem', borderRadius: '4px', background: 'rgba(245, 158, 11, 0.15)', color: '#fbbf24', border: '1px solid rgba(245, 158, 11, 0.3)', fontWeight: 'bold' }}>🌐 Dış Katılımcı</span>
+                                  )}
+                                </div>
+                              </td>
                               <td style={{ padding: '0.875rem', color: 'var(--text-muted)' }}>{u.email}</td>
                               <td style={{ padding: '0.875rem', color: 'var(--text-dim)' }}>{new Date(u.createdAt).toLocaleDateString('tr-TR')}</td>
                               <td style={{ padding: '0.875rem' }}>
@@ -447,8 +462,17 @@ export default async function Dashboard({ searchParams }: { searchParams: Promis
                           return (
                             <tr key={u.id} style={{ borderBottom: '1px solid var(--border-subtle)' }}>
                               <td style={{ padding: '0.875rem', fontWeight: '500', color: 'var(--text-main)', whiteSpace: 'nowrap' }}>
-                                <div style={{ display: 'flex', flexDirection: 'column' }}>
-                                  <span>{u.name} {u.surname}</span>
+                                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.2rem' }}>
+                                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                                    <span>{u.name} {u.surname}</span>
+                                    {u.student_status === 'FSMVU_ACTIVE' ? (
+                                      <span title="FSMVÜ Aktif Öğrencisi" style={{ fontSize: '0.6rem', padding: '0.1rem 0.35rem', borderRadius: '4px', background: 'rgba(16, 185, 129, 0.15)', color: '#10b981', border: '1px solid rgba(16, 185, 129, 0.3)', fontWeight: 'bold' }}>🎓 FSM</span>
+                                    ) : u.student_status === 'FSMVU_ALUMNI' ? (
+                                      <span title="FSMVÜ Mezunu" style={{ fontSize: '0.6rem', padding: '0.1rem 0.35rem', borderRadius: '4px', background: 'rgba(59, 130, 246, 0.15)', color: '#60a5fa', border: '1px solid rgba(59, 130, 246, 0.3)', fontWeight: 'bold' }}>🏛️ Mezun</span>
+                                    ) : (
+                                      <span title="Dış Üye / Misafir" style={{ fontSize: '0.6rem', padding: '0.1rem 0.35rem', borderRadius: '4px', background: 'rgba(245, 158, 11, 0.15)', color: '#fbbf24', border: '1px solid rgba(245, 158, 11, 0.3)', fontWeight: 'bold' }}>🌐 Dış Üye</span>
+                                    )}
+                                  </div>
                                   {u.displayTitle && (
                                     <span style={{ fontSize: '0.7rem', color: 'var(--primary-gold)', fontWeight: '600' }}>
                                       ⭐ Vitrin: {u.displayTitle}
