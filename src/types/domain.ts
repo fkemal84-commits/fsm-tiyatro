@@ -79,6 +79,8 @@ export interface AcademicMeta {
   issue?: string;
 }
 
+export type PostStatus = 'PUBLISHED' | 'PENDING_REVIEW' | 'REJECTED';
+
 export interface Post {
   id: string;
   title: string;
@@ -91,6 +93,10 @@ export interface Post {
   imageUrl?: string;
   likes?: string[];
   academicMeta?: AcademicMeta;
+  status?: PostStatus;
+  approvedBy?: string | null;
+  approvedAt?: string | null;
+  rejectionReason?: string | null;
   createdAt: string;
   updatedAt?: string;
 }
@@ -123,6 +129,8 @@ export type MembershipStatus = 'NONE' | 'PENDING' | 'ACTIVE' | 'ALUMNI';
 
 export type StudentStatus = 'FSMVU_ACTIVE' | 'FSMVU_ALUMNI' | 'EXTERNAL';
 
+export type UserSegment = 'STUDENT' | 'ALUMNI' | 'EXTERNAL' | 'ADMIN' | 'PUBLIC';
+
 export interface User {
   id: string;
   name: string;
@@ -132,6 +140,10 @@ export interface User {
   role: UserRole;
   membership_status?: MembershipStatus;
   student_status?: StudentStatus;
+  original_school_email?: string;
+  email_changed_at?: string;
+  email_changed_once?: boolean;
+  email_updated_by?: string | null;
   titles?: string[];
   displayTitle?: string;
   joinedSeason?: string;

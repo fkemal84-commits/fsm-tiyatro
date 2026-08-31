@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useRef } from 'react';
-import { changePassword, updateProfile, uploadAvatar } from '@/app/actions';
+import { changePassword, updateProfile, uploadAvatar, migrateAlumniEmail } from '@/app/actions';
 import { compressImageOnClient } from '@/lib/client-compress';
 
 export default function ProfileClient({ user }: { user: any }) {
@@ -11,6 +11,12 @@ export default function ProfileClient({ user }: { user: any }) {
   const [passwordLoading, setPasswordLoading] = useState(false);
   const [message, setMessage] = useState('');
   const [error, setError] = useState('');
+
+  const [emailLoading, setEmailLoading] = useState(false);
+  const [emailMsg, setEmailMsg] = useState('');
+  const [emailErr, setEmailErr] = useState('');
+  const [currentEmail, setCurrentEmail] = useState(user?.email || '');
+  const [emailChangedOnce, setEmailChangedOnce] = useState(user?.email_changed_once || false);
 
   const [avatarLoading, setAvatarLoading] = useState(false);
   const [avatarError, setAvatarError] = useState('');
@@ -102,6 +108,25 @@ export default function ProfileClient({ user }: { user: any }) {
       (e.target as HTMLFormElement).reset();
     }
     setPasswordLoading(false);
+  };
+
+  const handleEmailMigrate = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    setEmailLoading(true);
+    setEmailMsg('');
+    setEmailErr('');
+
+    const formData = new FormData(e.currentTarget);
+    const res = await migrateAlumniEmail(formData);
+    if (res && 'error' in res && res.error) {
+      setEmailErr(res.error);
+    } else if (res && 'success' in res && res.success) {
+      setEmailMsg('E-posta adresiniz başarıyla kişisel e-postanıza taşındı.');
+      if (res.newEmail) setCurrentEmail(res.newEmail);
+      setEmailChangedOnce(true);
+      (e.target as HTMLFormElement).reset();
+    }
+    setEmailLoading(false);
   };
 
   const handleFileChange = async (file: File) => {
@@ -290,6 +315,55 @@ export default function ProfileClient({ user }: { user: any }) {
           </button>
         </form>
       </div>
+
+      {/* MEZUN E-POSTA TAŞIMA (YALNIZCA MEZUNLARA ÖZEL & 1 DEFAYA MAHSUS) */}
+      {(user?.student_status === 'FSMVU_ALUMNI' || user?.role === 'ALUMNI' || user?.membership_status === 'ALUMNI') && (
+        <div className="glass-card" style={{ padding: '2rem', borderRadius: '16px', border: '1px solid rgba(59, 130, 246, 0.3)', background: 'rgba(59, 130, 246, 0.04)' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.5rem' }}>
+            <span style={{ fontSize: '1.25rem' }}>🎓</span>
+            <h3 style={{ fontSize: '1.1rem', color: '#60a5fa', margin: 0, fontWeight: 'bold' }}>Mezun E-Posta Taşıma (1 Defaya Mahsus)</h3>
+          </div>
+          <p style={{ color: 'var(--text-muted)', fontSize: '0.8rem', lineHeight: '1.5', margin: '0 0 1.25rem 0' }}>
+            Mezuniyet sonrası kapanacak olan <code>@stu.fsm.edu.tr</code> okul e-postanızı kalıcı kişisel e-postanıza (Gmail vb.) taşıyabilirsiniz. Bu işlem bir defaya mahsustur ve tüm yazılarınız ile kulüp geçmişiniz korunur.
+          </p>
+
+          {emailErr && <div style={{ background: 'rgba(239,68,68,0.1)', border: '1px solid rgba(239,68,68,0.3)', color: '#ef4444', padding: '0.75rem 1rem', borderRadius: '8px', marginBottom: '1rem', fontSize: '0.85rem' }}>{emailErr}</div>}
+          {emailMsg && <div style={{ background: 'rgba(34,197,94,0.1)', border: '1px solid rgba(34,197,94,0.3)', color: '#10b981', padding: '0.75rem 1rem', borderRadius: '8px', marginBottom: '1rem', fontSize: '0.85rem', fontWeight: 'bold' }}>{emailMsg}</div>}
+
+          {emailChangedOnce ? (
+            <div style={{ padding: '1rem', borderRadius: '8px', background: 'rgba(16, 185, 129, 0.1)', border: '1px solid rgba(16, 185, 129, 0.25)', color: '#10b981', fontSize: '0.85rem' }}>
+              ✓ E-posta değiştirme hakkınızı kullandınız. Aktif e-postanız: <strong>{currentEmail}</strong>
+              {user?.original_school_email && (
+                <span style={{ display: 'block', color: 'var(--text-dim)', fontSize: '0.75rem', marginTop: '0.25rem' }}>
+                  Eski Okul E-postası: {user.original_school_email}
+                </span>
+              )}
+            </div>
+          ) : (
+            <form onSubmit={handleEmailMigrate} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+              <div>
+                <label style={{ fontSize: '0.75rem', color: 'var(--text-dim)', fontWeight: 'bold', display: 'block', marginBottom: '0.3rem', textTransform: 'uppercase' }}>Yeni Kişisel E-Posta Adresiniz</label>
+                <input 
+                  type="email" 
+                  name="newEmail" 
+                  placeholder="ornek@gmail.com" 
+                  style={inputStyle} 
+                  required 
+                />
+              </div>
+
+              <button 
+                type="submit" 
+                className="btn btn-primary" 
+                style={{ background: '#3b82f6', borderColor: '#3b82f6', color: '#fff', width: '100%', padding: '0.85rem' }} 
+                disabled={emailLoading}
+              >
+                {emailLoading ? 'Taşınıyor...' : 'E-Postamı Kişisel Hesabıma Taşı'}
+              </button>
+            </form>
+          )}
+        </div>
+      )}
 
     </div>
   );

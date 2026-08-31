@@ -4,8 +4,11 @@ import { adminDb } from '@/lib/firebase-admin';
 import { revalidatePath } from 'next/cache';
 import { redirect } from 'next/navigation';
 import { requireAuth, deleteStorageFile, uploadToStorage, handleServerError } from './common';
+import { isEditor } from '@/lib/auth-helpers';
+import { PostStatus } from '@/types/domain';
 
 export async function addPost(formData: FormData) {
+  let createdPostStatus: PostStatus = 'PUBLISHED';
   try {
     const title = formData.get('title') as string;
     const content = formData.get('content') as string;
@@ -26,7 +29,7 @@ export async function addPost(formData: FormData) {
       return { error: "Başlık ve içerik alanları zorunludur." };
     }
 
-    const { user } = await requireAuth(['SUPERADMIN', 'ADMIN', 'EDITOR', 'DIRECTOR']);
+    const { session, user } = await requireAuth(['SUPERADMIN', 'ADMIN', 'EDITOR', 'DIRECTOR', 'ASST_DIRECTOR', 'AKTOR', 'PLAYER', 'MEMBER']);
 
     let imageUrl = "";
     if (file && file.size > 0) {
@@ -39,6 +42,9 @@ export async function addPost(formData: FormData) {
     }
 
     const authorName = [user.name, user.surname].filter(Boolean).join(' ') || user.email.split('@')[0];
+    const userIsEditor = isEditor(user);
+    const postStatus: PostStatus = userIsEditor ? 'PUBLISHED' : 'PENDING_REVIEW';
+    createdPostStatus = postStatus;
 
     await adminDb.collection('posts').add({
       title,
@@ -48,6 +54,10 @@ export async function addPost(formData: FormData) {
       imageUrl: imageUrl || null,
       author: authorName,
       authorEmail: user.email,
+      status: postStatus,
+      approvedBy: userIsEditor ? user.email : null,
+      approvedAt: userIsEditor ? new Date().toISOString() : null,
+      rejectionReason: null,
       academicMeta: isAcademic ? {
         isAcademic: true,
         abstract,
@@ -62,11 +72,57 @@ export async function addPost(formData: FormData) {
 
     revalidatePath('/');
     revalidatePath('/kulis');
+    revalidatePath('/members');
     revalidatePath('/sitemap.xml');
   } catch (error) {
     return handleServerError(error, "ADD_POST");
   }
-  redirect('/kulis');
+  redirect(createdPostStatus === 'PUBLISHED' ? '/kulis' : '/members?tab=posts&status=pending');
+}
+
+export async function approvePost(formData: FormData) {
+  try {
+    const postId = formData.get('postId') as string;
+    if (!postId) return { error: "Yazı ID gereklidir." };
+
+    const { session } = await requireAuth(['SUPERADMIN', 'ADMIN', 'EDITOR', 'DIRECTOR']);
+
+    await adminDb.collection('posts').doc(postId).update({
+      status: 'PUBLISHED',
+      approvedBy: session?.user?.email || 'editor',
+      approvedAt: new Date().toISOString(),
+      rejectionReason: null
+    });
+
+    revalidatePath('/');
+    revalidatePath('/kulis');
+    revalidatePath(`/kulis/${postId}`);
+    revalidatePath('/members');
+    return { success: true };
+  } catch (error) {
+    return handleServerError(error, "APPROVE_POST");
+  }
+}
+
+export async function rejectPost(formData: FormData) {
+  try {
+    const postId = formData.get('postId') as string;
+    const reason = (formData.get('reason') as string) || 'Editör incelemesinden geçemedi.';
+    if (!postId) return { error: "Yazı ID gereklidir." };
+
+    const { session } = await requireAuth(['SUPERADMIN', 'ADMIN', 'EDITOR', 'DIRECTOR']);
+
+    await adminDb.collection('posts').doc(postId).update({
+      status: 'REJECTED',
+      rejectionReason: reason
+    });
+
+    revalidatePath('/kulis');
+    revalidatePath('/members');
+    return { success: true };
+  } catch (error) {
+    return handleServerError(error, "REJECT_POST");
+  }
 }
 
 export async function deletePost(formData: FormData) {

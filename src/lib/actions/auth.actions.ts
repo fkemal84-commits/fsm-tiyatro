@@ -396,3 +396,122 @@ export async function completePasswordReset(formData: FormData) {
     return handleServerError(error, "PWD_RESET_COMPLETE");
   }
 }
+
+/**
+ * Mezunlar için 1 defaya mahsus kişisel e-postaya geçiş aksiyonu
+ */
+export async function migrateAlumniEmail(formData: FormData) {
+  try {
+    const newEmail = (formData.get('newEmail') as string)?.toLowerCase()?.trim();
+    if (!newEmail) return { error: "Yeni e-posta adresi zorunludur." };
+
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(newEmail)) return { error: "Geçersiz e-posta formatı." };
+
+    const { session, user, uid } = await requireAuth(['MEMBER', 'AKTOR', 'EDITOR', 'DIRECTOR', 'ASST_DIRECTOR', 'ADMIN', 'SUPERADMIN']);
+
+    if (user.student_status !== 'FSMVU_ALUMNI' && user.role !== 'ALUMNI' && user.membership_status !== 'ALUMNI') {
+      return { error: "Bu işlem yalnızca mezun statüsündeki üyeler içindir." };
+    }
+
+    if (user.email_changed_once) {
+      return { error: "E-posta adresinizi daha önce 1 defa değiştirdiniz. Tekrar değişiklik için yöneticiyle iletişime geçiniz." };
+    }
+
+    const oldEmail = user.email.toLowerCase();
+    if (oldEmail === newEmail) {
+      return { error: "Yeni e-posta mevcut e-postanızla aynı olamaz." };
+    }
+
+    // Yeni e-postanın sistemde kayıtlı olup olmadığını kontrol et
+    const existing = await adminDb.collection('users').where('email', '==', newEmail).limit(1).get();
+    if (!existing.empty) {
+      return { error: "Bu e-posta adresi sistemde zaten başka bir kullanıcı tarafından kullanılıyor." };
+    }
+
+    // Kullanıcı kaydını güncelle
+    await adminDb.collection('users').doc(uid).update({
+      email: newEmail,
+      original_school_email: oldEmail,
+      email_changed_at: new Date().toISOString(),
+      email_changed_once: true,
+      updatedAt: new Date().toISOString()
+    });
+
+    // Kullanıcının mevcut yazılarını yeni e-postaya kaskad güncelle
+    try {
+      const postsSnap = await adminDb.collection('posts').where('authorEmail', '==', oldEmail).get();
+      if (!postsSnap.empty) {
+        const batch = adminDb.batch();
+        postsSnap.docs.forEach(doc => {
+          batch.update(doc.ref, { authorEmail: newEmail });
+        });
+        await batch.commit();
+      }
+    } catch (e) {
+      console.warn("[MIGRATE_ALUMNI_EMAIL] Yazı e-posta kaskad hatası:", e);
+    }
+
+    revalidatePath('/profile');
+    revalidatePath('/members');
+    return { success: true, newEmail };
+  } catch (error) {
+    return handleServerError(error, "MIGRATE_ALUMNI_EMAIL");
+  }
+}
+
+/**
+ * Yöneticilerin yanlış yazılan e-postaları doğrudan düzeltmesini sağlayan aksiyon
+ */
+export async function adminUpdateUserEmail(formData: FormData) {
+  try {
+    const userId = formData.get('userId') as string;
+    const newEmail = (formData.get('newEmail') as string)?.toLowerCase()?.trim();
+
+    if (!userId || !newEmail) return { error: "Kullanıcı ID ve yeni e-posta gereklidir." };
+
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(newEmail)) return { error: "Geçersiz e-posta formatı." };
+
+    const { session } = await requireAuth(['SUPERADMIN', 'ADMIN']);
+
+    const userDoc = await adminDb.collection('users').doc(userId).get();
+    if (!userDoc.exists) return { error: "Kullanıcı bulunamadı." };
+
+    const targetUser = userDoc.data()!;
+    const oldEmail = (targetUser.email || '').toLowerCase();
+
+    if (oldEmail !== newEmail) {
+      const existing = await adminDb.collection('users').where('email', '==', newEmail).limit(1).get();
+      if (!existing.empty && existing.docs[0].id !== userId) {
+        return { error: "Bu e-posta adresi başka bir kullanıcıya ait." };
+      }
+    }
+
+    await adminDb.collection('users').doc(userId).update({
+      email: newEmail,
+      email_updated_by: session?.user?.email || 'admin',
+      email_updated_at: new Date().toISOString(),
+      updatedAt: new Date().toISOString()
+    });
+
+    // Yazıları kaskad güncelle
+    if (oldEmail && oldEmail !== newEmail) {
+      try {
+        const postsSnap = await adminDb.collection('posts').where('authorEmail', '==', oldEmail).get();
+        if (!postsSnap.empty) {
+          const batch = adminDb.batch();
+          postsSnap.docs.forEach(doc => {
+            batch.update(doc.ref, { authorEmail: newEmail });
+          });
+          await batch.commit();
+        }
+      } catch {}
+    }
+
+    revalidatePath('/tanerabi/dashboard');
+    return { success: true };
+  } catch (error) {
+    return handleServerError(error, "ADMIN_UPDATE_USER_EMAIL");
+  }
+}

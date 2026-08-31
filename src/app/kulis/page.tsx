@@ -4,6 +4,10 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { BreadcrumbsJsonLd } from '@/components/JsonLd';
 import { formatAuthorSignature } from '@/lib/utils';
+import { getServerSession } from "next-auth";
+import { authOptions } from "@/lib/auth";
+import { isEditor, isActiveMember } from "@/lib/auth-helpers";
+import { approvePost, rejectPost } from "@/app/actions";
 
 export const dynamic = "force-dynamic";
 
@@ -12,33 +16,13 @@ export const metadata: Metadata = {
   description: 'FSM Tiyatro kulis günlükleri, prova notları, oyun incelemeleri ve tiyatro yazıları.',
 };
 
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/auth";
-
 export default async function KulisPage() {
   let posts: any[] = [];
 
   const session = await getServerSession(authOptions);
-  let canWritePost = false;
-  if (session?.user) {
-    const userRole = (session.user as any).role;
-    const userTitles: string[] = (session.user as any).titles || [];
-    if (['EDITOR', 'ADMIN', 'SUPERADMIN', 'DIRECTOR'].includes(userRole) || userTitles.some((t: string) => t.includes('Editör') || t.includes('Yazar') || t.includes('Yönetmen') || t.includes('Admin'))) {
-      canWritePost = true;
-    } else if (session.user.email) {
-      try {
-        const uSnap = await adminDb.collection('users').where('email', '==', session.user.email.toLowerCase()).limit(1).get();
-        if (!uSnap.empty) {
-          const uData = uSnap.docs[0].data();
-          const dbRole = uData.role;
-          const dbTitles: string[] = uData.titles || [];
-          if (['EDITOR', 'ADMIN', 'SUPERADMIN', 'DIRECTOR'].includes(dbRole) || dbTitles.some((t: string) => t.includes('Editör') || t.includes('Yazar') || t.includes('Yönetmen') || t.includes('Admin'))) {
-            canWritePost = true;
-          }
-        }
-      } catch {}
-    }
-  }
+  const user = session?.user as any;
+  const userIsEditor = isEditor(user);
+  const canWritePost = isActiveMember(user);
 
   try {
     const snap = await adminDb.collection('posts').orderBy('createdAt', 'desc').get();
@@ -46,6 +30,9 @@ export default async function KulisPage() {
   } catch (error) {
     console.error("[KULIS] Veri çekme hatası:", error);
   }
+
+  const publishedPosts = posts.filter(p => p.status === 'PUBLISHED' || !p.status);
+  const pendingPosts = userIsEditor ? posts.filter(p => p.status === 'PENDING_REVIEW') : [];
 
   const baseUrl = process.env.NEXTAUTH_URL || 'https://fsmtiyatro.com';
 
@@ -69,7 +56,7 @@ export default async function KulisPage() {
         </div>
 
         {canWritePost && (
-          <div>
+          <div className="flex flex-col items-end gap-1">
             <Link 
               href="/kulis/yeni"
               className="btn btn-primary py-3 px-6 text-xs font-bold uppercase tracking-wider flex items-center gap-2 shadow-lg hover:scale-105 transition-all flex-shrink-0"
@@ -77,14 +64,67 @@ export default async function KulisPage() {
               <ion-icon name="create-outline" style={{ fontSize: '1.2rem' }}></ion-icon>
               <span>+ Yeni Yazı Ekle</span>
             </Link>
+            {!userIsEditor && (
+              <span className="text-[10px] text-[var(--text-dim)]">
+                ✍️ Gönderdiğiniz yazılar editör onayından sonra yayına alınır.
+              </span>
+            )}
           </div>
         )}
       </div>
 
+      {/* Editör İnceleme Masası (Yalnızca Editör ve Yöneticilere Açık) */}
+      {userIsEditor && pendingPosts.length > 0 && (
+        <div className="max-w-[1380px] mx-auto px-[5%] mb-12">
+          <div className="p-6 rounded-xl bg-amber-950/20 border border-amber-500/40 shadow-xl">
+            <div className="flex items-center justify-between mb-4 flex-wrap gap-2">
+              <h2 className="serif-font text-lg sm:text-xl text-amber-400 flex items-center gap-2 font-bold">
+                <ion-icon name="clipboard-outline"></ion-icon>
+                Editör Masası: Onay Bekleyen Kulüp Yazıları ({pendingPosts.length})
+              </h2>
+              <span className="text-xs text-amber-300/70 font-medium">
+                Bu yazılar henüz yayında değildir, sadece editörler görebilir.
+              </span>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {pendingPosts.map(post => (
+                <div key={post.id} className="p-4 rounded-lg bg-[var(--bg-surface)] border border-amber-500/30 flex flex-col justify-between">
+                  <div>
+                    <div className="flex items-center justify-between text-xs mb-2">
+                      <span className="text-amber-400 font-bold uppercase text-[10px]">{post.category || 'Blog'}</span>
+                      <span className="text-[var(--text-dim)]">{post.createdAt ? new Date(post.createdAt).toLocaleDateString('tr-TR') : ''}</span>
+                    </div>
+                    <h3 className="serif-font font-bold text-sm text-[var(--text-main)] mb-1">{post.title}</h3>
+                    <p className="text-xs text-[var(--text-muted)] line-clamp-2 mb-2">{post.excerpt || post.content}</p>
+                    <span className="text-[11px] text-[var(--text-dim)] block">Yazar: <strong>{post.author || post.authorEmail}</strong></span>
+                  </div>
+
+                  <div className="flex gap-2 mt-4 pt-3 border-t border-[var(--border-subtle)]">
+                    <form action={approvePost as any} className="flex-1">
+                      <input type="hidden" name="postId" value={post.id} />
+                      <button type="submit" className="w-full py-1.5 px-3 rounded bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs transition-colors flex items-center justify-center gap-1">
+                        ✓ Yayına Al
+                      </button>
+                    </form>
+                    <form action={rejectPost as any} className="flex-1">
+                      <input type="hidden" name="postId" value={post.id} />
+                      <button type="submit" className="w-full py-1.5 px-3 rounded bg-red-900/40 hover:bg-red-800/60 text-red-300 border border-red-500/30 font-bold text-xs transition-colors flex items-center justify-center gap-1">
+                        ✕ Reddet
+                      </button>
+                    </form>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
+
       <div className="max-w-[1380px] mx-auto px-[5%]">
-        {posts.length > 0 ? (
+        {publishedPosts.length > 0 ? (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 md:gap-8">
-            {posts.map((post) => (
+            {publishedPosts.map((post) => (
               <article key={post.id} className="editorial-card p-5 sm:p-6 bg-[var(--bg-surface)] flex flex-col justify-between group">
                 <div>
                   {post.imageUrl && (

@@ -3,7 +3,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { redirect, notFound } from "next/navigation";
 import Link from 'next/link';
-import { deleteUserRecord } from '@/app/actions';
+import { deleteUserRecord, adminUpdateUserEmail } from '@/app/actions';
 import UserPlaysManager from '@/components/UserPlaysManager';
 
 export const dynamic = "force-dynamic";
@@ -125,6 +125,33 @@ export default async function AdminUserProfile({ params }: { params: Promise<{ i
               </p>
             </div>
           </div>
+
+          {(currentUserRole === 'SUPERADMIN' || currentUserRole === 'ADMIN') && (
+            <div style={{ marginTop: '2rem', padding: '1.5rem', background: 'rgba(234, 179, 8, 0.08)', borderRadius: '12px', border: '1px solid rgba(234, 179, 8, 0.25)' }}>
+              <h4 style={{ color: 'var(--primary-gold)', fontSize: '0.95rem', margin: '0 0 0.35rem 0', fontWeight: 'bold', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                <ion-icon name="mail-outline" /> E-Posta Adresini Düzelt (Admin Müdahalesi)
+              </h4>
+              <p style={{ color: 'var(--text-dim)', fontSize: '0.75rem', margin: '0 0 1rem 0' }}>
+                Kullanıcı kaydolurken yazım hatası yaptıysa veya e-postasının güncellenmesi gerekiyorsa buradan doğrudan düzeltebilirsiniz.
+              </p>
+              <form action={adminUpdateUserEmail as any} style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
+                <input type="hidden" name="userId" value={userRecord.id} />
+                <input 
+                  type="email" 
+                  name="newEmail" 
+                  defaultValue={userRecord.email} 
+                  required 
+                  style={{ flex: '1', minWidth: '240px', padding: '0.5rem 0.75rem', borderRadius: '6px', background: 'var(--bg-dark)', border: '1px solid var(--border-medium)', color: 'var(--text-main)', fontSize: '0.85rem' }} 
+                />
+                <button 
+                  type="submit" 
+                  style={{ padding: '0.5rem 1.25rem', background: 'var(--primary-gold)', color: '#000', fontWeight: 'bold', borderRadius: '6px', border: 'none', cursor: 'pointer', fontSize: '0.8rem' }}
+                >
+                  E-Postayı Güncelle
+                </button>
+              </form>
+            </div>
+          )}
 
           {(currentUserRole === 'SUPERADMIN' || currentUserRole === 'ADMIN') && (
             <div style={{ marginTop: '3rem', paddingTop: '2rem', borderTop: '1px dashed rgba(239,68,68,0.25)', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>

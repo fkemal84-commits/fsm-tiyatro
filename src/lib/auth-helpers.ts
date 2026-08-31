@@ -140,3 +140,35 @@ export function isExternalMember(user?: Partial<User> | null): boolean {
   const normalized = normalizeUser(user);
   return normalized.student_status === 'EXTERNAL' && normalized.membership_status === 'ACTIVE';
 }
+
+export function isEditor(user?: Partial<User> | null): boolean {
+  if (!user) return false;
+  const role = user.role;
+  const titles = Array.isArray(user.titles) ? user.titles : [];
+  return (
+    role === 'EDITOR' ||
+    role === 'DIRECTOR' ||
+    isAdmin(user) ||
+    titles.some(t => t.includes('Editör') || t.includes('Yazar') || t.includes('Yönetmen'))
+  );
+}
+
+import { UserSegment } from '@/types/domain';
+
+export function getUserSegment(user?: Partial<User> | null): UserSegment {
+  if (!user) return 'PUBLIC';
+  const normalized = normalizeUser(user);
+  if (normalized.membership_status === 'NONE' || normalized.membership_status === 'PENDING') {
+    return 'PUBLIC';
+  }
+  if (isAdmin(user)) {
+    return 'ADMIN';
+  }
+  if (normalized.student_status === 'FSMVU_ACTIVE') {
+    return 'STUDENT';
+  }
+  if (normalized.student_status === 'FSMVU_ALUMNI') {
+    return 'ALUMNI';
+  }
+  return 'EXTERNAL';
+}

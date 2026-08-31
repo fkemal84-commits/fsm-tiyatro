@@ -56,6 +56,14 @@ export async function completePasswordReset(formData: FormData) {
   return authActions.completePasswordReset(formData);
 }
 
+export async function migrateAlumniEmail(formData: FormData) {
+  return authActions.migrateAlumniEmail(formData);
+}
+
+export async function adminUpdateUserEmail(formData: FormData) {
+  return authActions.adminUpdateUserEmail(formData);
+}
+
 // 2. İçerik, Oyun, Blog & Akademik Eylemler
 export async function addPost(formData: FormData) {
   return contentActions.addPost(formData);
@@ -63,6 +71,14 @@ export async function addPost(formData: FormData) {
 
 export async function updatePost(formData: FormData) {
   return contentActions.updatePost(formData);
+}
+
+export async function approvePost(formData: FormData) {
+  return contentActions.approvePost(formData);
+}
+
+export async function rejectPost(formData: FormData) {
+  return contentActions.rejectPost(formData);
 }
 
 export async function deletePost(formData: FormData) {

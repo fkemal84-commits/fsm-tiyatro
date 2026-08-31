@@ -42,6 +42,7 @@ export default async function Home() {
 
     posts = ((postsSnapshot as any).docs || [])
       .map((doc: any) => ({ id: doc.id, ...doc.data() }))
+      .filter((p: any) => p.status === 'PUBLISHED' || !p.status)
       .sort((a: any, b: any) => new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime());
 
     events = ((eventsSnapshot as any).docs || [])
