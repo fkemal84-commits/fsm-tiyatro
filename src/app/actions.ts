@@ -302,3 +302,7 @@ export async function sendAppNotification(payload: any) {
   return notificationActions.sendAppNotification(payload);
 }
 
+export async function savePushSubscription(token: string, platform?: any) {
+  return notificationActions.savePushSubscription(token, platform);
+}
+

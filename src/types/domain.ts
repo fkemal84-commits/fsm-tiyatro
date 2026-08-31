@@ -225,11 +225,12 @@ export interface AppNotification {
 }
 
 export interface PushSubscriptionRecord {
-  id: string;
+  id?: string;
   userId: string;
-  userEmail: string;
-  token?: string;
+  userEmail?: string;
+  token: string;
   subscription?: any;
+  platform?: 'ios' | 'android' | 'web' | string;
   deviceType?: string;
   createdAt: string;
   updatedAt?: string;

@@ -14,7 +14,7 @@ import {
   generateQRToken,
   verifyQRTokenSignature
 } from '../src/lib/qr-helpers';
-import { EventItem, AttendanceSession, AttendanceRecord, Play } from '../src/types/domain';
+import { EventItem, AttendanceSession, AttendanceRecord, Play, AppNotification } from '../src/types/domain';
 
 console.log('🧪 [FAZ 1.6A KAPSAMLI TEST SENARYOLARI BAŞLATILIYOR]\n');
 

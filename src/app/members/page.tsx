@@ -100,9 +100,11 @@ export default async function MembersDashboard() {
   const activePlays = allPlays.filter(p => p.status === 'ACTIVE' || p.status === 'UPCOMING');
 
   const userAssignedPlays = activePlays.filter(p => {
+    const isAssigned = (session?.user as any)?.assignedPlays?.includes(p.id);
+    if (isAssigned) return true;
     const inCast = Array.isArray(p.cast) && p.cast.some((c: any) => 
-      (c.actorName && cleanName && c.actorName.toLowerCase().includes(cleanName.toLowerCase())) ||
-      (userEmail && c.userEmail === userEmail)
+      (userEmail && (c.email?.toLowerCase() === userEmail.toLowerCase() || c.userEmail?.toLowerCase() === userEmail.toLowerCase())) ||
+      (c.actorName && cleanName && c.actorName.toLowerCase().includes(cleanName.toLowerCase()))
     );
     const inCrew = Array.isArray(p.crew) && p.crew.some((cr: any) => 
       (cr.memberName && cleanName && cr.memberName.toLowerCase().includes(cleanName.toLowerCase()))

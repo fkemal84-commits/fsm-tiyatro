@@ -10,22 +10,32 @@ service cloud.firestore {
     match /settings/{doc} { allow read: if true; }
     
     // 2. YOKLAMA VE ETKİNLİK SİSTEMİ (Tek Kaynak)
-    match /attendance_sessions/{doc} { allow read: if request.auth != null; }
-    match /attendance_records/{doc} { allow read: if request.auth != null; }
+    match /attendance_sessions/{doc} { 
+      allow read: if request.auth != null; 
+      allow write: if false; // Yalnızca Server Actions (Admin SDK)
+    }
+    match /attendance_records/{doc} { 
+      allow read: if request.auth != null; 
+      allow write: if false; // Yalnızca Server Actions (Admin SDK)
+    }
     
     // 3. BİLDİRİMLER VE KULLANICI VERİLERİ
     match /users/{userId} {
       allow read: if request.auth != null; 
+      allow write: if false; // Yalnızca Server Actions (Admin SDK)
     }
     match /notifications/{notifId} {
-      allow read: if request.auth != null;
+      allow read: if request.auth != null && resource.data.userId == request.auth.uid;
+      allow write: if false; // Yalnızca Server Actions (Admin SDK)
     }
     match /push_subscriptions/{subId} {
-      allow read, write: if request.auth != null;
+      allow read: if request.auth != null && resource.data.userId == request.auth.uid;
+      allow write: if request.auth != null && request.resource.data.userId == request.auth.uid;
     }
     
     match /eventRequests/{reqId} {
       allow read: if request.auth != null;
+      allow write: if false;
     }
 
     // 4. GÜVENLİK BARİYERİ (Tüm kritik yazma işlemleri Firebase Admin SDK / Server Actions üzerinden yapılır)

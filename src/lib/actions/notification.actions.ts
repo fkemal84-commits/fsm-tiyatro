@@ -3,7 +3,8 @@
 import { adminDb, adminMessaging } from '@/lib/firebase-admin';
 import { revalidatePath } from 'next/cache';
 import { requireAuth, handleServerError } from './common';
-import { AppNotification, NotificationType } from '@/types/domain';
+import { AppNotification, NotificationType, PushSubscriptionRecord } from '@/types/domain';
+import crypto from 'crypto';
 
 export interface SendNotificationPayload {
   targetUserIds: string[];
@@ -17,7 +18,34 @@ export interface SendNotificationPayload {
 }
 
 /**
- * Tekil ve merkezi bildirim gönderim servisi (In-App + Multicast Push)
+ * Cihaz Push Token'ını tekil canonical `push_subscriptions` koleksiyonuna kaydeder.
+ */
+export async function savePushSubscription(token: string, platform?: 'ios' | 'android' | 'web') {
+  try {
+    const { uid } = await requireAuth();
+    if (!token) return { error: "Belirteç (token) zorunludur." };
+
+    const tokenHash = crypto.createHash('sha256').update(token).digest('hex').slice(0, 32);
+    const subRef = adminDb.collection('push_subscriptions').doc(tokenHash);
+
+    const now = new Date().toISOString();
+    const subscriptionData: PushSubscriptionRecord = {
+      userId: uid,
+      token,
+      platform: platform || 'web',
+      createdAt: now,
+      updatedAt: now
+    };
+
+    await subRef.set(subscriptionData, { merge: true });
+    return { success: true };
+  } catch (error) {
+    return handleServerError(error, "SAVE_PUSH_SUBSCRIPTION");
+  }
+}
+
+/**
+ * Tekil ve merkezi bildirim gönderim servisi (In-App + Push Subscriptions üzerinden Multicast Push)
  */
 export async function sendAppNotification(payload: SendNotificationPayload): Promise<{ success: boolean; sentCount: number }> {
   try {
@@ -49,18 +77,16 @@ export async function sendAppNotification(payload: SendNotificationPayload): Pro
 
     await batch.commit();
 
-    // Push Bildirimi Gönder (FCM / WebPush)
+    // Push Bildirimi Gönder (Canonical push_subscriptions koleksiyonundan oku)
     if (sendPush && adminMessaging && uniqueUserIds.length > 0) {
       try {
-        const tokensSnap = await adminDb.collection('users')
-          .where('__name__', 'in', uniqueUserIds.slice(0, 10))
+        const subsSnap = await adminDb.collection('push_subscriptions')
+          .where('userId', 'in', uniqueUserIds.slice(0, 10))
           .get();
 
-        const fcmTokens: string[] = [];
-        tokensSnap.docs.forEach(d => {
-          const uTokens = d.data().fcmTokens || [];
-          fcmTokens.push(...uTokens);
-        });
+        const fcmTokens: string[] = subsSnap.docs
+          .map(d => d.data().token)
+          .filter(Boolean);
 
         const uniqueTokens = Array.from(new Set(fcmTokens));
         if (uniqueTokens.length > 0) {

@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import { getToken, onMessage } from 'firebase/messaging';
 import { messaging } from '@/lib/firebase';
-import { saveFCMToken } from '@/app/actions';
+import { savePushSubscription } from '@/app/actions';
 
 import { useSession } from 'next-auth/react';
 
@@ -63,7 +63,7 @@ export default function PushNotificationManager({ session: initialSession }: { s
       
       if (token) {
         setRegStatus('saving');
-        await saveFCMToken(token);
+        await savePushSubscription(token, isIOS ? 'ios' : 'web');
         setRegStatus('done');
       } else {
         setRegStatus('no_token');

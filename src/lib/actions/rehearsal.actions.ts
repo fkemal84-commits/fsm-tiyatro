@@ -245,27 +245,14 @@ export async function getEventReservations(eventId: string) {
   }
 }
 
+import { savePushSubscription } from './notification.actions';
+
 // ============================================================================
-// BİLDİRİM VE CİHAZ EŞLEŞTİRME İŞLEMLERİ
+// BİLDİRİM VE CİHAZ EŞLEŞTİRME İŞLEMLERİ (push_subscriptions canonical storage)
 // ============================================================================
 
 export async function saveFCMToken(token: string) {
-  try {
-    const { uid } = await requireAuth();
-    const userRef = adminDb.collection('users').doc(uid);
-    const userSnap = await userRef.get();
-
-    if (userSnap.exists) {
-      const currentTokens: string[] = userSnap.data()?.fcmTokens || [];
-      if (!currentTokens.includes(token)) {
-        currentTokens.push(token);
-        await userRef.update({ fcmTokens: currentTokens });
-      }
-    }
-    return { success: true };
-  } catch (error) {
-    return handleServerError(error, "SAVE_FCM_TOKEN");
-  }
+  return savePushSubscription(token);
 }
 
 export async function nudgePlayers(targetUserIds?: string[]) {
@@ -274,15 +261,19 @@ export async function nudgePlayers(targetUserIds?: string[]) {
     let usersQuery = adminDb.collection('users').where('role', 'in', ['AKTOR', 'PLAYER']);
     const snapshot = await usersQuery.get();
 
-    const tokens: string[] = [];
-    snapshot.forEach(doc => {
-      if (!targetUserIds || targetUserIds.includes(doc.id)) {
-        const userTokens: string[] = doc.data().fcmTokens || [];
-        tokens.push(...userTokens);
-      }
-    });
+    const targetUids = snapshot.docs
+      .map(doc => doc.id)
+      .filter(id => !targetUserIds || targetUserIds.includes(id));
 
-    const uniqueTokens = Array.from(new Set(tokens));
+    if (targetUids.length === 0) {
+      return { success: false, message: "Kayıtlı aktif oyuncu bulunamadı." };
+    }
+
+    const subsSnap = await adminDb.collection('push_subscriptions')
+      .where('userId', 'in', targetUids.slice(0, 10))
+      .get();
+
+    const uniqueTokens = Array.from(new Set(subsSnap.docs.map(d => d.data().token).filter(Boolean)));
     if (uniqueTokens.length === 0) {
       return { success: false, message: "Kayıtlı aktif bildirim cihazı bulunamadı." };
     }
@@ -290,7 +281,7 @@ export async function nudgePlayers(targetUserIds?: string[]) {
     const payload = {
       notification: {
         title: "FSM Tiyatro Bildirimi",
-        body: "Yeni bir prova duyurusu veya yoklama başlatıldı. Lütfen panonuzu kontrol edin."
+        body: "Yeni bir prova duyurusu veya etkinlik planlandı. Lütfen panonuzu kontrol edin."
       },
       tokens: uniqueTokens
     };
@@ -305,8 +296,11 @@ export async function nudgePlayers(targetUserIds?: string[]) {
 export async function testPushToSelf() {
   try {
     const { uid } = await requireAuth(['SUPERADMIN', 'ADMIN']);
-    const userDoc = await adminDb.collection('users').doc(uid).get();
-    const tokens: string[] = userDoc.data()?.fcmTokens || [];
+    const subsSnap = await adminDb.collection('push_subscriptions')
+      .where('userId', '==', uid)
+      .get();
+
+    const tokens = Array.from(new Set(subsSnap.docs.map(d => d.data().token).filter(Boolean)));
 
     if (tokens.length === 0) return { error: "Cihazınızda kayıtlı bildirim belirteci yok." };
 
@@ -315,7 +309,7 @@ export async function testPushToSelf() {
         title: "FSM Tiyatro Test Bildirimi",
         body: "Bildirim sistemi başarıyla çalışıyor."
       },
-      tokens: tokens
+      tokens
     };
 
     const response = await adminMessaging.sendEachForMulticast(payload);
