@@ -84,11 +84,11 @@ export async function sendAppNotification(payload: SendNotificationPayload): Pro
           .where('userId', 'in', uniqueUserIds.slice(0, 10))
           .get();
 
-        const fcmTokens: string[] = subsSnap.docs
+        const deviceTokens: string[] = subsSnap.docs
           .map(d => d.data().token)
           .filter(Boolean);
 
-        const uniqueTokens = Array.from(new Set(fcmTokens));
+        const uniqueTokens = Array.from(new Set(deviceTokens));
         if (uniqueTokens.length > 0) {
           await adminMessaging.sendEachForMulticast({
             notification: { title, body },
