@@ -14,8 +14,10 @@ export type UserRole =
 
 export interface CastMember {
   roleName: string;
-  actorName: string;
+  actorName?: string;
+  name?: string;
   userId?: string;
+  actorId?: string;
   photoUrl?: string;
 }
 
@@ -40,6 +42,7 @@ export interface Play {
   playwright?: string;
   translator?: string;
   director?: string;
+  directorId?: string;
   assistantDirector?: string;
   season?: string;
   genre?: string;
@@ -110,11 +113,26 @@ export interface Comment {
   createdAt: string;
 }
 
+export type EventType =
+  | 'PROVA'
+  | 'TEMSIL'
+  | 'WORKSHOP'
+  | 'TOPLANTI'
+  | 'OKUMA'
+  | 'Atölye'
+  | 'Söyleşi'
+  | 'Film Gösterimi'
+  | 'Festival'
+  | 'Okuma Tiyatrosu'
+  | 'Genel Etkinlik'
+  | 'Etkinlik'
+  | string;
+
 export interface EventItem {
   id: string;
   title: string;
-  type?: 'Atölye' | 'Söyleşi' | 'Film Gösterimi' | 'Festival' | 'Okuma Tiyatrosu' | 'Genel Etkinlik';
-  instructor?: string;
+  type?: EventType;
+  instructor?: string | null;
   date: string;
   time?: string;
   location: string;
@@ -122,7 +140,91 @@ export interface EventItem {
   coverImageUrl?: string;
   capacity?: number;
   registrationOpen?: boolean;
+  playId?: string | null;
+  playTitle?: string | null;
+  directorId?: string | null;
+  participants?: string[];
+  isTicketed?: boolean;
+  ticketQuota?: number;
+  reservedCount?: number;
+  notes?: string;
   createdAt: string;
+  updatedAt?: string;
+}
+
+export type AttendanceSessionStatus = 'OPEN' | 'CLOSED';
+
+export interface AttendanceSession {
+  id: string;
+  eventId: string;
+  eventTitle: string;
+  playId?: string | null;
+  status: AttendanceSessionStatus;
+  openedBy: string;
+  openedByEmail?: string;
+  openedByName?: string;
+  openedAt: string;
+  closedAt?: string | null;
+  expiresAt: number;
+  qrSecret: string;
+  lastNudgeAt?: string | null;
+  createdAt: string;
+  updatedAt?: string;
+}
+
+export type AttendanceRecordStatus = 'ATTENDED' | 'EXCUSED' | 'NOT_ATTENDED';
+export type VerificationMethod = 'QR' | 'MANUAL';
+
+export interface AttendanceRecord {
+  id: string;
+  eventId: string;
+  eventTitle: string;
+  sessionId: string;
+  userId: string;
+  userName: string;
+  userEmail: string;
+  status: AttendanceRecordStatus;
+  verifiedAt: string;
+  verificationMethod: VerificationMethod;
+  excuseNote?: string | null;
+  modifiedBy?: string | null;
+  modifiedAt?: string | null;
+  previousStatus?: string | null;
+  createdAt: string;
+  updatedAt?: string;
+}
+
+export type NotificationType =
+  | 'ATTENDANCE_STARTED'
+  | 'ATTENDANCE_NUDGE'
+  | 'EVENT_REMINDER'
+  | 'POST_REVIEW'
+  | 'TEAM_APPLICATION'
+  | 'GENERAL';
+
+export interface AppNotification {
+  id: string;
+  userId: string;
+  userEmail?: string;
+  type: NotificationType;
+  title: string;
+  body: string;
+  link?: string;
+  eventId?: string | null;
+  sessionId?: string | null;
+  isRead: boolean;
+  createdAt: string;
+}
+
+export interface PushSubscriptionRecord {
+  id: string;
+  userId: string;
+  userEmail: string;
+  token?: string;
+  subscription?: any;
+  deviceType?: string;
+  createdAt: string;
+  updatedAt?: string;
 }
 
 export type MembershipStatus = 'NONE' | 'PENDING' | 'ACTIVE' | 'ALUMNI';

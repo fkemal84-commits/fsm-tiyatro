@@ -9,6 +9,7 @@ import { redirect } from "next/navigation";
 import { Metadata } from "next";
 import Link from "next/link";
 import RehearsalCalendar from "@/components/RehearsalCalendar";
+import { canManageEvent, isEventParticipant } from "@/lib/auth-helpers";
 
 export const metadata: Metadata = {
   title: "Özel Prova Takvimi",
@@ -31,24 +32,36 @@ export default async function RehearsalsPage(props: { searchParams: Promise<{ vi
   }
 
   const canManage = ['SUPERADMIN', 'ADMIN', 'DIRECTOR', 'ASST_DIRECTOR'].includes(role) && (session?.user as any)?.isAdminMode;
+  const user = session?.user as any;
+  const userIsAdmin = role === 'SUPERADMIN' || role === 'ADMIN';
+
+  const playsSnap = await adminDb.collection('plays').get();
+  const allPlays = playsSnap.docs.map(doc => ({ id: doc.id, ...doc.data() as any }));
 
   const rehearsalsSnapshot = await adminDb.collection('rehearsals').get();
   const allRehearsals = rehearsalsSnapshot.docs
     .map(doc => ({ id: doc.id, ...doc.data() as any }))
     .sort((a, b) => new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime());
 
+  // Kullanıcı yalnızca kendi oyunu/katılımcısı olduğu provaları görür
+  const userRehearsals = allRehearsals.filter(r => {
+    if (userIsAdmin) return true;
+    const play = r.playId ? allPlays.find(p => p.id === r.playId) : null;
+    return canManageEvent(user, r) || isEventParticipant(user, r, play);
+  });
+
   const todayStr = new Date().toLocaleDateString('en-CA', { timeZone: 'Europe/Istanbul' });
 
-  const activeRehearsals = allRehearsals.filter(r => r.pulseActive === true);
+  const activeRehearsals = userRehearsals.filter(r => r.pulseActive === true);
   
-  const upcomingRehearsals = allRehearsals.filter(r => {
+  const upcomingRehearsals = userRehearsals.filter(r => {
     if (r.pulseActive) return false;
     if (!r.date) return false;
     const rDate = r.date.split(' - ')[0];
     return rDate >= todayStr;
   });
 
-  const pastRehearsals = allRehearsals.filter(r => {
+  const pastRehearsals = userRehearsals.filter(r => {
     if (r.pulseActive) return false;
     if (!r.date) return false;
     const rDate = r.date.split(' - ')[0];

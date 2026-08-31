@@ -8,6 +8,9 @@
 import * as authActions from '@/lib/actions/auth.actions';
 import * as contentActions from '@/lib/actions/content.actions';
 import * as rehearsalActions from '@/lib/actions/rehearsal.actions';
+import * as eventActions from '@/lib/actions/event.actions';
+import * as attendanceActions from '@/lib/actions/attendance.actions';
+import * as notificationActions from '@/lib/actions/notification.actions';
 import * as ticketActions from '@/lib/actions/ticket.actions';
 import * as adminActions from '@/lib/actions/admin.actions';
 
@@ -266,5 +269,56 @@ export async function removeAvailableTitle(title: string) {
 
 export async function getAvailableTitles() {
   return adminActions.getAvailableTitles();
+}
+
+// 5. Birleşik Etkinlik, Prova & Takvim Eylemleri (Faz 1.6A)
+export async function createEvent(formData: FormData) {
+  return eventActions.createEvent(formData);
+}
+
+export async function deleteUnifiedEvent(formData: FormData) {
+  return eventActions.deleteUnifiedEvent(formData);
+}
+
+export async function getUserRelatedEvents(userId: string, userEmail: string) {
+  return eventActions.getUserRelatedEvents(userId, userEmail);
+}
+
+export async function migrateLegacyRehearsalsToEvents() {
+  return eventActions.migrateLegacyRehearsalsToEvents();
+}
+
+// 6. QR Doğrulamalı Yoklama & Dürtme Eylemleri (Faz 1.6A)
+export async function openAttendanceSession(eventId: string, durationMinutes?: number) {
+  return attendanceActions.openAttendanceSession(eventId, durationMinutes);
+}
+
+export async function closeAttendanceSession(sessionId: string) {
+  return attendanceActions.closeAttendanceSession(sessionId);
+}
+
+export async function verifyAttendanceViaQR(token: string) {
+  return attendanceActions.verifyAttendanceViaQR(token);
+}
+
+export async function recordManualAttendance(sessionId: string, targetUserId: string, status: any, excuseNote?: string) {
+  return attendanceActions.recordManualAttendance(sessionId, targetUserId, status, excuseNote);
+}
+
+export async function nudgeUnansweredParticipants(sessionId: string) {
+  return attendanceActions.nudgeUnansweredParticipants(sessionId);
+}
+
+// 7. Bildirim Eylemleri (Faz 1.6A)
+export async function getUserNotifications(limitCount?: number) {
+  return notificationActions.getUserNotifications(limitCount);
+}
+
+export async function markNotificationAsRead(notificationId: string) {
+  return notificationActions.markNotificationAsRead(notificationId);
+}
+
+export async function markAllNotificationsAsRead() {
+  return notificationActions.markAllNotificationsAsRead();
 }
 

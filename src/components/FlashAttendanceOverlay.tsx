@@ -4,24 +4,22 @@ import { useState, useEffect } from 'react';
 import { db } from '@/lib/firebase';
 import { collection, query, where, onSnapshot } from 'firebase/firestore';
 import { useSession } from 'next-auth/react';
-import { respondToPulse } from '@/app/actions';
+import Link from 'next/link';
 
 export default function FlashAttendanceOverlay() {
   const { data: session } = useSession();
-  const [activeRehearsal, setActiveRehearsal] = useState<any>(null);
+  const [activeSession, setActiveSession] = useState<any>(null);
   const [timeLeft, setTimeLeft] = useState(0);
-  const [responded, setResponded] = useState(false);
-  const [loading, setLoading] = useState(false);
 
   useEffect(() => {
     if (!session?.user) return;
 
-    const userRole = (session.user as any).role;
     const userId = (session.user as any).id;
+    const userRole = (session.user as any).role;
 
     const q = query(
-      collection(db, "rehearsals"),
-      where("pulseActive", "==", true)
+      collection(db, "attendance_sessions"),
+      where("status", "==", "OPEN")
     );
 
     const unsubscribe = onSnapshot(q, (snapshot) => {
@@ -31,47 +29,39 @@ export default function FlashAttendanceOverlay() {
         for (const doc of snapshot.docs) {
           const docData = doc.data();
           const id = doc.id;
-          const expiresAt = docData.pulseExpiresAt;
-          const responses = docData.pulseResponses || [];
-          
-          const hasResponded = responses.includes(userId);
+          const expiresAt = docData.expiresAt;
           const now = Date.now();
           const remaining = Math.max(0, Math.floor((expiresAt - now) / 1000));
 
-          if (remaining > 0 && !hasResponded) {
-            // BAŞLATAN KİŞİ VE REJİ (Admin/Director) GÖRMESİN
-            const isStarter = userId === docData.pulseStartedBy;
-            const isActor = ['AKTOR', 'PLAYER'].includes(userRole);
-            const isManager = ['ADMIN', 'SUPERADMIN', 'DIRECTOR', 'ASST_DIRECTOR'].includes(userRole);
-
-            if (isActor && !isStarter && !isManager) {
-              setActiveRehearsal({ id, ...docData });
+          if (remaining > 0) {
+            // Başlatan kişi kendisi görmesin
+            if (userId !== docData.openedBy) {
+              setActiveSession({ id, ...docData });
               setTimeLeft(remaining);
-              setResponded(false);
               foundValid = true;
-              break; 
+              break;
             }
           }
         }
 
-        if (!foundValid) setActiveRehearsal(null);
+        if (!foundValid) setActiveSession(null);
       } else {
-        setActiveRehearsal(null);
+        setActiveSession(null);
       }
     }, (error) => {
-      console.error("[FLASH] Connection error:", error);
+      console.warn("[ATTENDANCE_OVERLAY] Bağlantı:", error);
     });
 
     return () => unsubscribe();
   }, [session]);
 
-  // Sayaç işlemi
+  // Sayaç
   useEffect(() => {
-    if (activeRehearsal && timeLeft > 0) {
+    if (activeSession && timeLeft > 0) {
       const timer = setInterval(() => {
         setTimeLeft(prev => {
           if (prev <= 1) {
-            setActiveRehearsal(null);
+            setActiveSession(null);
             return 0;
           }
           return prev - 1;
@@ -79,66 +69,50 @@ export default function FlashAttendanceOverlay() {
       }, 1000);
       return () => clearInterval(timer);
     }
-  }, [activeRehearsal, timeLeft]);
+  }, [activeSession, timeLeft]);
 
-  const handleImHere = async () => {
-    if (!activeRehearsal) return;
-    setLoading(true);
-    try {
-      if ('vibrate' in navigator) {
-        navigator.vibrate(200);
-      }
-      await respondToPulse(activeRehearsal.id);
-      setResponded(true);
-      setTimeout(() => setActiveRehearsal(null), 1500);
-    } catch (err: any) {
-      console.error(err);
-    } finally {
-      setLoading(false);
-    }
-  };
+  if (!activeSession) return null;
 
   return (
-    <>
-      {activeRehearsal && (
-        <div className="fixed inset-0 z-[9999] flex items-center justify-center p-6 bg-black/90 backdrop-blur-xl animate-fadeIn">
-          <div className="max-w-md w-full text-center space-y-8">
-            <div className="relative mx-auto w-32 h-32">
-              <div className="absolute inset-0 rounded-full border-4 border-[var(--primary-gold)]/20 animate-ping"></div>
-              <div className="absolute inset-0 rounded-full border-4 border-[var(--primary-gold)] flex items-center justify-center text-4xl font-bold text-[var(--primary-gold)] bg-black/50">
-                {timeLeft}
-              </div>
-            </div>
-
-            <div className="space-y-2">
-              <h2 className="serif-font text-3xl text-white">Nabız <span className="text-[var(--primary-gold)]">Yoklaması</span></h2>
-              <p className="text-white/60 text-sm">Provada mısın? Hemen butona basarak varlığını kanıtla!</p>
-            </div>
-
-            {responded ? (
-              <div className="bg-green-600/20 border border-green-500/30 p-6 rounded-3xl animate-bounce">
-                <ion-icon name="checkmark-done-outline" style={{ fontSize: '3rem', color: '#22c55e' }}></ion-icon>
-                <p className="text-green-400 font-bold mt-2 tracking-widest text-sm">Yoklama Alındı ✓</p>
-              </div>
-            ) : (
-              <button
-                onClick={handleImHere}
-                disabled={loading}
-                className="w-full aspect-square max-w-[280px] mx-auto rounded-full bg-gradient-to-tr from-[var(--primary-gold)] to-[#FFD700] p-1 shadow-[0_0_50px_rgba(212,175,55,0.3)] active:scale-95 transition-all group"
-              >
-                <div className="w-full h-full rounded-full bg-black flex flex-col items-center justify-center space-y-2 group-hover:bg-transparent transition-colors">
-                  <ion-icon name="finger-print-outline" style={{ fontSize: '4rem', color: loading ? '#666' : 'var(--primary-gold)' }} className="group-hover:text-black"></ion-icon>
-                  <span className="text-white group-hover:text-black font-bold tracking-widest uppercase text-xl">
-                    {loading ? 'Kaydediliyor...' : 'Buradayım'}
-                  </span>
-                </div>
-              </button>
-            )}
-
-              <p className="text-white/20 text-xs uppercase tracking-[0.2em]">Kalan süre: {timeLeft} saniye</p>
-          </div>
+    <div className="fixed bottom-6 right-6 z-[9999] max-w-sm w-[90vw] p-5 rounded-2xl bg-zinc-950/95 border border-[var(--primary-gold)]/60 shadow-[0_10px_40px_rgba(0,0,0,0.8)] backdrop-blur-xl animate-fadeIn">
+      <div className="flex items-start justify-between gap-3 mb-3">
+        <div className="flex items-center gap-2">
+          <span className="flex h-3 w-3 relative">
+            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+            <span className="relative inline-flex rounded-full h-3 w-3 bg-emerald-500"></span>
+          </span>
+          <span className="text-[10px] font-bold text-[var(--primary-gold)] uppercase tracking-wider">
+            Canlı Yoklama Başladı
+          </span>
         </div>
-      )}
-    </>
+        <button
+          onClick={() => setActiveSession(null)}
+          className="text-zinc-500 hover:text-zinc-300 text-xs transition-colors p-1"
+        >
+          ✕
+        </button>
+      </div>
+
+      <h4 className="serif-font text-white font-bold text-base mb-1 line-clamp-1">
+        {activeSession.eventTitle || 'Prova / Etkinlik'}
+      </h4>
+      <p className="text-zinc-400 text-xs leading-relaxed mb-4">
+        Etkinlik alanındaysanız, yönetmenin/yöneticinin gösterdiği <strong>QR kodu kameranızla tarayarak</strong> katılımınızı doğrulayınız.
+      </p>
+
+      <div className="flex items-center justify-between gap-3 pt-2 border-t border-zinc-800">
+        <span className="text-[11px] text-zinc-500 font-mono">
+          ⏱️ Kalan: {Math.floor(timeLeft / 60)}:{(timeLeft % 60).toString().padStart(2, '0')}
+        </span>
+        <Link
+          href={`/members/attendance?session=${activeSession.id}`}
+          onClick={() => setActiveSession(null)}
+          className="py-1.5 px-4 rounded-lg bg-[var(--primary-gold)] hover:bg-[#c49b2c] text-black font-bold text-xs transition-all flex items-center gap-1.5 shadow-md"
+        >
+          <ion-icon name="qr-code-outline"></ion-icon>
+          <span>QR Oku / Doğrula</span>
+        </Link>
+      </div>
+    </div>
   );
 }

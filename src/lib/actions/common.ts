@@ -7,7 +7,9 @@ import { normalizeUser, isAdmin } from "@/lib/auth-helpers";
  * Kullanıcı oturumunu ve yetkisini doğrular. 
  * Revalidation yaparak stale session (bayat oturum) saldırılarını engeller.
  */
-export async function requireAuth(allowedRoles: string[]) {
+export async function requireAuth(allowedRoles: string[] = [
+  'MEMBER', 'AKTOR', 'PLAYER', 'EDITOR', 'SALES', 'DIRECTOR', 'ASST_DIRECTOR', 'ADMIN', 'SUPERADMIN', 'ALUMNI'
+]) {
   const session = await getServerSession(authOptions);
   if (!session?.user?.email) throw new Error("Yetkisiz erişim! Lütfen giriş yapın.");
 

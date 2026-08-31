@@ -153,6 +153,78 @@ export function isEditor(user?: Partial<User> | null): boolean {
   );
 }
 
+export function isDirector(user?: Partial<User> | null): boolean {
+  if (!user) return false;
+  const role = user.role;
+  const titles = Array.isArray(user.titles) ? user.titles : [];
+  return (
+    role === 'DIRECTOR' ||
+    role === 'ASST_DIRECTOR' ||
+    isAdmin(user) ||
+    titles.some(t => t.includes('Yönetmen') || t.includes('Reji'))
+  );
+}
+
+import { EventItem, Play } from '@/types/domain';
+
+export function canManageEvent(user?: Partial<User> | null, event?: Partial<EventItem> | null): boolean {
+  if (!user) return false;
+  if (isAdmin(user)) return true;
+  if (!event) return false;
+  if (!isDirector(user)) return false;
+
+  const uid = user.id;
+  const uEmail = user.email?.toLowerCase();
+  
+  if (event.directorId && (event.directorId === uid || event.directorId === uEmail)) {
+    return true;
+  }
+
+  if (event.playId && Array.isArray(user.assignedPlays) && user.assignedPlays.includes(event.playId)) {
+    return true;
+  }
+
+  return false;
+}
+
+export function isEventParticipant(
+  user?: Partial<User> | null,
+  event?: Partial<EventItem> | null,
+  play?: Partial<Play> | null
+): boolean {
+  if (!user || !event) return false;
+  const uid = user.id;
+  const uEmail = (user.email || '').toLowerCase();
+
+  // 1. Doğrudan katılımcı listesinde var mı?
+  if (Array.isArray(event.participants) && event.participants.length > 0) {
+    const inList = event.participants.some(p => p === uid || p.toLowerCase() === uEmail);
+    if (inList) return true;
+  }
+
+  // 2. Etkinlik bir oyuna/projeye bağlıysa, kullanıcı bu projenin kadrosunda mı?
+  if (event.playId) {
+    if (Array.isArray(user.assignedPlays) && user.assignedPlays.includes(event.playId)) {
+      return true;
+    }
+    if (play && Array.isArray(play.cast)) {
+      const inCast = play.cast.some(c => 
+        ((c.actorId && c.actorId === uid) || (c.userId && c.userId === uid)) || 
+        ((c.name && user.name && c.name.toLowerCase().includes(user.name.toLowerCase())) ||
+         (c.actorName && user.name && c.actorName.toLowerCase().includes(user.name.toLowerCase())))
+      );
+      if (inCast) return true;
+    }
+  }
+
+  // 3. Genel kulüp etkinliği ise ve katılımcı listesi kısıtlanmamışsa
+  if (!event.playId && (!event.participants || event.participants.length === 0)) {
+    return isActiveMember(user);
+  }
+
+  return false;
+}
+
 import { UserSegment } from '@/types/domain';
 
 export function getUserSegment(user?: Partial<User> | null): UserSegment {
