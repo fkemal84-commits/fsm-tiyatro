@@ -161,30 +161,6 @@ export async function getEventReservations(eventId: string) {
   return rehearsalActions.getEventReservations(eventId);
 }
 
-export async function startPulseCheck(rehearsalId: string) {
-  return rehearsalActions.startPulseCheck(rehearsalId);
-}
-
-export async function respondToPulse(rehearsalId: string) {
-  return rehearsalActions.respondToPulse(rehearsalId);
-}
-
-export async function addManualAttendance(rehearsalId: string, userId: string, status: string, note: string) {
-  return rehearsalActions.addManualAttendance(rehearsalId, userId, status, note);
-}
-
-export async function finalizeAttendance(rehearsalId: string, attendanceData: any, attendanceNotes: string) {
-  return rehearsalActions.finalizeAttendance(rehearsalId, attendanceData, attendanceNotes);
-}
-
-export async function startInstantAttendance(formData?: FormData) {
-  return rehearsalActions.startInstantAttendance(formData);
-}
-
-export async function activateRehearsalPulse(rehearsalId: string) {
-  return rehearsalActions.activateRehearsalPulse(rehearsalId);
-}
-
 export async function saveFCMToken(token: string) {
   return rehearsalActions.saveFCMToken(token);
 }
@@ -320,5 +296,9 @@ export async function markNotificationAsRead(notificationId: string) {
 
 export async function markAllNotificationsAsRead() {
   return notificationActions.markAllNotificationsAsRead();
+}
+
+export async function sendAppNotification(payload: any) {
+  return notificationActions.sendAppNotification(payload);
 }
 

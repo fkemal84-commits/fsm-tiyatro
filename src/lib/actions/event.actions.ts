@@ -4,7 +4,7 @@ import { adminDb } from '@/lib/firebase-admin';
 import { revalidatePath } from 'next/cache';
 import { requireAuth, handleServerError } from './common';
 import { canManageEvent, isEventParticipant, isAdmin } from '@/lib/auth-helpers';
-import { EventItem, EventType } from '@/types/domain';
+import { EventItem, EventType, ParticipantScope } from '@/types/domain';
 
 /**
  * Yeni bir Etkinlik veya Prova oluşturur.
@@ -22,6 +22,7 @@ export async function createEvent(formData: FormData) {
     const playId = (formData.get('playId') as string) || null;
     const playTitle = (formData.get('playTitle') as string) || null;
     const notes = ((formData.get('notes') as string) || '').trim();
+    const explicitScope = formData.get('participantScope') as ParticipantScope;
     
     // Biletleme alanları
     const isTicketed = formData.get('isTicketed') === 'true' || formData.get('isTicketed') === 'on';
@@ -63,14 +64,17 @@ export async function createEvent(formData: FormData) {
         
         // Eğer katılımcı listesi verilmemişse, oyunun kadrosundan otomatik al
         if (participants.length === 0 && Array.isArray(playData.cast)) {
-          participants = playData.cast.map((c: any) => c.actorId || c.email).filter(Boolean);
+          participants = playData.cast.map((c: any) => c.actorId || c.userId || c.email).filter(Boolean);
         }
       }
     }
 
+    const participantScope: ParticipantScope = explicitScope || (playId ? 'PROJECT_MEMBERS' : (participants.length > 0 ? 'SELECTED_USERS' : 'ALL_MEMBERS'));
+
     const newEvent: Omit<EventItem, 'id'> = {
       title,
       type,
+      participantScope,
       date: dateTimeStr,
       time: eventTime || undefined,
       location,
@@ -193,13 +197,23 @@ export async function migrateLegacyRehearsalsToEvents(): Promise<{ migratedCount
       continue;
     }
 
+    const playId = rData.playId || null;
+    const participants = Array.isArray(rData.participants) ? rData.participants : [];
+    const participantScope: ParticipantScope = playId 
+      ? 'PROJECT_MEMBERS' 
+      : (participants.length > 0 ? 'SELECTED_USERS' : 'ALL_MEMBERS');
+
     await adminDb.collection('events').doc(rDoc.id).set({
       title: rData.title,
       type: 'PROVA',
+      participantScope,
       date: rData.date || 'Tarih Belirtilmedi',
       location: rData.location || 'Haliç Yerleşkesi',
       notes: rData.notes || '',
-      participants: [],
+      description: rData.description || rData.notes || '',
+      playId,
+      directorId: rData.directorId || rData.pulseStartedBy || null,
+      participants,
       createdAt: rData.createdAt || new Date().toISOString(),
       updatedAt: new Date().toISOString()
     }, { merge: true });

@@ -80,9 +80,9 @@ export async function getMemberDashboardData(userIdentifier: string): Promise<Me
       if (user.assignedPlays?.includes(play.id)) return true;
       if (Array.isArray(play.cast)) {
         return play.cast.some(c => 
-          ((c.actorId && c.actorId === user.id) || (c.userId && c.userId === user.id)) ||
-          ((c.name && user.name && c.name.toLowerCase().includes(user.name.toLowerCase())) ||
-           (c.actorName && user.name && c.actorName.toLowerCase().includes(user.name.toLowerCase())))
+          (c.actorId && c.actorId === user.id) || 
+          (c.userId && c.userId === user.id) ||
+          (c.email && c.email.toLowerCase() === user.email.toLowerCase())
         );
       }
       return false;
@@ -91,7 +91,7 @@ export async function getMemberDashboardData(userIdentifier: string): Promise<Me
     const directedPlays = allPlays.filter(play => {
       return (
         (play.directorId && play.directorId === user.id) ||
-        (play.director && user.name && play.director.toLowerCase().includes(user.name.toLowerCase()))
+        (play.directorId && play.directorId === user.email.toLowerCase())
       );
     });
 

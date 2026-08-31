@@ -1,18 +1,92 @@
 'use server';
 
-import { adminDb } from '@/lib/firebase-admin';
+import { adminDb, adminMessaging } from '@/lib/firebase-admin';
 import { revalidatePath } from 'next/cache';
 import { requireAuth, handleServerError } from './common';
-import { AppNotification } from '@/types/domain';
+import { AppNotification, NotificationType } from '@/types/domain';
+
+export interface SendNotificationPayload {
+  targetUserIds: string[];
+  type: NotificationType;
+  title: string;
+  body: string;
+  link?: string;
+  eventId?: string | null;
+  sessionId?: string | null;
+  sendPush?: boolean;
+}
+
+/**
+ * Tekil ve merkezi bildirim gönderim servisi (In-App + Multicast Push)
+ */
+export async function sendAppNotification(payload: SendNotificationPayload): Promise<{ success: boolean; sentCount: number }> {
+  try {
+    const { targetUserIds, type, title, body, link, eventId, sessionId, sendPush = true } = payload;
+    const uniqueUserIds = Array.from(new Set(targetUserIds.filter(Boolean)));
+
+    if (uniqueUserIds.length === 0) {
+      return { success: true, sentCount: 0 };
+    }
+
+    const batch = adminDb.batch();
+    const now = new Date().toISOString();
+
+    for (const uid of uniqueUserIds) {
+      const notifRef = adminDb.collection('notifications').doc();
+      const notification: Omit<AppNotification, 'id'> = {
+        userId: uid,
+        type,
+        title,
+        body,
+        link: link || '',
+        eventId: eventId || null,
+        sessionId: sessionId || null,
+        isRead: false,
+        createdAt: now
+      };
+      batch.set(notifRef, notification);
+    }
+
+    await batch.commit();
+
+    // Push Bildirimi Gönder (FCM / WebPush)
+    if (sendPush && adminMessaging && uniqueUserIds.length > 0) {
+      try {
+        const tokensSnap = await adminDb.collection('users')
+          .where('__name__', 'in', uniqueUserIds.slice(0, 10))
+          .get();
+
+        const fcmTokens: string[] = [];
+        tokensSnap.docs.forEach(d => {
+          const uTokens = d.data().fcmTokens || [];
+          fcmTokens.push(...uTokens);
+        });
+
+        const uniqueTokens = Array.from(new Set(fcmTokens));
+        if (uniqueTokens.length > 0) {
+          await adminMessaging.sendEachForMulticast({
+            notification: { title, body },
+            tokens: uniqueTokens
+          });
+        }
+      } catch (pushErr) {
+        console.warn("[SEND_APP_NOTIFICATION] Push gönderim uyarısı:", pushErr);
+      }
+    }
+
+    return { success: true, sentCount: uniqueUserIds.length };
+  } catch (error) {
+    console.error("[SEND_APP_NOTIFICATION] Hata:", error);
+    return { success: false, sentCount: 0 };
+  }
+}
 
 /**
  * Kullanıcının bildirimlerini listeler
  */
 export async function getUserNotifications(limitCount = 20): Promise<AppNotification[]> {
   try {
-    const { uid } = await requireAuth([
-      'MEMBER', 'AKTOR', 'PLAYER', 'EDITOR', 'SALES', 'DIRECTOR', 'ASST_DIRECTOR', 'ADMIN', 'SUPERADMIN'
-    ]);
+    const { uid } = await requireAuth();
 
     const snap = await adminDb.collection('notifications')
       .where('userId', '==', uid)

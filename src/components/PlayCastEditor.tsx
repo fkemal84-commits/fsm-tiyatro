@@ -7,6 +7,9 @@ export interface CastMember {
   roleName: string;
   photoUrl?: string;
   userEmail?: string;
+  email?: string;
+  userId?: string;
+  actorId?: string;
 }
 
 export interface CrewMember {

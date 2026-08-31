@@ -2,26 +2,33 @@ rules_version = '2';
 
 service cloud.firestore {
   match /databases/{database}/documents {
-    // 1. GENEL OKUMA İZİNLERİ
+    // 1. GENEL İÇERİK OKUMA İZİNLERİ
     match /posts/{doc} { allow read: if true; }
     match /plays/{doc} { allow read: if true; }
     match /events/{doc} { allow read: if true; }
     match /teamNeeds/{doc} { allow read: if true; }
     match /settings/{doc} { allow read: if true; }
     
-    // YOKLAMA SİSTEMİ
-    match /rehearsals/{doc} { allow read: if true; }
+    // 2. YOKLAMA VE ETKİNLİK SİSTEMİ (Tek Kaynak)
+    match /attendance_sessions/{doc} { allow read: if request.auth != null; }
+    match /attendance_records/{doc} { allow read: if request.auth != null; }
     
-    // 2. KULLANICI VERİLERİ
+    // 3. BİLDİRİMLER VE KULLANICI VERİLERİ
     match /users/{userId} {
       allow read: if request.auth != null; 
+    }
+    match /notifications/{notifId} {
+      allow read: if request.auth != null;
+    }
+    match /push_subscriptions/{subId} {
+      allow read, write: if request.auth != null;
     }
     
     match /eventRequests/{reqId} {
       allow read: if request.auth != null;
     }
 
-    // 3. GÜVENLİK BARİYERİ
+    // 4. GÜVENLİK BARİYERİ (Tüm kritik yazma işlemleri Firebase Admin SDK / Server Actions üzerinden yapılır)
     match /{document=**} {
       allow write: if false; 
     }

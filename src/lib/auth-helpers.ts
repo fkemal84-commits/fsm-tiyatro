@@ -215,9 +215,9 @@ export function isEventParticipant(
     }
     if (play && Array.isArray(play.cast)) {
       const inCast = play.cast.some(c => 
-        ((c.actorId && c.actorId === uid) || (c.userId && c.userId === uid)) || 
-        ((c.name && user.name && c.name.toLowerCase().includes(user.name.toLowerCase())) ||
-         (c.actorName && user.name && c.actorName.toLowerCase().includes(user.name.toLowerCase())))
+        (c.actorId && c.actorId === uid) || 
+        (c.userId && c.userId === uid) || 
+        (c.email && c.email.toLowerCase() === uEmail)
       );
       if (inCast) return true;
     }

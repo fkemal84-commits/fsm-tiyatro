@@ -13,6 +13,7 @@ import {
   AppNotification
 } from '@/types/domain';
 import { generateQRToken, verifyQRTokenSignature } from '@/lib/qr-helpers';
+import { sendAppNotification } from './notification.actions';
 import crypto from 'crypto';
 
 /**
@@ -418,53 +419,19 @@ export async function nudgeUnansweredParticipants(sessionId: string) {
       return { success: true, nudgedCount: 0, message: "Tüm katılımcılar zaten yoklamaya katılmış!" };
     }
 
-    // Cevap vermeyenlere in-app notification ve push gönder
-    const batch = adminDb.batch();
+    // Cevap vermeyenlere tekil bildirim altyapısı üzerinden bildirim gönder
+    const notifRes = await sendAppNotification({
+      targetUserIds: unansweredIds,
+      type: 'ATTENDANCE_NUDGE',
+      title: `⚠️ Yoklama Hatırlatması: ${eventData.title}`,
+      body: `Yoklama süresi devam ediyor! Lütfen etkinlik alanındaki QR kodu okutunuz.`,
+      link: `/members/attendance?session=${sessionId}`,
+      eventId: eventData.id || sessionData.eventId,
+      sessionId,
+      sendPush: true
+    });
+
     const now = new Date().toISOString();
-
-    for (const uid of unansweredIds) {
-      const notifRef = adminDb.collection('notifications').doc();
-      const notification: Omit<AppNotification, 'id'> = {
-        userId: uid,
-        type: 'ATTENDANCE_NUDGE',
-        title: `⚠️ Yoklama Hatırlatması: ${eventData.title}`,
-        body: `Yoklama süresi devam ediyor! Lütfen etkinlik alanındaki QR kodu okutunuz.`,
-        link: `/members/attendance?session=${sessionId}`,
-        eventId: eventData.id || sessionData.eventId,
-        sessionId,
-        isRead: false,
-        createdAt: now
-      };
-      batch.set(notifRef, notification);
-    }
-
-    await batch.commit();
-
-    // FCM / WebPush multicast (opsiyonel cihaz bildirimleri)
-    try {
-      const tokensSnap = await adminDb.collection('users')
-        .where('__name__', 'in', unansweredIds.slice(0, 10))
-        .get();
-
-      const fcmTokens: string[] = [];
-      tokensSnap.docs.forEach(d => {
-        const uTokens = d.data().fcmTokens || [];
-        fcmTokens.push(...uTokens);
-      });
-
-      if (fcmTokens.length > 0 && adminMessaging) {
-        await adminMessaging.sendEachForMulticast({
-          notification: {
-            title: `⚠️ Yoklama Hatırlatması: ${eventData.title}`,
-            body: `Yoklama devam ediyor! Lütfen etkinlik alanındaki QR kodu tarayınız.`
-          },
-          tokens: Array.from(new Set(fcmTokens))
-        });
-      }
-    } catch (e) {
-      console.warn("[NUDGE] Push gönderim uyarısı:", e);
-    }
-
     await sessionRef.update({
       lastNudgeAt: now,
       updatedAt: now
@@ -472,8 +439,8 @@ export async function nudgeUnansweredParticipants(sessionId: string) {
 
     return {
       success: true,
-      nudgedCount: unansweredIds.length,
-      message: `${unansweredIds.length} katılımcıya yoklama dürtmesi gönderildi.`
+      nudgedCount: notifRes.sentCount,
+      message: `${notifRes.sentCount} katılımcıya yoklama dürtmesi gönderildi.`
     };
   } catch (error) {
     return handleServerError(error, "NUDGE_UNANSWERED");
@@ -490,32 +457,22 @@ async function notifyParticipantsAboutAttendance(eventData: EventItem, sessionId
     if (participantIds.length === 0 && eventData.playId) {
       const playDoc = await adminDb.collection('plays').doc(eventData.playId).get();
       if (playDoc.exists && Array.isArray(playDoc.data()?.cast)) {
-        participantIds = playDoc.data()!.cast.map((c: any) => c.actorId || c.id).filter(Boolean);
+        participantIds = playDoc.data()!.cast.map((c: any) => c.actorId || c.userId || c.id).filter(Boolean);
       }
     }
 
     if (participantIds.length === 0) return;
 
-    const batch = adminDb.batch();
-    const now = new Date().toISOString();
-
-    for (const uid of participantIds) {
-      const notifRef = adminDb.collection('notifications').doc();
-      const notification: Omit<AppNotification, 'id'> = {
-        userId: uid,
-        type: 'ATTENDANCE_STARTED',
-        title: `🎭 Yoklama Başladı: ${eventData.title}`,
-        body: `Etkinlik alanındaki QR kodu tarayarak yoklamanızı doğrulayabilirsiniz.`,
-        link: `/members/attendance?session=${sessionId}`,
-        eventId: eventData.id,
-        sessionId,
-        isRead: false,
-        createdAt: now
-      };
-      batch.set(notifRef, notification);
-    }
-
-    await batch.commit();
+    await sendAppNotification({
+      targetUserIds: participantIds,
+      type: 'ATTENDANCE_STARTED',
+      title: `🎭 Yoklama Başladı: ${eventData.title}`,
+      body: `Etkinlik alanındaki QR kodu tarayarak yoklamanızı doğrulayabilirsiniz.`,
+      link: `/members/attendance?session=${sessionId}`,
+      eventId: eventData.id,
+      sessionId,
+      sendPush: true
+    });
   } catch (e) {
     console.warn("[NOTIFY_PARTICIPANTS] Bildirim oluşturma uyarısı:", e);
   }

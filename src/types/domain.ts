@@ -18,6 +18,7 @@ export interface CastMember {
   name?: string;
   userId?: string;
   actorId?: string;
+  email?: string;
   photoUrl?: string;
 }
 

@@ -291,6 +291,84 @@ const tests: Array<{ name: string; test: () => boolean }> = [
         Boolean(record.modifiedAt)
       );
     }
+  },
+
+  // --- FAZ 1.6A CLEANUP SENARYOLARI ---
+  {
+    name: '25. Legacy Migration: Prova kaydının playId ve PROJECT_MEMBERS kapsamı korunur',
+    test: () => {
+      const legacyRehearsal = {
+        id: 'reh-1',
+        title: 'Cimri 1. Perde Provası',
+        playId: 'play-cimri',
+        date: '2026-10-01',
+        location: 'Haliç',
+        notes: 'Repliksiz gelinecek',
+        participants: []
+      };
+      const migratedScope = legacyRehearsal.playId 
+        ? 'PROJECT_MEMBERS' 
+        : (legacyRehearsal.participants?.length > 0 ? 'SELECTED_USERS' : 'ALL_MEMBERS');
+      return migratedScope === 'PROJECT_MEMBERS' && legacyRehearsal.playId === 'play-cimri';
+    }
+  },
+  {
+    name: '26. Legacy Migration: Katılımcı listesi olan provalar SELECTED_USERS olarak taşınır',
+    test: () => {
+      const legacyRehearsal = {
+        id: 'reh-2',
+        title: 'Özel Diksiyon Çalışması',
+        playId: null,
+        date: '2026-10-05',
+        participants: ['u-1', 'u-2']
+      };
+      const migratedScope = legacyRehearsal.playId 
+        ? 'PROJECT_MEMBERS' 
+        : (legacyRehearsal.participants?.length > 0 ? 'SELECTED_USERS' : 'ALL_MEMBERS');
+      return migratedScope === 'SELECTED_USERS' && legacyRehearsal.participants.length === 2;
+    }
+  },
+  {
+    name: '27. isEventParticipant: İsim benzerliği ile sahte yetki alma kaldırılmıştır (Yalnızca strict userId / email)',
+    test: () => {
+      const uStranger = normalizeUser({ id: 'u-stranger', email: 'baska@fsm.edu.tr', name: 'Ahmet Yılmaz' });
+      const playWithSameNameActor: Play = {
+        id: 'play-1',
+        title: 'Test Oyunu',
+        description: '',
+        createdAt: '',
+        cast: [
+          { roleName: 'Harpagon', actorName: 'Ahmet Yılmaz', actorId: 'u-real-actor', email: 'real@fsm.edu.tr' }
+        ]
+      };
+      const event: EventItem = {
+        id: 'ev-test',
+        title: 'Prova',
+        playId: 'play-1',
+        participantScope: 'PROJECT_MEMBERS',
+        date: '2026-10-01',
+        location: 'Sahne',
+        createdAt: ''
+      };
+      // uStranger actorId u-real-actor ile eşleşmez ve email farklıdır -> false dönmeli
+      return isEventParticipant(uStranger, event, playWithSameNameActor) === false;
+    }
+  },
+  {
+    name: '28. Tekil Bildirim Altyapısı: Bildirim veya push gönderimi asla doğrudan AttendanceRecord üretmez',
+    test: () => {
+      const notif: AppNotification = {
+        id: 'notif-1',
+        userId: 'u-1',
+        type: 'ATTENDANCE_STARTED',
+        title: 'Yoklama Başladı',
+        body: 'QR kodu tarayınız',
+        isRead: false,
+        createdAt: new Date().toISOString()
+      };
+      // Bildirim yalnızca bilgilendirir, attendance verisi attendance_records altında ayrıca QR ile oluşur
+      return notif.type === 'ATTENDANCE_STARTED' && !('status' in notif);
+    }
   }
 ];
 

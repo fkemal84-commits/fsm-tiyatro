@@ -3,137 +3,40 @@
 import { adminDb, adminMessaging } from '@/lib/firebase-admin';
 import { revalidatePath } from 'next/cache';
 import { requireAuth, handleServerError } from './common';
+import { createEvent, deleteUnifiedEvent } from './event.actions';
+
+// ============================================================================
+// UYUMLULUK SARMALAYICILARI (Compatibility Wrappers -> event.actions)
+// ============================================================================
 
 export async function addRehearsal(formData: FormData) {
-  const title = formData.get('title') as string;
-  const date = formData.get('rehearsalDate') as string;
-  const time = formData.get('rehearsalTime') as string;
-  const location = formData.get('location') as string;
-  const notes = formData.get('notes') as string;
-  const saveAsPreset = formData.get('saveAsPreset') === 'on';
-
-  if (!title || !date || !time) return;
-
-  await requireAuth(['SUPERADMIN', 'ADMIN', 'DIRECTOR', 'ASST_DIRECTOR']);
-
-  const dateTimeStr = `${date} - ${time}`;
-
-  await adminDb.collection('rehearsals').add({
-    title,
-    date: dateTimeStr,
-    location: location || 'Haliç Yerleşkesi',
-    notes: notes || '',
-    createdAt: new Date().toISOString()
-  });
-
-  if (saveAsPreset) {
-    await adminDb.collection('presets').add({
-      type: 'rehearsal',
-      title,
-      location: location || 'Haliç Yerleşkesi',
-      time,
-      createdAt: new Date().toISOString()
-    });
-  }
-
-  revalidatePath('/members/rehearsals');
+  return createEvent(formData);
 }
 
 export async function deleteRehearsal(formData: FormData) {
-  const rehearsalId = formData.get('rehearsalId') as string;
-  if (!rehearsalId) return;
-
-  await requireAuth(['SUPERADMIN', 'ADMIN', 'DIRECTOR', 'ASST_DIRECTOR']);
-  await adminDb.collection('rehearsals').doc(rehearsalId).delete();
-  revalidatePath('/members/rehearsals');
+  return deleteUnifiedEvent(formData);
 }
 
 export async function addEvent(formData: FormData) {
-  try {
-    const title = formData.get('title') as string;
-    const rawDate = (formData.get('date') as string) || '';
-    const eventDate = (formData.get('eventDate') as string) || '';
-    const eventTime = (formData.get('eventTime') as string) || '';
-    const location = (formData.get('location') as string) || 'Haliç Yerleşkesi';
-    const description = (formData.get('description') as string) || '';
-    const type = (formData.get('type') as string) || 'Etkinlik';
-    
-    // Biletli / Kontenjanlı Etkinlik Alanları
-    const isTicketed = formData.get('isTicketed') === 'true' || formData.get('isTicketed') === 'on';
-    const ticketQuotaRaw = formData.get('ticketQuota') as string;
-    const ticketQuota = isTicketed && ticketQuotaRaw ? Math.max(1, parseInt(ticketQuotaRaw, 10)) : 0;
-
-    const dateTimeStr = rawDate.trim() || (eventDate && eventTime ? `${eventDate} - ${eventTime}` : eventDate || 'Tarih Belirtilmedi');
-
-    if (!title || !dateTimeStr) {
-      return { error: "Etkinlik adı ve tarihi zorunludur." };
-    }
-
-    await requireAuth(['SUPERADMIN', 'ADMIN']);
-
-    await adminDb.collection('events').add({
-      title: title.trim(),
-      date: dateTimeStr,
-      location: location.trim(),
-      description: description.trim(),
-      type: type.trim(),
-      isTicketed: Boolean(isTicketed),
-      ticketQuota: ticketQuota,
-      reservedCount: 0,
-      createdAt: new Date().toISOString()
-    });
-
-    revalidatePath('/etkinlikler');
-    revalidatePath('/members');
-    revalidatePath('/tanerabi/dashboard');
-    return { success: true };
-  } catch (error) {
-    return handleServerError(error, "ADD_EVENT");
-  }
+  return createEvent(formData);
 }
 
 export async function deleteEvent(formData: FormData) {
-  const eventId = formData.get('eventId') as string;
-  if (!eventId) return;
-
-  try {
-    await requireAuth(['SUPERADMIN', 'ADMIN']);
-    
-    // Etkinliğe ait rezervasyonları da temizle
-    const resSnap = await adminDb.collection('eventReservations').where('eventId', '==', eventId).get();
-    const batch = adminDb.batch();
-    resSnap.docs.forEach(doc => batch.delete(doc.ref));
-    await batch.commit().catch(() => {});
-
-    await adminDb.collection('events').doc(eventId).delete();
-    revalidatePath('/etkinlikler');
-    revalidatePath('/members');
-    revalidatePath('/tanerabi/dashboard');
-    return { success: true };
-  } catch (error) {
-    return handleServerError(error, "DELETE_EVENT");
-  }
+  return deleteUnifiedEvent(formData);
 }
 
 export async function updateEvent(formData: FormData) {
+  const eventId = formData.get('eventId') as string;
+  const title = formData.get('title') as string;
+  const date = formData.get('date') as string;
+  const location = formData.get('location') as string;
+  const description = formData.get('description') as string;
+  const type = formData.get('type') as string;
+
+  if (!eventId || !title) return { error: "Eksik parametre." };
+
   try {
-    const eventId = formData.get('eventId') as string;
-    if (!eventId) return { error: "Etkinlik ID gereklidir." };
-
-    await requireAuth(['SUPERADMIN', 'ADMIN']);
-
-    const title = (formData.get('title') as string)?.trim();
-    const date = (formData.get('date') as string)?.trim();
-    const location = (formData.get('location') as string)?.trim() || 'Haliç Yerleşkesi';
-    const description = (formData.get('description') as string)?.trim() || '';
-    const type = (formData.get('type') as string)?.trim() || 'Etkinlik';
-    const isTicketed = formData.get('isTicketed') === 'true' || formData.get('isTicketed') === 'on';
-    const ticketQuotaRaw = formData.get('ticketQuota') as string;
-    const ticketQuota = isTicketed && ticketQuotaRaw ? Math.max(1, parseInt(ticketQuotaRaw, 10)) : 0;
-
-    if (!title || !date) {
-      return { error: "Etkinlik adı ve tarihi zorunludur." };
-    }
+    await requireAuth(['SUPERADMIN', 'ADMIN', 'DIRECTOR', 'ASST_DIRECTOR']);
 
     await adminDb.collection('events').doc(eventId).update({
       title,
@@ -141,8 +44,6 @@ export async function updateEvent(formData: FormData) {
       location,
       description,
       type,
-      isTicketed: Boolean(isTicketed),
-      ticketQuota,
       updatedAt: new Date().toISOString()
     });
 
@@ -157,47 +58,41 @@ export async function updateEvent(formData: FormData) {
 
 export async function joinEvent(formData: FormData) {
   const eventId = formData.get('eventId') as string;
-  const eventTitle = formData.get('eventTitle') as string;
-  const note = formData.get('note') as string;
-
-  if (!eventId) return { error: "Etkinlik ID bulunamadı." };
+  if (!eventId) return;
 
   try {
-    const { session, user, uid } = await requireAuth(['MEMBER', 'AKTOR', 'EDITOR', 'DIRECTOR', 'ASST_DIRECTOR', 'ADMIN', 'SUPERADMIN']);
-    const userName = [user.name, user.surname].filter(Boolean).join(' ') || session.user?.name || 'Kulüp Üyesi';
+    const { user, uid } = await requireAuth([
+      'MEMBER', 'AKTOR', 'PLAYER', 'EDITOR', 'SALES', 
+      'DIRECTOR', 'ASST_DIRECTOR', 'ADMIN', 'SUPERADMIN'
+    ]);
 
-    const existingReq = await adminDb.collection('eventRequests')
-      .where('eventId', '==', eventId)
-      .where('userId', '==', uid)
-      .limit(1)
-      .get();
+    const istanbulTime = new Date().toLocaleTimeString('tr-TR', { 
+      timeZone: 'Europe/Istanbul', 
+      hour: '2-digit', 
+      minute: '2-digit' 
+    });
 
-    if (!existingReq.empty) {
-      return { error: "Bu etkinliğe zaten katılım bildirdiniz." };
-    }
+    const userName = [user.name, user.surname].filter(Boolean).join(' ') || user.email;
 
     await adminDb.collection('eventRequests').add({
       eventId,
-      eventTitle: eventTitle || 'Etkinlik',
       userId: uid,
       userName,
-      userEmail: user.email,
-      note: note || '',
-      status: 'APPROVED',
-      createdAt: new Date().toISOString()
+      userRole: user.role,
+      joinedAt: `${new Date().toLocaleDateString('tr-TR')} ${istanbulTime}`,
+      status: 'JOINED'
     });
 
-    revalidatePath('/members');
-    return { success: true };
+    revalidatePath('/etkinlikler');
   } catch (error) {
     return handleServerError(error, "JOIN_EVENT");
   }
 }
 
-/**
- * Biletli Etkinlik için Üye Bilet Rezervasyonu
- * Sadece giriş yapmış kulüp üyeleri kendilerine bilet ayırtabilir.
- */
+// ============================================================================
+// BİLETLİ ETKİNLİK REZERVASYON İŞLEMLERİ
+// ============================================================================
+
 export async function reserveEventTicket(eventId: string) {
   if (!eventId) return { error: "Etkinlik ID gereklidir." };
 
@@ -219,7 +114,6 @@ export async function reserveEventTicket(eventId: string) {
       return { error: "Bu etkinlik biletli bir etkinlik değildir." };
     }
 
-    // Kontenjan Kontrolü
     const currentReserved = eventData.reservedCount || 0;
     const quota = eventData.ticketQuota || 0;
 
@@ -227,7 +121,6 @@ export async function reserveEventTicket(eventId: string) {
       return { error: "Üzgünüz, bu etkinlik için tüm kontenjan / biletler dolmuştur." };
     }
 
-    // Daha önce bilet ayırtmış mı kontrol et
     const existingSnap = await adminDb.collection('eventReservations')
       .where('eventId', '==', eventId)
       .where('userId', '==', uid)
@@ -242,10 +135,8 @@ export async function reserveEventTicket(eventId: string) {
       };
     }
 
-    // Özel bilet referans kodu üret (Örn: ETK-FSM-7D4E)
     const randomSuffix = crypto.randomUUID().split('-')[0].toUpperCase();
     const ticketCode = `ETK-${randomSuffix}`;
-
     const userName = [user.name, user.surname].filter(Boolean).join(' ') || user.email;
 
     const resRef = await adminDb.collection('eventReservations').add({
@@ -264,7 +155,6 @@ export async function reserveEventTicket(eventId: string) {
       createdAt: new Date().toISOString()
     });
 
-    // Kontenjan sayacını artır
     await eventRef.update({
       reservedCount: currentReserved + 1,
       updatedAt: new Date().toISOString()
@@ -285,9 +175,6 @@ export async function reserveEventTicket(eventId: string) {
   }
 }
 
-/**
- * Biletli Etkinlik Rezervasyonunu İptal Etme
- */
 export async function cancelEventTicketReservation(reservationId: string) {
   if (!reservationId) return { error: "Rezervasyon ID gereklidir." };
 
@@ -306,7 +193,6 @@ export async function cancelEventTicketReservation(reservationId: string) {
 
     const resData = resDoc.data()!;
 
-    // Yalnızca biletin sahibi veya ADMIN silebilir
     if (resData.userId !== uid && user.role !== 'SUPERADMIN' && user.role !== 'ADMIN') {
       return { error: "Sadece kendi biletinizi iptal edebilirsiniz." };
     }
@@ -315,13 +201,11 @@ export async function cancelEventTicketReservation(reservationId: string) {
       return { error: "Bu rezervasyon zaten aktif değil." };
     }
 
-    // Rezervasyonu iptal et
     await resRef.update({
       status: 'CANCELLED',
       cancelledAt: new Date().toISOString()
     });
 
-    // Etkinliğin kontenjan sayacını düşür
     if (resData.eventId) {
       const eventRef = adminDb.collection('events').doc(resData.eventId);
       const eventDoc = await eventRef.get();
@@ -344,9 +228,6 @@ export async function cancelEventTicketReservation(reservationId: string) {
   }
 }
 
-/**
- * Etkinliğe bilet ayırtmış üyeleri listeleme (Yönetim için)
- */
 export async function getEventReservations(eventId: string) {
   try {
     await requireAuth(['SUPERADMIN', 'ADMIN', 'DIRECTOR', 'ASST_DIRECTOR']);
@@ -364,108 +245,13 @@ export async function getEventReservations(eventId: string) {
   }
 }
 
-export async function startPulseCheck(rehearsalId: string) {
-  return { 
-    error: "Eski nabız yoklaması sistemi kaldırılmıştır. Lütfen Yoklama Paneli üzerinden Canlı QR Oturumu başlatınız." 
-  };
-}
-
-export async function respondToPulse(rehearsalId: string) {
-  return { 
-    error: "Uzaktan tek tıkla yoklama sistemi kapatılmıştır. Yoklamanızın geçerli sayılması için lütfen salondaki fiziksel QR kodu okutunuz." 
-  };
-}
-
-export async function addManualAttendance(rehearsalId: string, userId: string, status: string, note: string) {
-  try {
-    await requireAuth(['SUPERADMIN', 'ADMIN', 'DIRECTOR', 'ASST_DIRECTOR']);
-    const ref = adminDb.collection('rehearsals').doc(rehearsalId);
-    const snap = await ref.get();
-    if (!snap.exists) throw new Error("Prova kaydı bulunamadı.");
-
-    const currentAttendance = snap.data()?.attendance || {};
-    currentAttendance[userId] = status;
-
-    let notes = snap.data()?.attendanceNotes || '';
-    if (note) {
-      notes += `\n[Manuel ${status}] ${userId}: ${note}`;
-    }
-
-    await ref.update({
-      attendance: currentAttendance,
-      attendanceNotes: notes
-    });
-
-    revalidatePath('/members/rehearsals');
-    return { success: true };
-  } catch (error) {
-    return handleServerError(error, "ADD_MANUAL_ATTENDANCE");
-  }
-}
-
-export async function finalizeAttendance(rehearsalId: string, attendanceData: any, attendanceNotes: string) {
-  try {
-    await requireAuth(['SUPERADMIN', 'ADMIN', 'DIRECTOR', 'ASST_DIRECTOR']);
-    await adminDb.collection('rehearsals').doc(rehearsalId).update({
-      attendance: attendanceData,
-      attendanceNotes: attendanceNotes || '',
-      pulseActive: false
-    });
-
-    revalidatePath('/members/rehearsals');
-    return { success: true };
-  } catch (error) {
-    return handleServerError(error, "FINALIZE_ATTENDANCE");
-  }
-}
-
-export async function startInstantAttendance(formData?: FormData) {
-  try {
-    const { uid } = await requireAuth(['SUPERADMIN', 'ADMIN', 'DIRECTOR', 'ASST_DIRECTOR']);
-    const istanbulDateStr = new Date().toLocaleDateString('tr-TR', { timeZone: 'Europe/Istanbul' });
-    const istanbulTimeStr = new Date().toLocaleTimeString('tr-TR', { timeZone: 'Europe/Istanbul', hour: '2-digit', minute: '2-digit' });
-    const expiresAt = Date.now() + 60000;
-
-    const docRef = await adminDb.collection('rehearsals').add({
-      title: `Anlık Yoklama (${istanbulDateStr} ${istanbulTimeStr})`,
-      date: `${new Date().toLocaleDateString('en-CA', { timeZone: 'Europe/Istanbul' })} - ${istanbulTimeStr} (Anlık)`,
-      location: 'Haliç Yerleşkesi',
-      notes: 'Anlık başlatılan nabız yoklaması.',
-      pulseActive: true,
-      pulseExpiresAt: expiresAt,
-      pulseStartedBy: uid,
-      pulseResponses: [],
-      createdAt: new Date().toISOString()
-    });
-
-    revalidatePath('/members/rehearsals');
-    return { success: true, rehearsalId: docRef.id };
-  } catch (error) {
-    return handleServerError(error, "START_INSTANT_ATTENDANCE");
-  }
-}
-
-export async function activateRehearsalPulse(rehearsalId: string) {
-  try {
-    const { uid } = await requireAuth(['SUPERADMIN', 'ADMIN', 'DIRECTOR', 'ASST_DIRECTOR']);
-    const expiresAt = Date.now() + 60000;
-
-    await adminDb.collection('rehearsals').doc(rehearsalId).update({
-      pulseActive: true,
-      pulseExpiresAt: expiresAt,
-      pulseStartedBy: uid
-    });
-
-    revalidatePath('/members/rehearsals');
-    return { success: true, expiresAt };
-  } catch (error) {
-    return handleServerError(error, "ACTIVATE_REHEARSAL_PULSE");
-  }
-}
+// ============================================================================
+// BİLDİRİM VE CİHAZ EŞLEŞTİRME İŞLEMLERİ
+// ============================================================================
 
 export async function saveFCMToken(token: string) {
   try {
-    const { uid } = await requireAuth(['MEMBER', 'AKTOR', 'PLAYER', 'EDITOR', 'DIRECTOR', 'ASST_DIRECTOR', 'ADMIN', 'SUPERADMIN']);
+    const { uid } = await requireAuth();
     const userRef = adminDb.collection('users').doc(uid);
     const userSnap = await userRef.get();
 
