@@ -19,7 +19,7 @@ import crypto from 'crypto';
  * Bir etkinlik için Yoklama Oturumu (AttendanceSession) Başlatır.
  * (Aynı etkinlik için aynı anda yalnızca 1 açık oturum bulunabilir)
  */
-export async function openAttendanceSession(eventId: string, durationMinutes = 10) {
+export async function openAttendanceSession(eventId: string, durationMinutes = 240) {
   try {
     if (!eventId) return { error: "Etkinlik ID gereklidir." };
 
@@ -184,13 +184,13 @@ export async function verifyAttendanceViaQR(token: string) {
     }
 
     if (Date.now() > sessionData.expiresAt) {
-      return { error: "Yoklama süresi dolmuştur." };
+      return { error: "Yoklama oturumunun süresi dolmuştur." };
     }
 
-    // QR Token imzasını oturumun qrSecret'ı ile doğrula
-    const signatureCheck = verifyQRTokenSignature(token, sessionData.qrSecret);
+    // QR Token imzasını ve 90sn TTL'ini oturumun qrSecret'ı ile doğrula
+    const signatureCheck = verifyQRTokenSignature(token, sessionData.qrSecret, 90000);
     if (!signatureCheck.valid) {
-      return { error: "Geçersiz veya süresi dolmuş QR güvenlik imzası." };
+      return { error: signatureCheck.error || "Geçersiz veya süresi dolmuş QR güvenlik imzası." };
     }
 
     // Etkinlik ve katılımcı kontrolü

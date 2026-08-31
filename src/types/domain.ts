@@ -128,10 +128,17 @@ export type EventType =
   | 'Etkinlik'
   | string;
 
+export type ParticipantScope =
+  | 'ALL_MEMBERS'
+  | 'PROJECT_MEMBERS'
+  | 'SELECTED_USERS'
+  | 'ROLE_BASED';
+
 export interface EventItem {
   id: string;
   title: string;
   type?: EventType;
+  participantScope?: ParticipantScope;
   instructor?: string | null;
   date: string;
   time?: string;

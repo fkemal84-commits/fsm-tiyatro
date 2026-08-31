@@ -365,49 +365,15 @@ export async function getEventReservations(eventId: string) {
 }
 
 export async function startPulseCheck(rehearsalId: string) {
-  try {
-    const { uid } = await requireAuth(['SUPERADMIN', 'ADMIN', 'DIRECTOR', 'ASST_DIRECTOR']);
-    const expiresAt = Date.now() + 60000; // 60 saniye
-
-    await adminDb.collection('rehearsals').doc(rehearsalId).update({
-      pulseActive: true,
-      pulseExpiresAt: expiresAt,
-      pulseStartedBy: uid,
-      pulseResponses: []
-    });
-
-    return { success: true, expiresAt };
-  } catch (error) {
-    return handleServerError(error, "START_PULSE_CHECK");
-  }
+  return { 
+    error: "Eski nabız yoklaması sistemi kaldırılmıştır. Lütfen Yoklama Paneli üzerinden Canlı QR Oturumu başlatınız." 
+  };
 }
 
 export async function respondToPulse(rehearsalId: string) {
-  try {
-    const { uid } = await requireAuth(['AKTOR', 'PLAYER', 'MEMBER', 'DIRECTOR', 'ASST_DIRECTOR', 'ADMIN', 'SUPERADMIN']);
-    const rehearsalRef = adminDb.collection('rehearsals').doc(rehearsalId);
-    const rehearsalSnap = await rehearsalRef.get();
-
-    if (!rehearsalSnap.exists) throw new Error("Prova bulunamadı.");
-    const data = rehearsalSnap.data()!;
-
-    if (!data.pulseActive || Date.now() > data.pulseExpiresAt) {
-      throw new Error("Yoklama süresi doldu.");
-    }
-
-    const currentResponses: any[] = data.pulseResponses || [];
-    const hasAlreadyResponded = currentResponses.some(r => typeof r === 'string' ? r === uid : r.userId === uid);
-
-    if (!hasAlreadyResponded) {
-      const istanbulTime = new Date().toLocaleTimeString('tr-TR', { timeZone: 'Europe/Istanbul', hour: '2-digit', minute: '2-digit', second: '2-digit' });
-      currentResponses.push({ userId: uid, timeString: istanbulTime });
-      await rehearsalRef.update({ pulseResponses: currentResponses });
-    }
-
-    return { success: true };
-  } catch (error) {
-    return handleServerError(error, "RESPOND_TO_PULSE");
-  }
+  return { 
+    error: "Uzaktan tek tıkla yoklama sistemi kapatılmıştır. Yoklamanızın geçerli sayılması için lütfen salondaki fiziksel QR kodu okutunuz." 
+  };
 }
 
 export async function addManualAttendance(rehearsalId: string, userId: string, status: string, note: string) {

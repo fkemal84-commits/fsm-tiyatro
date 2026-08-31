@@ -196,14 +196,20 @@ export function isEventParticipant(
   const uid = user.id;
   const uEmail = (user.email || '').toLowerCase();
 
-  // 1. Doğrudan katılımcı listesinde var mı?
-  if (Array.isArray(event.participants) && event.participants.length > 0) {
-    const inList = event.participants.some(p => p === uid || p.toLowerCase() === uEmail);
-    if (inList) return true;
+  // Katılımcı kapsamını belirle
+  const scope = event.participantScope || 
+    (event.playId ? 'PROJECT_MEMBERS' : (event.participants && event.participants.length > 0 ? 'SELECTED_USERS' : 'PROJECT_MEMBERS'));
+
+  // 1. Sadece Seçili Kullanıcılar (SELECTED_USERS)
+  if (scope === 'SELECTED_USERS') {
+    if (Array.isArray(event.participants) && event.participants.length > 0) {
+      return event.participants.some(p => p === uid || p.toLowerCase() === uEmail);
+    }
+    return false;
   }
 
-  // 2. Etkinlik bir oyuna/projeye bağlıysa, kullanıcı bu projenin kadrosunda mı?
-  if (event.playId) {
+  // 2. Proje / Oyun Kadrosu Üyeleri (PROJECT_MEMBERS)
+  if (scope === 'PROJECT_MEMBERS' && event.playId) {
     if (Array.isArray(user.assignedPlays) && user.assignedPlays.includes(event.playId)) {
       return true;
     }
@@ -215,10 +221,23 @@ export function isEventParticipant(
       );
       if (inCast) return true;
     }
+    // Katılımcı listesinde açıkça eklenmişse de izin ver
+    if (Array.isArray(event.participants) && event.participants.length > 0) {
+      return event.participants.some(p => p === uid || p.toLowerCase() === uEmail);
+    }
+    return false;
   }
 
-  // 3. Genel kulüp etkinliği ise ve katılımcı listesi kısıtlanmamışsa
-  if (!event.playId && (!event.participants || event.participants.length === 0)) {
+  // 3. Rol / Unvan Bazlı Kapsam (ROLE_BASED)
+  if (scope === 'ROLE_BASED') {
+    const targetRoles = Array.isArray(event.participants) ? event.participants : [];
+    if (user.role && targetRoles.includes(user.role)) return true;
+    if (Array.isArray(user.titles) && user.titles.some(t => targetRoles.includes(t))) return true;
+    return false;
+  }
+
+  // 4. Tüm Kulüp Üyeleri (Yalnızca açıkça ALL_MEMBERS olarak tanımlandıysa)
+  if (scope === 'ALL_MEMBERS') {
     return isActiveMember(user);
   }
 

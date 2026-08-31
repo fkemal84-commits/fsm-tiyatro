@@ -127,7 +127,7 @@ const tests: Array<{ name: string; test: () => boolean }> = [
     name: '13. QR Token üretimi ve HMAC imza doğrulaması geçerli token için true döner',
     test: () => {
       const secret = 'secret-key-12345';
-      const token = generateQRToken('ev-10', 'sess-10', secret, 1725000000000);
+      const token = generateQRToken('ev-10', 'sess-10', secret, Date.now());
       const res = verifyQRTokenSignature(token, secret);
       return res.valid && res.eventId === 'ev-10' && res.sessionId === 'sess-10';
     }
@@ -144,7 +144,7 @@ const tests: Array<{ name: string; test: () => boolean }> = [
     name: '15. Yanlış veya taklit QR secret ile token imzası geçersiz sayılır (Tamper protection)',
     test: () => {
       const secret = 'secret-real';
-      const token = generateQRToken('ev-10', 'sess-10', secret, 1725000000000);
+      const token = generateQRToken('ev-10', 'sess-10', secret, Date.now());
       const res = verifyQRTokenSignature(token, 'wrong-secret');
       return !res.valid;
     }
@@ -152,7 +152,7 @@ const tests: Array<{ name: string; test: () => boolean }> = [
   {
     name: '16. Başka bir etkinliğin QR tokenı farklı eventId taşır',
     test: () => {
-      const token = generateQRToken('ev-wrong', 'sess-1', 'sec', 1725000000000);
+      const token = generateQRToken('ev-wrong', 'sess-1', 'sec', Date.now());
       const res = verifyQRTokenSignature(token, 'sec');
       return res.valid && res.eventId === 'ev-wrong' && (res.eventId as string) !== 'ev-correct';
     }
@@ -214,6 +214,82 @@ const tests: Array<{ name: string; test: () => boolean }> = [
       const answeredSet = new Set(records.map(r => r.userId));
       const unanswered = allParticipants.filter(p => !answeredSet.has(p));
       return unanswered.length === 2 && unanswered.includes('u-3') && unanswered.includes('u-4');
+    }
+  },
+
+  // --- FAZ 1.6A İNCELEME & REFINEMENT EK SENARYOLARI ---
+  {
+    name: '21. Dönen (Rotating) QR Token TTL: 90 saniyeden eski token reddedilir',
+    test: () => {
+      const secret = 'secret-rotation-test';
+      const oldToken = generateQRToken('ev-1', 'sess-1', secret, Date.now() - 100000); // 100 sn önce üretilmiş
+      const freshToken = generateQRToken('ev-1', 'sess-1', secret, Date.now() - 10000); // 10 sn önce üretilmiş
+      
+      const oldCheck = verifyQRTokenSignature(oldToken, secret, 90000);
+      const freshCheck = verifyQRTokenSignature(freshToken, secret, 90000);
+
+      return oldCheck.valid === false && freshCheck.valid === true;
+    }
+  },
+  {
+    name: '22. ParticipantScope: ROLE_BASED kapsamı sadece hedef rolleri kabul eder',
+    test: () => {
+      const uActor = normalizeUser({ id: 'u-actor', role: 'AKTOR' });
+      const uSales = normalizeUser({ id: 'u-sales', role: 'SALES' });
+      const event: EventItem = {
+        id: 'ev-actor-only',
+        title: 'Oyunculuk Çalıştayı',
+        participantScope: 'ROLE_BASED',
+        participants: ['AKTOR', 'PLAYER'],
+        date: '2026-09-20',
+        location: 'Sahne',
+        createdAt: ''
+      };
+      return isEventParticipant(uActor, event) === true && isEventParticipant(uSales, event) === false;
+    }
+  },
+  {
+    name: '23. ParticipantScope: ALL_MEMBERS kapsamı aktif üyeleri kabul ederken misafiri reddeder',
+    test: () => {
+      const uActive = normalizeUser({ id: 'u-act', membership_status: 'ACTIVE' });
+      const uPending = normalizeUser({ id: 'u-pnd', membership_status: 'PENDING' });
+      const event: EventItem = {
+        id: 'ev-genel',
+        title: 'Genel Kurul',
+        participantScope: 'ALL_MEMBERS',
+        date: '2026-09-25',
+        location: 'Konferans Salonu',
+        createdAt: ''
+      };
+      return isEventParticipant(uActive, event) === true && isEventParticipant(uPending, event) === false;
+    }
+  },
+  {
+    name: '24. Manuel yoklama düzeltmesinde denetim (audit) alanları tamdır',
+    test: () => {
+      const record: AttendanceRecord = {
+        id: 'rec-1',
+        eventId: 'ev-1',
+        eventTitle: 'Prova',
+        sessionId: 'sess-1',
+        userId: 'u-1',
+        userName: 'Ahmet',
+        userEmail: 'ahmet@fsm.edu.tr',
+        status: 'EXCUSED',
+        verifiedAt: new Date().toISOString(),
+        verificationMethod: 'MANUAL',
+        excuseNote: 'Sınavı vardı',
+        previousStatus: 'NOT_ATTENDED',
+        modifiedBy: 'yonetmen@fsm.edu.tr',
+        modifiedAt: new Date().toISOString(),
+        createdAt: new Date().toISOString()
+      };
+      return (
+        record.status === 'EXCUSED' &&
+        record.previousStatus === 'NOT_ATTENDED' &&
+        Boolean(record.modifiedBy) &&
+        Boolean(record.modifiedAt)
+      );
     }
   }
 ];
