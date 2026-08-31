@@ -6,6 +6,7 @@ import Link from "next/link";
 import { OrganizationJsonLd } from "@/components/JsonLd";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
+import { formatAuthorSignature } from "@/lib/utils";
 
 export const dynamic = "force-dynamic";
 
@@ -211,7 +212,7 @@ export default async function Home() {
                   </p>
                 </div>
                 <div className="pt-3 border-t border-[var(--border-subtle)] flex items-center justify-between text-[11px] text-[var(--text-dim)]">
-                  <span>{p.author || 'FSM Tiyatro'}</span>
+                  <span>{formatAuthorSignature(p.author)}</span>
                   <span>{p.createdAt ? new Date(p.createdAt).toLocaleDateString('tr-TR') : ''}</span>
                 </div>
               </div>

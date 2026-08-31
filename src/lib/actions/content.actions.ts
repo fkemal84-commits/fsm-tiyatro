@@ -100,6 +100,100 @@ export async function deletePost(formData: FormData) {
   }
 }
 
+export async function updatePost(formData: FormData) {
+  let targetPostId = "";
+  try {
+    const postId = formData.get('postId') as string;
+    targetPostId = postId;
+    if (!postId) {
+      return { error: "Yazı ID'si bulunamadı." };
+    }
+
+    const title = formData.get('title') as string;
+    const content = formData.get('content') as string;
+    const excerpt = (formData.get('excerpt') as string) || content.slice(0, 160);
+    const category = (formData.get('category') as string) || 'Kulis';
+    const file = formData.get('image') as File | null;
+    const pdfFile = formData.get('pdf') as File | null;
+
+    const isAcademic = category === 'Makale' || formData.get('isAcademic') === 'true';
+    const abstract = (formData.get('abstract') as string) || excerpt;
+    const authorAffiliation = (formData.get('authorAffiliation') as string) || 'Fatih Sultan Mehmet Vakıf Üniversitesi';
+    const journalTitle = (formData.get('journalTitle') as string) || 'FSM Tiyatro ve Sahne Sanatları Güncesi';
+    const keywordsRaw = (formData.get('keywords') as string) || '';
+    const keywords = keywordsRaw ? keywordsRaw.split(',').map(k => k.trim()).filter(Boolean) : [];
+
+    if (!title || !content) {
+      return { error: "Başlık ve içerik alanları zorunludur." };
+    }
+
+    const { session, user } = await requireAuth(['SUPERADMIN', 'ADMIN', 'EDITOR', 'DIRECTOR', 'AKTOR', 'PLAYER', 'MEMBER']);
+    const postDoc = await adminDb.collection('posts').doc(postId).get();
+    if (!postDoc.exists) {
+      return { error: "Düzenlenmek istenen yazı bulunamadı." };
+    }
+
+    const postData = postDoc.data()!;
+    const isOwner = !!(postData.authorEmail && session?.user?.email && postData.authorEmail.toLowerCase() === session.user.email.toLowerCase());
+    const userTitles: string[] = Array.isArray(user.titles) ? user.titles : [];
+    const isAdmin = ['ADMIN', 'SUPERADMIN'].includes(user.role) || userTitles.some(t => t.includes('Admin') || t.includes('Yönetici'));
+
+    if (!isOwner && !isAdmin) {
+      return { error: "Bu yazıyı düzenleme yetkiniz bulunmamaktadır." };
+    }
+
+    let imageUrl = postData.imageUrl || null;
+    if (file && file.size > 0) {
+      if (postData.imageUrl) {
+        try {
+          await deleteStorageFile(postData.imageUrl);
+        } catch {}
+      }
+      imageUrl = await uploadToStorage(file, 'posts');
+    }
+
+    let pdfUrl = postData.academicMeta?.pdfUrl || null;
+    if (pdfFile && pdfFile.size > 0) {
+      if (postData.academicMeta?.pdfUrl) {
+        try {
+          await deleteStorageFile(postData.academicMeta.pdfUrl);
+        } catch {}
+      }
+      pdfUrl = await uploadToStorage(pdfFile, 'academic-papers');
+    }
+
+    const updatedData: Record<string, any> = {
+      title,
+      content,
+      excerpt,
+      category,
+      imageUrl: imageUrl || null,
+      academicMeta: isAcademic ? {
+        isAcademic: true,
+        abstract,
+        authorAffiliation,
+        journalTitle,
+        publisher: 'Fatih Sultan Mehmet Vakıf Üniversitesi',
+        keywords,
+        pdfUrl: pdfUrl || null,
+      } : null,
+      updatedAt: new Date().toISOString()
+    };
+
+    await postDoc.ref.update(updatedData);
+
+    revalidatePath('/');
+    revalidatePath('/kulis');
+    revalidatePath(`/kulis/${postId}`);
+    revalidatePath('/members');
+    revalidatePath('/sitemap.xml');
+  } catch (error) {
+    return handleServerError(error, "UPDATE_POST");
+  }
+  redirect(`/kulis/${targetPostId}`);
+}
+
+
 export async function addPlay(formData: FormData) {
   try {
     const title = formData.get('title') as string;

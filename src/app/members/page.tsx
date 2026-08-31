@@ -309,19 +309,28 @@ export default async function MembersDashboard() {
                 </span>
                 <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
                   {editorPosts.slice(0, 3).map((p: any) => (
-                    <Link
+                    <div
                       key={p.id}
-                      href={`/kulis/${p.id}`}
-                      className="p-3 bg-[var(--bg-surface-elevated)] hover:bg-[var(--primary-gold-dim)] border border-[var(--border-subtle)] hover:border-[var(--primary-gold-border)] rounded-xl transition-all block group"
+                      className="p-3 bg-[var(--bg-surface-elevated)] border border-[var(--border-subtle)] hover:border-[var(--primary-gold-border)] rounded-xl transition-all flex flex-col justify-between group"
                     >
-                      <span className="text-xs font-bold text-[var(--text-main)] group-hover:text-[var(--primary-gold)] line-clamp-1">
-                        {p.title}
-                      </span>
-                      <div className="flex items-center gap-3 text-[10px] text-[var(--text-dim)] mt-1.5 font-mono">
-                        <span>👁️ {p.views || 0} okuma</span>
-                        <span>❤️ {p.likes?.length || 0} beğeni</span>
+                      <Link href={`/kulis/${p.id}`} className="block">
+                        <span className="text-xs font-bold text-[var(--text-main)] group-hover:text-[var(--primary-gold)] line-clamp-1 transition-colors">
+                          {p.title}
+                        </span>
+                      </Link>
+                      <div className="flex items-center justify-between gap-2 mt-2 pt-2 border-t border-[var(--border-subtle)]">
+                        <div className="flex items-center gap-2 text-[10px] text-[var(--text-dim)] font-mono">
+                          <span>👁️ {p.views || 0}</span>
+                          <span>❤️ {p.likes?.length || 0}</span>
+                        </div>
+                        <Link
+                          href={`/kulis/${p.id}/duzenle`}
+                          className="text-[10px] font-bold text-[var(--primary-gold)] hover:underline flex items-center gap-1"
+                        >
+                          <ion-icon name="create-outline"></ion-icon> Düzenle
+                        </Link>
                       </div>
-                    </Link>
+                    </div>
                   ))}
                 </div>
               </div>

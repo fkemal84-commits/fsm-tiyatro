@@ -57,6 +57,10 @@ export async function addPost(formData: FormData) {
   return contentActions.addPost(formData);
 }
 
+export async function updatePost(formData: FormData) {
+  return contentActions.updatePost(formData);
+}
+
 export async function deletePost(formData: FormData) {
   return contentActions.deletePost(formData);
 }

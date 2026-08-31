@@ -3,6 +3,7 @@ import { Metadata } from 'next';
 import Image from 'next/image';
 import Link from 'next/link';
 import { BreadcrumbsJsonLd } from '@/components/JsonLd';
+import { formatAuthorSignature } from '@/lib/utils';
 
 export const dynamic = "force-dynamic";
 
@@ -118,7 +119,7 @@ export default async function KulisPage() {
 
                 <div className="pt-4 border-t border-[var(--border-subtle)] flex items-center justify-between text-xs">
                   <span className="text-[var(--text-dim)]">
-                    🖋️ {post.author || 'FSM Tiyatro'}
+                    🖋️ {formatAuthorSignature(post.author)}
                   </span>
                   <Link
                     href={`/kulis/${post.id}`}

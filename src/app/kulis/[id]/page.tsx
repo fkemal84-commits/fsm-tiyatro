@@ -8,6 +8,7 @@ import { authOptions } from "@/lib/auth";
 import BlogInteractions from '@/components/BlogInteractions';
 import CitationBox from '@/components/CitationBox';
 import { ArticleJsonLd, BreadcrumbsJsonLd } from '@/components/JsonLd';
+import { formatAuthorSignature } from '@/lib/utils';
 
 export const dynamic = "force-dynamic";
 
@@ -86,6 +87,13 @@ export default async function KulisDetailPage({ params }: { params: Promise<{ id
 
   const isAcademic = post.category === 'Makale' || post.academicMeta?.isAcademic === true;
 
+  const role = (session?.user as any)?.role;
+  const userTitles: string[] = (session?.user as any)?.titles || [];
+  const userEmail = session?.user?.email?.toLowerCase();
+  const isOwner = !!(post.authorEmail && userEmail && post.authorEmail.toLowerCase() === userEmail);
+  const isAdmin = ['ADMIN', 'SUPERADMIN'].includes(role) || userTitles.some((t: string) => t.includes('Admin') || t.includes('Yönetici'));
+  const canEdit = isOwner || isAdmin;
+
   return (
     <div className="min-h-screen bg-[var(--bg-dark)] pt-24 pb-16 sm:pt-32 sm:pb-24">
       {/* Yapısal Veri (JSON-LD) */}
@@ -100,13 +108,25 @@ export default async function KulisDetailPage({ params }: { params: Promise<{ id
 
       <div className="max-w-3xl mx-auto px-4 sm:px-6">
         
-        {/* Üst Geri Butonu */}
-        <Link 
-          href="/kulis" 
-          className="text-xs font-bold text-[var(--text-muted)] hover:text-[var(--primary-gold)] uppercase tracking-wider inline-flex items-center gap-1.5 mb-6 sm:mb-8 transition-colors"
-        >
-          <ion-icon name="arrow-back-outline"></ion-icon> Kulis Yazılarına Dön
-        </Link>
+        {/* Üst Geri & Düzenle Butonları */}
+        <div className="flex items-center justify-between gap-4 mb-6 sm:mb-8">
+          <Link 
+            href="/kulis" 
+            className="text-xs font-bold text-[var(--text-muted)] hover:text-[var(--primary-gold)] uppercase tracking-wider inline-flex items-center gap-1.5 transition-colors"
+          >
+            <ion-icon name="arrow-back-outline"></ion-icon> Kulis Yazılarına Dön
+          </Link>
+
+          {canEdit && (
+            <Link
+              href={`/kulis/${post.id}/duzenle`}
+              className="inline-flex items-center gap-1.5 px-3.5 py-1.5 bg-[var(--primary-gold-dim)] hover:bg-[var(--primary-gold)] text-[var(--primary-gold)] hover:text-black border border-[var(--primary-gold-border)] rounded-lg text-xs font-bold transition-all shadow-sm flex-shrink-0"
+            >
+              <ion-icon name="create-outline"></ion-icon>
+              <span>Yazıyı Düzenle</span>
+            </Link>
+          )}
+        </div>
 
         {/* Yazı Kartı */}
         <article className="editorial-card p-5 sm:p-8 md:p-12 bg-[var(--bg-surface)]">
@@ -116,7 +136,7 @@ export default async function KulisDetailPage({ params }: { params: Promise<{ id
               {post.category || 'Kulis'}
             </span>
             <span>
-              {post.author ? `🖋️ ${post.author}` : 'FSM Tiyatro'} &bull; {post.createdAt ? new Date(post.createdAt).toLocaleDateString('tr-TR', { day: 'numeric', month: 'long', year: 'numeric' }) : ''}
+              🖋️ {formatAuthorSignature(post.author)} &bull; {post.createdAt ? new Date(post.createdAt).toLocaleDateString('tr-TR', { day: 'numeric', month: 'long', year: 'numeric' }) : ''}
             </span>
           </div>
 
