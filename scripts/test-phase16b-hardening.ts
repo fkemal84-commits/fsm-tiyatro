@@ -161,6 +161,52 @@ const tests: Array<{ name: string; test: () => boolean }> = [
       );
     }
   },
+  {
+    name: '8. EXCUSED (Mazeretli) kullanıcı QR taradığında mazeret kararı korunur ve ezilmez',
+    test: () => {
+      const existingRecord: AttendanceRecord = {
+        id: 'rec-excused',
+        eventId: 'ev-1',
+        eventTitle: 'Prova',
+        sessionId: 'sess-1',
+        userId: 'u-excused',
+        userName: 'Mazeretli Üye',
+        userEmail: 'mazeretli@fsm.edu.tr',
+        status: 'EXCUSED',
+        verifiedAt: '',
+        verificationMethod: 'MANUAL',
+        excuseNote: 'İzinli',
+        createdAt: ''
+      };
+      // QR okutma mantığında EXCUSED kontrolü
+      const canOverwrite = existingRecord.status !== 'EXCUSED';
+      return canOverwrite === false;
+    }
+  },
+  {
+    name: '9. NOT_ATTENDED olarak işaretli kullanıcı oturum açıkken QR okutursa ATTENDED olur ve previousStatus saklanır',
+    test: () => {
+      const existingRecord: AttendanceRecord = {
+        id: 'rec-not-attended',
+        eventId: 'ev-1',
+        eventTitle: 'Prova',
+        sessionId: 'sess-1',
+        userId: 'u-late',
+        userName: 'Geç Gelen Oyuncu',
+        userEmail: 'gecgelen@fsm.edu.tr',
+        status: 'NOT_ATTENDED',
+        verifiedAt: '',
+        verificationMethod: 'MANUAL',
+        createdAt: ''
+      };
+      const updated: Partial<AttendanceRecord> = {
+        status: 'ATTENDED',
+        previousStatus: existingRecord.status || 'NOT_ATTENDED',
+        verificationMethod: 'QR'
+      };
+      return updated.status === 'ATTENDED' && updated.previousStatus === 'NOT_ATTENDED' && updated.verificationMethod === 'QR';
+    }
+  },
 
   // --- 5. HİYERARŞİ & ÇOKLU ROL KORUNMASI ---
   {

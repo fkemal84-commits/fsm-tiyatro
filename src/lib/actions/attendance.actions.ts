@@ -210,7 +210,7 @@ export async function verifyAttendanceViaQR(token: string) {
       return { error: "Bu etkinliğin / provanın katılımcı kadrosunda yer almıyorsunuz." };
     }
 
-    // Daha önce bu oturum için katılım kaydı var mı kontrol et (Duplicate prevention)
+    // Daha önce bu oturum için katılım kaydı var mı kontrol et (Duplicate & Override prevention)
     const existingRecordSnap = await adminDb.collection('attendance_records')
       .where('sessionId', '==', sessionId)
       .where('userId', '==', uid)
@@ -218,39 +218,48 @@ export async function verifyAttendanceViaQR(token: string) {
       .get();
 
     if (!existingRecordSnap.empty) {
-      const existing = existingRecordSnap.docs[0].data() as AttendanceRecord;
+      const existingDoc = existingRecordSnap.docs[0];
+      const existing = existingDoc.data() as AttendanceRecord;
+
       if (existing.status === 'ATTENDED') {
         return { success: true, message: "Yoklamanız zaten doğrulanmış durumdadır." };
       }
-    }
 
-    // Katılım kaydını oluştur / güncelle
-    const recordData: Omit<AttendanceRecord, 'id'> = {
-      eventId,
-      eventTitle: eventData.title,
-      sessionId,
-      userId: uid,
-      userName: [user.name, user.surname].filter(Boolean).join(' ') || user.email,
-      userEmail: user.email,
-      status: 'ATTENDED',
-      verifiedAt: new Date().toISOString(),
-      verificationMethod: 'QR',
-      excuseNote: null,
-      modifiedBy: null,
-      modifiedAt: null,
-      previousStatus: null,
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString()
-    };
+      // Yönetici tarafından EXCUSED (Mazeretli) olarak işlenmişse QR ile ezilemez
+      if (existing.status === 'EXCUSED') {
+        return {
+          error: "Yoklama durumunuz yönetici tarafından mazeretli (EXCUSED) olarak işlenmiştir ve QR ile değiştirilemez."
+        };
+      }
 
-    if (!existingRecordSnap.empty) {
-      await existingRecordSnap.docs[0].ref.update({
+      // Önceden NOT_ATTENDED girilmişse ve oturum hâlâ açıksa QR ile ATTENDED'a güncelle
+      await existingDoc.ref.update({
         status: 'ATTENDED',
+        previousStatus: existing.status || 'NOT_ATTENDED',
         verificationMethod: 'QR',
         verifiedAt: new Date().toISOString(),
         updatedAt: new Date().toISOString()
       });
     } else {
+      // Katılım kaydını oluştur
+      const recordData: Omit<AttendanceRecord, 'id'> = {
+        eventId,
+        eventTitle: eventData.title,
+        sessionId,
+        userId: uid,
+        userName: [user.name, user.surname].filter(Boolean).join(' ') || user.email,
+        userEmail: user.email,
+        status: 'ATTENDED',
+        verifiedAt: new Date().toISOString(),
+        verificationMethod: 'QR',
+        excuseNote: null,
+        modifiedBy: null,
+        modifiedAt: null,
+        previousStatus: null,
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString()
+      };
+
       await adminDb.collection('attendance_records').add(recordData);
     }
 
