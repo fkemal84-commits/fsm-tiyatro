@@ -4,7 +4,7 @@ import { adminDb } from '@/lib/firebase-admin';
 import { revalidatePath } from 'next/cache';
 import { requireAuth, handleServerError } from './common';
 import { canManageEvent, isEventParticipant, isAdmin } from '@/lib/auth-helpers';
-import { EventItem, EventType, ParticipantScope } from '@/types/domain';
+import { EventItem, EventType, ParticipantScope, EventVisibility } from '@/types/domain';
 
 /**
  * Yeni bir Etkinlik veya Prova oluşturur.
@@ -23,6 +23,8 @@ export async function createEvent(formData: FormData) {
     const playTitle = (formData.get('playTitle') as string) || null;
     const notes = ((formData.get('notes') as string) || '').trim();
     const explicitScope = formData.get('participantScope') as ParticipantScope;
+    const explicitVisibility = formData.get('visibility') as EventVisibility;
+    const visibility: EventVisibility = explicitVisibility || (type === 'PROVA' ? 'PRIVATE' : (type === 'OYUN' || type === 'ATOLYE' || type === 'BULUSMA' ? 'PUBLIC' : 'PRIVATE'));
     
     // Biletleme alanları
     const isTicketed = formData.get('isTicketed') === 'true' || formData.get('isTicketed') === 'on';
@@ -85,6 +87,7 @@ export async function createEvent(formData: FormData) {
     const newEvent: Omit<EventItem, 'id'> = {
       title,
       type,
+      visibility,
       participantScope,
       date: dateTimeStr,
       time: eventTime || undefined,
@@ -217,6 +220,7 @@ export async function migrateLegacyRehearsalsToEvents(): Promise<{ migratedCount
     await adminDb.collection('events').doc(rDoc.id).set({
       title: rData.title,
       type: 'PROVA',
+      visibility: 'PRIVATE',
       participantScope,
       date: rData.date || 'Tarih Belirtilmedi',
       location: rData.location || 'Haliç Yerleşkesi',

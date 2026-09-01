@@ -5,7 +5,10 @@ service cloud.firestore {
     // 1. GENEL İÇERİK OKUMA İZİNLERİ
     match /posts/{doc} { allow read: if true; }
     match /plays/{doc} { allow read: if true; }
-    match /events/{doc} { allow read: if true; }
+    match /events/{doc} { 
+      allow read: if resource.data.visibility == 'PUBLIC' || (request.auth != null); 
+      allow write: if false;
+    }
     match /teamNeeds/{doc} { allow read: if true; }
     match /settings/{doc} { allow read: if true; }
     
@@ -17,6 +20,10 @@ service cloud.firestore {
     match /attendance_records/{doc} { 
       allow read: if request.auth != null; 
       allow write: if false; // Yalnızca Server Actions (Admin SDK)
+    }
+    match /attendance_secrets/{doc} { 
+      allow read: if false; // Server-only secret (İstemci asla okuyamaz)
+      allow write: if false; 
     }
     
     // 3. BİLDİRİMLER VE KULLANICI VERİLERİ (Kişiye Özel İzolasyon)

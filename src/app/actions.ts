@@ -273,6 +273,10 @@ export async function closeAttendanceSession(sessionId: string) {
   return attendanceActions.closeAttendanceSession(sessionId);
 }
 
+export async function getLiveAttendanceQRToken(sessionId: string) {
+  return attendanceActions.getLiveAttendanceQRToken(sessionId);
+}
+
 export async function verifyAttendanceViaQR(token: string) {
   return attendanceActions.verifyAttendanceViaQR(token);
 }

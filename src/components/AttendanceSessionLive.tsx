@@ -2,11 +2,11 @@
 
 import { useState, useEffect } from 'react';
 import QRCode from 'react-qr-code';
-import { generateQRToken } from '@/lib/qr-helpers';
 import {
   closeAttendanceSession,
   nudgeUnansweredParticipants,
-  recordManualAttendance
+  recordManualAttendance,
+  getLiveAttendanceQRToken
 } from '@/app/actions';
 import { db } from '@/lib/firebase';
 import { collection, query, where, onSnapshot } from 'firebase/firestore';
@@ -44,19 +44,33 @@ export default function AttendanceSessionLive({ session, event, participants, ca
     return () => unsubscribe();
   }, [session?.id]);
 
-  // QR Kodunu her 45 saniyede bir imzalı olarak tazele (Rotating QR)
+  // QR Kodunu sunucudan her 40 saniyede bir imzalı olarak tazele (Server-Signed Rotating QR - Secret asla istemciye verilmez)
   useEffect(() => {
-    if (!session?.id || !session?.qrSecret) return;
+    if (!session?.id || !canManage) return;
 
-    const refreshQR = () => {
-      const freshToken = generateQRToken(session.eventId, session.id, session.qrSecret, Date.now());
-      setCurrentToken(freshToken);
+    let isMounted = true;
+    const refreshQR = async () => {
+      try {
+        const res = await getLiveAttendanceQRToken(session.id);
+        if (res && res.success && res.token && isMounted) {
+          setCurrentToken(res.token);
+        }
+      } catch (err) {
+        console.error("Canlı QR alma hatası:", err);
+      }
     };
 
-    refreshQR();
-    const interval = setInterval(refreshQR, 45000);
-    return () => clearInterval(interval);
-  }, [session?.id, session?.eventId, session?.qrSecret]);
+    // İlk yüklemede mevcut token yoksa hemen çek
+    if (!currentToken) {
+      refreshQR();
+    }
+
+    const interval = setInterval(refreshQR, 40000);
+    return () => {
+      isMounted = false;
+      clearInterval(interval);
+    };
+  }, [session?.id, canManage, currentToken]);
 
   const handleNudge = async () => {
     setNudgeLoading(true);

@@ -47,12 +47,14 @@ export async function openAttendanceSession(eventId: string, durationMinutes = 2
     for (const doc of existingSnap.docs) {
       const sData = doc.data() as AttendanceSession;
       if (sData.expiresAt > now) {
-        // Zaten süresi dolmamış aktif bir oturum var, onu dön
-        const currentToken = generateQRToken(eventId, doc.id, sData.qrSecret);
+        // Zaten süresi dolmamış aktif bir oturum var
+        const secretDoc = await adminDb.collection('attendance_secrets').doc(doc.id).get();
+        const existingSecret = secretDoc.data()?.qrSecret || (sData as any).qrSecret;
+        const currentToken = existingSecret ? generateQRToken(eventId, doc.id, existingSecret, now) : '';
+
         return {
           success: true,
           sessionId: doc.id,
-          qrSecret: sData.qrSecret,
           token: currentToken,
           expiresAt: sData.expiresAt,
           message: "Mevcut aktif yoklama oturumu gösteriliyor."
@@ -76,13 +78,21 @@ export async function openAttendanceSession(eventId: string, durationMinutes = 2
       openedAt: new Date().toISOString(),
       closedAt: null,
       expiresAt,
-      qrSecret,
       lastNudgeAt: null,
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString()
     };
 
     const sessionRef = await adminDb.collection('attendance_sessions').add(sessionData);
+
+    // Gizli anahtarı yalnızca sunucu erişimine açık private koleksiyonda sakla
+    await adminDb.collection('attendance_secrets').doc(sessionRef.id).set({
+      sessionId: sessionRef.id,
+      eventId,
+      qrSecret,
+      createdAt: new Date().toISOString()
+    });
+
     const token = generateQRToken(eventId, sessionRef.id, qrSecret, now);
 
     // Katılımcılara bildirim gönder (Attendance oluşmaz, sadece haber verilir)
@@ -95,13 +105,56 @@ export async function openAttendanceSession(eventId: string, durationMinutes = 2
     return {
       success: true,
       sessionId: sessionRef.id,
-      qrSecret,
       token,
       expiresAt,
       message: "Yoklama oturumu başarıyla başlatıldı."
     };
   } catch (error) {
     return handleServerError(error, "OPEN_ATTENDANCE_SESSION");
+  }
+}
+
+/**
+ * Canlı Oturum Projeksiyonu için Sunucu Tarafında İmzalı Dynamic QR Token Üretir.
+ * (Yalnızca yetkili yönetmen/admin çağırabilir; qrSecret asla istemciye verilmez)
+ */
+export async function getLiveAttendanceQRToken(sessionId: string): Promise<{ success: boolean; token?: string; error?: string; expiresAt?: number }> {
+  try {
+    const { user } = await requireAuth(['SUPERADMIN', 'ADMIN', 'DIRECTOR', 'ASST_DIRECTOR']);
+    if (!sessionId) return { success: false, error: "Oturum ID gereklidir." };
+
+    const sessionDoc = await adminDb.collection('attendance_sessions').doc(sessionId).get();
+    if (!sessionDoc.exists) return { success: false, error: "Yoklama oturumu bulunamadı." };
+
+    const sessionData = sessionDoc.data() as AttendanceSession;
+    if (sessionData.status !== 'OPEN' || sessionData.expiresAt <= Date.now()) {
+      return { success: false, error: "Yoklama oturumu kapalı veya süresi dolmuş." };
+    }
+
+    const eventDoc = await adminDb.collection('events').doc(sessionData.eventId).get();
+    if (!eventDoc.exists) return { success: false, error: "Etkinlik bulunamadı." };
+
+    const eventData = eventDoc.data() as EventItem;
+    if (!canManageEvent(user, eventData)) {
+      return { success: false, error: "Bu oturum için QR üretme yetkiniz yoktur." };
+    }
+
+    // Server-only secret'ı oku
+    const secretDoc = await adminDb.collection('attendance_secrets').doc(sessionId).get();
+    const qrSecret = secretDoc.data()?.qrSecret || (sessionData as any).qrSecret;
+    if (!qrSecret) return { success: false, error: "Oturum gizli anahtarı bulunamadı." };
+
+    const now = Date.now();
+    const token = generateQRToken(sessionData.eventId, sessionId, qrSecret, now);
+
+    return {
+      success: true,
+      token,
+      expiresAt: now + 90000
+    };
+  } catch (error) {
+    console.error("[GET_LIVE_ATTENDANCE_QR_TOKEN] Hata:", error);
+    return { success: false, error: "QR üretilemedi." };
   }
 }
 
@@ -188,8 +241,15 @@ export async function verifyAttendanceViaQR(token: string) {
       return { error: "Yoklama oturumunun süresi dolmuştur." };
     }
 
-    // QR Token imzasını ve 90sn TTL'ini oturumun qrSecret'ı ile doğrula
-    const signatureCheck = verifyQRTokenSignature(token, sessionData.qrSecret, 90000);
+    // Server-only private secret dokümanından qrSecret'ı oku
+    const secretDoc = await adminDb.collection('attendance_secrets').doc(sessionId).get();
+    const qrSecret = secretDoc.data()?.qrSecret || (sessionData as any).qrSecret;
+    if (!qrSecret) {
+      return { error: "Yoklama oturumunun güvenlik anahtarı bulunamadı." };
+    }
+
+    // QR Token imzasını ve 90sn TTL'ini doğrula
+    const signatureCheck = verifyQRTokenSignature(token, qrSecret, 90000);
     if (!signatureCheck.valid) {
       return { error: signatureCheck.error || "Geçersiz veya süresi dolmuş QR güvenlik imzası." };
     }

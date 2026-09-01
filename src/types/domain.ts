@@ -135,10 +135,13 @@ export type ParticipantScope =
   | 'SELECTED_USERS'
   | 'ROLE_BASED';
 
+export type EventVisibility = 'PUBLIC' | 'PRIVATE';
+
 export interface EventItem {
   id: string;
   title: string;
   type?: EventType;
+  visibility?: EventVisibility;
   participantScope?: ParticipantScope;
   instructor?: string | null;
   date: string;
@@ -174,7 +177,7 @@ export interface AttendanceSession {
   openedAt: string;
   closedAt?: string | null;
   expiresAt: number;
-  qrSecret: string;
+  qrSecret?: string;
   lastNudgeAt?: string | null;
   createdAt: string;
   updatedAt?: string;

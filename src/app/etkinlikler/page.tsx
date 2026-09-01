@@ -23,7 +23,21 @@ export default async function EtkinliklerPage() {
 
   try {
     const snap = await adminDb.collection('events').orderBy('createdAt', 'desc').get();
-    events = snap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+    events = snap.docs
+      .map(doc => ({ id: doc.id, ...doc.data() as any }))
+      .filter(ev => ev.visibility === 'PUBLIC' || (!ev.visibility && ev.type !== 'PROVA'))
+      .map(ev => ({
+        id: ev.id,
+        title: ev.title,
+        type: ev.type,
+        date: ev.date,
+        time: ev.time,
+        location: ev.location,
+        description: ev.description,
+        isTicketed: ev.isTicketed,
+        ticketQuota: ev.ticketQuota,
+        reservedCount: ev.reservedCount
+      }));
 
     // Eğer kullanıcı giriş yapmışsa bu etkinlikler için aktif bilet rezervasyonlarını çek
     if (isLoggedIn && session?.user?.email) {

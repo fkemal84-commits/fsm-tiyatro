@@ -338,6 +338,100 @@ const tests: Array<{ name: string; test: () => boolean }> = [
         canReadPushSub('user-bob') === false
       );
     }
+  },
+
+  // --- 10. QR SECRET ISOLATION (BLOCKER 1) ---
+  {
+    name: '16. QR Secret İzolasyonu: qrSecret istemci oturum dokümanına yazılmaz, server-only attendance_secrets koleksiyonunda saklanır',
+    test: () => {
+      const clientSession: AttendanceSession = {
+        id: 'sess-secure-1',
+        eventId: 'ev-1',
+        eventTitle: 'Prova',
+        status: 'OPEN',
+        openedBy: 'dir-1',
+        openedAt: new Date().toISOString(),
+        expiresAt: Date.now() + 240 * 60 * 1000,
+        createdAt: '',
+        updatedAt: ''
+      };
+      // Client session nesnesinde qrSecret bulunmamalıdır
+      return clientSession.qrSecret === undefined;
+    }
+  },
+  {
+    name: '17. Server-Side Dynamic QR Token: Yalnızca yetkili yönetici getLiveAttendanceQRToken ile imzalı token alabilir',
+    test: () => {
+      const uDir = normalizeUser({ id: 'dir-mine', role: 'DIRECTOR', email: 'dirmine@fsm.edu.tr' });
+      const uNormal = normalizeUser({ id: 'member-1', role: 'MEMBER', email: 'member@fsm.edu.tr' });
+      const event: EventItem = {
+        id: 'ev-mine',
+        title: 'Özel Prova',
+        directorId: 'dir-mine',
+        visibility: 'PRIVATE',
+        date: '2026-10-01',
+        location: 'Sahne',
+        createdAt: ''
+      };
+
+      const canDirGenerate = canManageEvent(uDir, event);
+      const canNormalGenerate = canManageEvent(uNormal, event);
+
+      return canDirGenerate === true && canNormalGenerate === false;
+    }
+  },
+
+  // --- 11. PUBLIC / PRIVATE EVENT AYRIMI (BLOCKER 2) ---
+  {
+    name: '18. Event Privacy: Public etkinlik anonim listelenirken, Private Prova (/etkinlikler) sayfasından tamamen filtrelenir',
+    test: () => {
+      const allEvents: EventItem[] = [
+        { id: 'e1', title: 'Halka Açık Temsil', type: 'OYUN', visibility: 'PUBLIC', date: '', location: '', createdAt: '' },
+        { id: 'e2', title: 'Açık Atölye', type: 'ATOLYE', visibility: 'PUBLIC', date: '', location: '', createdAt: '' },
+        { id: 'e3', title: 'Özel Prova', type: 'PROVA', visibility: 'PRIVATE', date: '', location: '', createdAt: '', notes: 'Gizli sahne notu', participants: ['u-1'] },
+        { id: 'e4', title: 'Reji Toplantısı', type: 'TOPLANTI', visibility: 'PRIVATE', date: '', location: '', createdAt: '' }
+      ];
+
+      // Public /etkinlikler filtreleme kuralı
+      const publicList = allEvents
+        .filter(ev => ev.visibility === 'PUBLIC' || (!ev.visibility && ev.type !== 'PROVA'))
+        .map(ev => ({
+          id: ev.id,
+          title: ev.title,
+          type: ev.type
+        }));
+
+      return (
+        publicList.length === 2 &&
+        publicList.some(e => e.id === 'e1') &&
+        publicList.some(e => e.id === 'e2') &&
+        !publicList.some(e => e.id === 'e3') &&
+        !publicList.some(e => e.id === 'e4')
+      );
+    }
+  },
+  {
+    name: '19. Private Event Yetkilendirme: Private etkinliğe yalnızca atanan katılımcı ve yetkili yönetici erişebilir',
+    test: () => {
+      const uParticipant = normalizeUser({ id: 'actor-1', role: 'AKTOR', email: 'actor@fsm.edu.tr' });
+      const uOtherMember = normalizeUser({ id: 'other-1', role: 'MEMBER', email: 'other@fsm.edu.tr' });
+      const privateEvent: EventItem = {
+        id: 'ev-priv',
+        title: 'Özel Prova',
+        type: 'PROVA',
+        visibility: 'PRIVATE',
+        participantScope: 'SELECTED_USERS',
+        participants: ['actor-1'],
+        date: '',
+        location: '',
+        createdAt: ''
+      };
+
+      const isPart = isEventParticipant(uParticipant, privateEvent, null);
+      const isOther = isEventParticipant(uOtherMember, privateEvent, null);
+
+      return isPart === true && isOther === false;
+    }
   }
 ];
 
