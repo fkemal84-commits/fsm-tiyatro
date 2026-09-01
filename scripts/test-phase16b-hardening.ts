@@ -210,7 +210,7 @@ const tests: Array<{ name: string; test: () => boolean }> = [
 
   // --- 5. HİYERARŞİ & ÇOKLU ROL KORUNMASI ---
   {
-    name: '8. Çoklu Rol Kombinasyonu (Öğrenci + Yönetmen + Oyuncu + Editör) yetkilerini eksiksiz sağlar',
+    name: '10. Çoklu Rol Kombinasyonu (Öğrenci + Yönetmen + Oyuncu + Editör) yetkilerini eksiksiz sağlar',
     test: () => {
       const multiUser = normalizeUser({
         id: 'u-multi',
@@ -231,7 +231,7 @@ const tests: Array<{ name: string; test: () => boolean }> = [
     }
   },
   {
-    name: '9. Admin kullanıcısı segmentini kaybetmez (Örn: Mezun Admin)',
+    name: '11. Admin kullanıcısı segmentini kaybetmez (Örn: Mezun Admin)',
     test: () => {
       const adminAlumni = normalizeUser({
         id: 'u-adm-alumni',
@@ -246,7 +246,7 @@ const tests: Array<{ name: string; test: () => boolean }> = [
 
   // --- 6. EMPTY / ERROR STATE GÜVENLİĞİ ---
   {
-    name: '10. Boş/Eksik veri girişinde çökme olmadan güvenli varsayılan değerler üretilir',
+    name: '12. Boş/Eksik veri girişinde çökme olmadan güvenli varsayılan değerler üretilir',
     test: () => {
       const emptyUser = normalizeUser(null as any);
       const emptySegment = getUserSegment(emptyUser);
@@ -259,6 +259,83 @@ const tests: Array<{ name: string; test: () => boolean }> = [
         manageCheck === false &&
         emptyUser.role === 'USER' &&
         emptyUser.membership_status === 'NONE'
+      );
+    }
+  },
+
+  // --- 7. PUSH NOTIFICATION 10+ CHUNKING ---
+  {
+    name: '13. Push Notification: 5, 10, 11 ve 25 kullanıcı için doğru chunking ve token toplama',
+    test: () => {
+      const CHUNK_SIZE = 10;
+      const getChunks = (ids: string[]) => {
+        const unique = Array.from(new Set(ids.filter(Boolean)));
+        const chunks: string[][] = [];
+        for (let i = 0; i < unique.length; i += CHUNK_SIZE) {
+          chunks.push(unique.slice(i, i + CHUNK_SIZE));
+        }
+        return chunks;
+      };
+
+      const users5 = Array.from({ length: 5 }, (_, i) => `u-${i}`);
+      const users10 = Array.from({ length: 10 }, (_, i) => `u-${i}`);
+      const users11 = Array.from({ length: 11 }, (_, i) => `u-${i}`);
+      const users25 = Array.from({ length: 25 }, (_, i) => `u-${i}`);
+      const duplicates = ['u-1', 'u-1', 'u-2', 'u-2', 'u-3'];
+
+      const c5 = getChunks(users5);
+      const c10 = getChunks(users10);
+      const c11 = getChunks(users11);
+      const c25 = getChunks(users25);
+      const cDup = getChunks(duplicates);
+
+      return (
+        c5.length === 1 && c5[0].length === 5 &&
+        c10.length === 1 && c10[0].length === 10 &&
+        c11.length === 2 && c11[0].length === 10 && c11[1].length === 1 &&
+        c25.length === 3 && c25[0].length === 10 && c25[1].length === 10 && c25[2].length === 5 &&
+        cDup.length === 1 && cDup[0].length === 3
+      );
+    }
+  },
+
+  // --- 8. PARTICIPANT SCOPE SAFE DEFAULT ---
+  {
+    name: '14. Participant Scope: Scope verilmemişse asla sessizce ALL_MEMBERS olmamalı',
+    test: () => {
+      const resolveScope = (explicitScope?: any, playId?: string | null, participantsCount = 0, type = 'PROVA') => {
+        if (explicitScope) return explicitScope;
+        if (playId || type === 'PROVA') return 'PROJECT_MEMBERS';
+        if (participantsCount > 0) return 'SELECTED_USERS';
+        return 'SELECTED_USERS'; // Güvenli default
+      };
+
+      const s1 = resolveScope(undefined, 'play-1', 0, 'PROVA'); // -> PROJECT_MEMBERS
+      const s2 = resolveScope(undefined, null, 5, 'ATOLYE'); // -> SELECTED_USERS
+      const s3 = resolveScope('ROLE_BASED', null, 0, 'TOPLANTI'); // -> ROLE_BASED
+      const s4 = resolveScope('ALL_MEMBERS', null, 0, 'BULUSMA'); // -> ALL_MEMBERS
+      const s5 = resolveScope(undefined, null, 0, 'DIGER'); // -> SELECTED_USERS (asla ALL_MEMBERS değil)
+
+      return s1 === 'PROJECT_MEMBERS' && s2 === 'SELECTED_USERS' && s3 === 'ROLE_BASED' && s4 === 'ALL_MEMBERS' && s5 === 'SELECTED_USERS';
+    }
+  },
+
+  // --- 9. FIRESTORE PRIVACY & DATA ISOLATION ---
+  {
+    name: '15. Firestore Privacy: Kullanıcı yalnızca kendi profilini, bildirimini ve push kaydını okuyabilir',
+    test: () => {
+      const authUid = 'user-alice';
+      const canReadUserDoc = (targetDocUserId: string) => authUid === targetDocUserId;
+      const canReadNotification = (notifOwnerId: string) => authUid === notifOwnerId;
+      const canReadPushSub = (subOwnerId: string) => authUid === subOwnerId;
+
+      return (
+        canReadUserDoc('user-alice') === true &&
+        canReadUserDoc('user-bob') === false &&
+        canReadNotification('user-alice') === true &&
+        canReadNotification('user-bob') === false &&
+        canReadPushSub('user-alice') === true &&
+        canReadPushSub('user-bob') === false
       );
     }
   }

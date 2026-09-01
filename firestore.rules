@@ -19,9 +19,9 @@ service cloud.firestore {
       allow write: if false; // Yalnızca Server Actions (Admin SDK)
     }
     
-    // 3. BİLDİRİMLER VE KULLANICI VERİLERİ
+    // 3. BİLDİRİMLER VE KULLANICI VERİLERİ (Kişiye Özel İzolasyon)
     match /users/{userId} {
-      allow read: if request.auth != null; 
+      allow read: if request.auth != null && request.auth.uid == userId; 
       allow write: if false; // Yalnızca Server Actions (Admin SDK)
     }
     match /notifications/{notifId} {

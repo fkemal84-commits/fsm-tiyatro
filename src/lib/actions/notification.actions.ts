@@ -77,23 +77,41 @@ export async function sendAppNotification(payload: SendNotificationPayload): Pro
 
     await batch.commit();
 
-    // Push Bildirimi Gönder (Canonical push_subscriptions koleksiyonundan oku)
+    // Push Bildirimi Gönder (Canonical push_subscriptions koleksiyonundan chunk'lar halinde oku)
     if (sendPush && adminMessaging && uniqueUserIds.length > 0) {
       try {
-        const subsSnap = await adminDb.collection('push_subscriptions')
-          .where('userId', 'in', uniqueUserIds.slice(0, 10))
-          .get();
+        const CHUNK_SIZE = 10;
+        const userChunks: string[][] = [];
+        for (let i = 0; i < uniqueUserIds.length; i += CHUNK_SIZE) {
+          userChunks.push(uniqueUserIds.slice(i, i + CHUNK_SIZE));
+        }
 
-        const deviceTokens: string[] = subsSnap.docs
-          .map(d => d.data().token)
-          .filter(Boolean);
+        const chunkSnaps = await Promise.all(
+          userChunks.map(chunk =>
+            adminDb.collection('push_subscriptions')
+              .where('userId', 'in', chunk)
+              .get()
+          )
+        );
+
+        const deviceTokens: string[] = [];
+        chunkSnaps.forEach(snap => {
+          snap.docs.forEach(d => {
+            const token = d.data()?.token;
+            if (token) deviceTokens.push(token);
+          });
+        });
 
         const uniqueTokens = Array.from(new Set(deviceTokens));
         if (uniqueTokens.length > 0) {
-          await adminMessaging.sendEachForMulticast({
-            notification: { title, body },
-            tokens: uniqueTokens
-          });
+          const FCM_BATCH_SIZE = 500;
+          for (let i = 0; i < uniqueTokens.length; i += FCM_BATCH_SIZE) {
+            const tokenBatch = uniqueTokens.slice(i, i + FCM_BATCH_SIZE);
+            await adminMessaging.sendEachForMulticast({
+              notification: { title, body },
+              tokens: tokenBatch
+            });
+          }
         }
       } catch (pushErr) {
         console.warn("[SEND_APP_NOTIFICATION] Push gönderim uyarısı:", pushErr);

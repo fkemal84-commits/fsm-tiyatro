@@ -69,7 +69,18 @@ export async function createEvent(formData: FormData) {
       }
     }
 
-    const participantScope: ParticipantScope = explicitScope || (playId ? 'PROJECT_MEMBERS' : (participants.length > 0 ? 'SELECTED_USERS' : 'ALL_MEMBERS'));
+    let participantScope: ParticipantScope;
+    if (explicitScope) {
+      participantScope = explicitScope;
+    } else if (playId || type === 'PROVA') {
+      participantScope = 'PROJECT_MEMBERS';
+    } else if (participants.length > 0) {
+      participantScope = 'SELECTED_USERS';
+    } else {
+      // Güvenli default: Kapsam belirtilmemiş ve proje/katılımcı yoksa asla sessizce ALL_MEMBERS yapılmaz
+      participantScope = 'SELECTED_USERS';
+      participants = [uid];
+    }
 
     const newEvent: Omit<EventItem, 'id'> = {
       title,

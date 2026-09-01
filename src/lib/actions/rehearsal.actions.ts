@@ -245,7 +245,7 @@ export async function getEventReservations(eventId: string) {
   }
 }
 
-import { savePushSubscription } from './notification.actions';
+import { savePushSubscription, sendAppNotification } from './notification.actions';
 
 // ============================================================================
 // BİLDİRİM VE CİHAZ EŞLEŞTİRME İŞLEMLERİ (push_subscriptions canonical storage)
@@ -258,7 +258,7 @@ export async function saveFCMToken(token: string) {
 export async function nudgePlayers(targetUserIds?: string[]) {
   try {
     await requireAuth(['SUPERADMIN', 'ADMIN', 'DIRECTOR', 'ASST_DIRECTOR']);
-    let usersQuery = adminDb.collection('users').where('role', 'in', ['AKTOR', 'PLAYER']);
+    const usersQuery = adminDb.collection('users').where('role', 'in', ['AKTOR', 'PLAYER']);
     const snapshot = await usersQuery.get();
 
     const targetUids = snapshot.docs
@@ -269,25 +269,16 @@ export async function nudgePlayers(targetUserIds?: string[]) {
       return { success: false, message: "Kayıtlı aktif oyuncu bulunamadı." };
     }
 
-    const subsSnap = await adminDb.collection('push_subscriptions')
-      .where('userId', 'in', targetUids.slice(0, 10))
-      .get();
+    const notifRes = await sendAppNotification({
+      targetUserIds: targetUids,
+      type: 'GENERAL',
+      title: "FSM Tiyatro Bildirimi",
+      body: "Yeni bir prova duyurusu veya etkinlik planlandı. Lütfen panonuzu kontrol edin.",
+      link: '/members',
+      sendPush: true
+    });
 
-    const uniqueTokens = Array.from(new Set(subsSnap.docs.map(d => d.data().token).filter(Boolean)));
-    if (uniqueTokens.length === 0) {
-      return { success: false, message: "Kayıtlı aktif bildirim cihazı bulunamadı." };
-    }
-
-    const payload = {
-      notification: {
-        title: "FSM Tiyatro Bildirimi",
-        body: "Yeni bir prova duyurusu veya etkinlik planlandı. Lütfen panonuzu kontrol edin."
-      },
-      tokens: uniqueTokens
-    };
-
-    const response = await adminMessaging.sendEachForMulticast(payload);
-    return { success: true, sentCount: response.successCount, failureCount: response.failureCount };
+    return { success: true, sentCount: notifRes.sentCount };
   } catch (error) {
     return handleServerError(error, "NUDGE_PLAYERS");
   }
