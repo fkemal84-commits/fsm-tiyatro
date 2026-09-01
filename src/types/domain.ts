@@ -177,10 +177,19 @@ export interface AttendanceSession {
   openedAt: string;
   closedAt?: string | null;
   expiresAt: number;
-  qrSecret?: string;
   lastNudgeAt?: string | null;
   createdAt: string;
   updatedAt?: string;
+}
+
+/**
+ * Server-only Gizli Anahtar Depolama Modeli (İstemciye asla gönderilmez)
+ */
+export interface AttendanceSecret {
+  sessionId: string;
+  eventId: string;
+  qrSecret: string;
+  createdAt: string;
 }
 
 export type AttendanceRecordStatus = 'ATTENDED' | 'EXCUSED' | 'NOT_ATTENDED';

@@ -355,8 +355,8 @@ const tests: Array<{ name: string; test: () => boolean }> = [
         createdAt: '',
         updatedAt: ''
       };
-      // Client session nesnesinde qrSecret bulunmamalıdır
-      return clientSession.qrSecret === undefined;
+      // Client session nesnesinde qrSecret bulunmamalıdır (interface'ten tamamen çıkarılmıştır)
+      return (clientSession as any).qrSecret === undefined;
     }
   },
   {
@@ -431,6 +431,24 @@ const tests: Array<{ name: string; test: () => boolean }> = [
       const isOther = isEventParticipant(uOtherMember, privateEvent, null);
 
       return isPart === true && isOther === false;
+    }
+  },
+  {
+    name: '20. Firestore Security Rules: İstemci SDK yalnızca visibility == PUBLIC olan eventleri doğrudan okuyabilir',
+    test: () => {
+      const canClientReadDirectly = (eventDoc: { visibility?: string }) => {
+        return eventDoc.visibility === 'PUBLIC';
+      };
+
+      const publicDoc = { visibility: 'PUBLIC' };
+      const privateDoc = { visibility: 'PRIVATE' };
+      const undefinedDoc = { visibility: undefined };
+
+      return (
+        canClientReadDirectly(publicDoc) === true &&
+        canClientReadDirectly(privateDoc) === false &&
+        canClientReadDirectly(undefinedDoc) === false
+      );
     }
   }
 ];

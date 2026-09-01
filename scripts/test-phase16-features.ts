@@ -168,7 +168,6 @@ const tests: Array<{ name: string; test: () => boolean }> = [
         openedBy: 'admin',
         openedAt: new Date(Date.now() - 600000).toISOString(),
         expiresAt: Date.now() - 1000, // Süresi geçmiş
-        qrSecret: 'sec',
         createdAt: ''
       };
       return Date.now() > expiredSession.expiresAt;
@@ -185,7 +184,6 @@ const tests: Array<{ name: string; test: () => boolean }> = [
         openedBy: 'admin',
         openedAt: '',
         expiresAt: Date.now() + 600000,
-        qrSecret: 'sec',
         createdAt: ''
       };
       return closedSession.status !== 'OPEN';
